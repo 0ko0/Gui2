@@ -53,210 +53,193 @@ end
 function Library:New(config)
 	local self = setmetatable({}, Library)
 	
-	-- Bảng màu chuẩn Premium
+	-- Bảng màu chuẩn Premium (Tối giản, Sang trọng)
 	local AccentColor = Color3.fromRGB(110, 150, 255)
-	local DarkBg = Color3.fromRGB(18, 18, 24)
-	local LightBg = Color3.fromRGB(26, 26, 34)
+	local MainBg = Color3.fromRGB(15, 15, 20) -- Đen nhạt sâu hơn
+	local SecBg = Color3.fromRGB(22, 22, 28) -- Màu nền cho Sidebar/Element
+	local OutlineColor = Color3.fromRGB(45, 45, 55) -- Viền mỏng
 	local TextMain = Color3.fromRGB(255, 255, 255)
-	local TextMuted = Color3.fromRGB(160, 160, 180)
+	local TextMuted = Color3.fromRGB(140, 140, 160)
 
 	self.Gui = Create("ScreenGui", {
-		Name = "DcusHub_Ultimate",
+		Name = "DcusHub_Premium",
 		ResetOnSpawn = false,
 		Parent = GetSafeParent(), 
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 		IgnoreGuiInset = true
 	})
 
-	-- [TỐI TÂN]: Nút Mobile có hiệu ứng Glow và Gradient
-	local FloatingBtn = Create("ImageButton", {
-		Size = UDim2.fromOffset(50, 50),
-		Position = UDim2.new(0.5, -25, 0, 20),
-		BackgroundColor3 = Color3.fromRGB(20, 20, 28),
+	-- [FIX LỖI ẢNH 2]: Nút Mobile tròn hoàn hảo, không bị viền vuông
+	local FloatingHolder = Create("Frame", {
+		Size = UDim2.fromOffset(46, 46),
+		Position = UDim2.new(0.5, -23, 0, 20),
+		BackgroundTransparency = 1, -- Trong suốt hoàn toàn để không bị lỗi hình vuông
 		Visible = false,
+		Parent = self.Gui
+	})
+
+	-- Bóng đổ cho nút Mobile (Đen mềm, không dùng màu xanh)
+	Create("ImageLabel", {
+		Size = UDim2.new(1, 30, 1, 30),
+		Position = UDim2.fromScale(0.5, 0.5),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		BackgroundTransparency = 1,
+		Image = "rbxassetid://6015897843",
+		ImageColor3 = Color3.new(0, 0, 0),
+		ImageTransparency = 0.4,
+		ZIndex = 0,
+		Parent = FloatingHolder
+	})
+
+	local FloatingBtn = Create("ImageButton", {
+		Size = UDim2.fromScale(1, 1),
+		BackgroundColor3 = SecBg,
 		Active = true,
 		Draggable = true,
-		Parent = self.Gui
+		ZIndex = 1,
+		Parent = FloatingHolder
 	}, {
 		Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
-		Create("UIStroke", {Color = AccentColor, Thickness = 2, Transparency = 0.3}),
-		Create("UIGradient", {
-			Color = ColorSequence.new{
-				ColorSequenceKeypoint.new(0, Color3.fromRGB(30, 30, 40)),
-				ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 20))
-			},
-			Rotation = 45
-		}),
+		Create("UIStroke", {Color = AccentColor, Thickness = 1.5, Transparency = 0.2}),
 		Create("ImageLabel", {
 			Size = UDim2.fromScale(0.5, 0.5),
 			Position = UDim2.fromScale(0.25, 0.25),
 			BackgroundTransparency = 1,
 			Image = "rbxassetid://10709791437",
-			ImageColor3 = AccentColor
+			ImageColor3 = AccentColor,
+			ZIndex = 2
 		})
 	})
 
-	-- Bóng đổ cho nút Mobile
-	Create("ImageLabel", {
-		Size = UDim2.new(1, 30, 1, 30),
-		Position = UDim2.fromScale(0.5, 0.5),
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		BackgroundTransparency = 1,
-		Image = "rbxassetid://6015897843",
-		ImageColor3 = AccentColor,
-		ImageTransparency = 0.6,
-		ZIndex = -1,
-		Parent = FloatingBtn
-	})
-
-	-- [TỐI TÂN]: Main Window với Gradient và Ambient Glow
+	-- [FIX LỖI ẢNH 1]: Main Window thiết kế phẳng, viền kính, bóng đen sâu
 	self.Main = Create("Frame", {
-		Size = UDim2.new(0.75, 0, 0.75, 0), 
+		Size = UDim2.new(0.7, 0, 0.7, 0), 
 		Position = UDim2.fromScale(0.5, 0.5),
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		BackgroundColor3 = Color3.fromRGB(255, 255, 255), -- Để trắng để UIGradient hoạt động
+		BackgroundColor3 = MainBg,
 		BorderSizePixel = 0,
 		Parent = self.Gui
 	}, {
-		Create("UICorner", {CornerRadius = UDim.new(0, 12)}),
-		Create("UIStroke", {
-			Color = Color3.fromRGB(60, 60, 80), 
-			Thickness = 1.5, 
-			Transparency = 0.3
-		}),
-		Create("UIGradient", {
-			Color = ColorSequence.new{
-				ColorSequenceKeypoint.new(0, Color3.fromRGB(24, 24, 32)),
-				ColorSequenceKeypoint.new(1, DarkBg)
-			},
-			Rotation = 30
-		}),
+		Create("UICorner", {CornerRadius = UDim.new(0, 10)}),
+		Create("UIStroke", {Color = OutlineColor, Thickness = 1}),
 		Create("UISizeConstraint", {
-			MaxSize = Vector2.new(750, 480),
+			MaxSize = Vector2.new(750, 450),
 			MinSize = Vector2.new(450, 300)
 		}),
 		Create("UIScale", {Name = "Scale", Scale = 1})
 	})
 
-	-- Ambient Glow (Hào quang tỏa ra xung quanh UI)
-	Create("ImageLabel", {
-		Name = "AmbientGlow",
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.new(1, 60, 1, 60),
-		BackgroundTransparency = 1,
-		Image = "rbxassetid://6015897843",
-		ImageColor3 = AccentColor, -- Hào quang màu xanh chủ đạo
-		ImageTransparency = 0.75,
-		SliceCenter = Rect.new(49, 49, 450, 450),
-		ScaleType = Enum.ScaleType.Slice,
-		ZIndex = -2,
+	-- Đường viền Accent mỏng ở trên cùng (Tạo điểm nhấn Premium)
+	Create("Frame", {
+		Size = UDim2.new(1, -20, 0, 1),
+		Position = UDim2.new(0, 10, 0, 0),
+		BackgroundColor3 = AccentColor,
+		BorderSizePixel = 0,
 		Parent = self.Main
+	}, {
+		Create("UIGradient", {
+			Color = ColorSequence.new{
+				ColorSequenceKeypoint.new(0, MainBg),
+				ColorSequenceKeypoint.new(0.5, AccentColor),
+				ColorSequenceKeypoint.new(1, MainBg)
+			}
+		})
 	})
-	
-	-- Bóng đen sâu (Deep Shadow)
+
+	-- Bóng đen sâu (Soft Drop Shadow) - Bỏ hào quang xanh gắt
 	Create("ImageLabel", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.52),
-		Size = UDim2.new(1, 30, 1, 30),
+		Size = UDim2.new(1, 50, 1, 50),
 		BackgroundTransparency = 1,
 		Image = "rbxassetid://6015897843",
 		ImageColor3 = Color3.new(0, 0, 0),
-		ImageTransparency = 0.4,
+		ImageTransparency = 0.3, -- Bóng mờ tinh tế
 		SliceCenter = Rect.new(49, 49, 450, 450),
 		ScaleType = Enum.ScaleType.Slice,
 		ZIndex = -1,
 		Parent = self.Main
 	})
 
-	-- [TỐI TÂN]: Topbar tích hợp Avatar người chơi
+	-- Topbar
 	self.Top = Create("Frame", {
-		Size = UDim2.new(1, 0, 0, 55),
+		Size = UDim2.new(1, 0, 0, 50),
 		BackgroundTransparency = 1,
 		Parent = self.Main
 	})
 
-	-- Avatar
+	-- Avatar bo tròn hoàn hảo
 	local AvatarFrame = Create("Frame", {
-		Size = UDim2.fromOffset(32, 32),
-		Position = UDim2.fromOffset(20, 11),
-		BackgroundColor3 = LightBg,
+		Size = UDim2.fromOffset(28, 28),
+		Position = UDim2.fromOffset(15, 11),
+		BackgroundColor3 = SecBg,
 		Parent = self.Top
 	}, {
 		Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
-		Create("UIStroke", {Color = AccentColor, Thickness = 1.5, Transparency = 0.5}),
+		Create("UIStroke", {Color = OutlineColor, Thickness = 1}),
 		Create("ImageLabel", {
 			Size = UDim2.fromScale(1, 1),
 			BackgroundTransparency = 1,
 			Image = "rbxthumb://type=AvatarHeadShot&id=" .. Player.UserId .. "&w=48&h=48",
 			Parent = nil
-		})
+		}, { Create("UICorner", {CornerRadius = UDim.new(1, 0)}) })
 	})
 	AvatarFrame:FindFirstChildOfClass("ImageLabel").Parent = AvatarFrame
-	Create("UICorner", {CornerRadius = UDim.new(1, 0)}).Parent = AvatarFrame:FindFirstChildOfClass("ImageLabel")
 
 	Create("TextLabel", {
-		Text = config.Title or "Dcus Hub",
+		Text = config.Title or "Morten UI",
 		Font = Enum.Font.GothamBold,
-		TextSize = 17,
+		TextSize = 15,
 		TextColor3 = TextMain,
 		TextXAlignment = "Left",
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(62, 10),
+		Position = UDim2.fromOffset(55, 8),
 		Size = UDim2.new(0.5, 0, 0, 20),
 		Parent = self.Top
 	})
 
 	Create("TextLabel", {
-		Text = "Welcome back, " .. Player.Name,
+		Text = "Welcome, " .. Player.Name,
 		Font = Enum.Font.GothamMedium,
 		TextSize = 11,
 		TextColor3 = TextMuted,
 		TextXAlignment = "Left",
 		BackgroundTransparency = 1,
 		Size = UDim2.new(0.5, 0, 0, 15),
-		Position = UDim2.fromOffset(62, 30),
+		Position = UDim2.fromOffset(55, 26),
 		Parent = self.Top
 	})
 
-	-- Nút Close xịn xò
-	local CloseBtn = Create("TextButton", {
-		Text = "✕",
-		Font = Enum.Font.GothamBold,
-		TextSize = 14,
-		TextColor3 = TextMuted,
-		BackgroundColor3 = Color3.fromRGB(255, 60, 60),
+	-- Nút Close Icon Vector (Không dùng text ✕ để tránh lỗi font)
+	local CloseBtn = Create("ImageButton", {
 		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(30, 30),
+		Size = UDim2.fromOffset(20, 20),
 		AnchorPoint = Vector2.new(1, 0),
-		Position = UDim2.new(1, -15, 0, 12), 
+		Position = UDim2.new(1, -15, 0, 15), 
+		Image = "rbxassetid://10747384394", -- Icon X chuẩn UI
+		ImageColor3 = TextMuted,
 		Parent = self.Top
-	}, { Create("UICorner", {CornerRadius = UDim.new(0, 8)}) })
+	})
 
-	CloseBtn.MouseEnter:Connect(function() 
-		TweenService:Create(CloseBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0.8, TextColor3 = Color3.fromRGB(255, 100, 100)}):Play() 
-	end)
-	CloseBtn.MouseLeave:Connect(function() 
-		TweenService:Create(CloseBtn, TweenInfo.new(0.3), {BackgroundTransparency = 1, TextColor3 = TextMuted}):Play() 
-	end)
+	CloseBtn.MouseEnter:Connect(function() TweenService:Create(CloseBtn, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(255, 80, 80)}):Play() end)
+	CloseBtn.MouseLeave:Connect(function() TweenService:Create(CloseBtn, TweenInfo.new(0.2), {ImageColor3 = TextMuted}):Play() end)
 
 	self.Container = Create("Frame", {
-		Size = UDim2.new(1, 0, 1, -55),
-		Position = UDim2.fromOffset(0, 55),
+		Size = UDim2.new(1, 0, 1, -50),
+		Position = UDim2.fromOffset(0, 50),
 		BackgroundTransparency = 1,
 		Parent = self.Main
 	})
 
-	-- Sidebar
+	-- Sidebar (Tách biệt bằng 1 đường line mờ bên phải)
 	self.Sidebar = Create("Frame", {
-		Size = UDim2.new(0.28, 0, 1, -15), 
-		Position = UDim2.fromOffset(15, 0),
-		BackgroundColor3 = LightBg,
-		BackgroundTransparency = 0.4,
+		Size = UDim2.new(0.28, 0, 1, -10), 
+		Position = UDim2.fromOffset(10, 0),
+		BackgroundColor3 = SecBg,
 		Parent = self.Container
 	}, {
-		Create("UICorner", {CornerRadius = UDim.new(0, 10)}),
-		Create("UIStroke", {Color = Color3.fromRGB(255, 255, 255), Thickness = 1, Transparency = 0.92}),
+		Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
+		Create("UIStroke", {Color = OutlineColor, Thickness = 1}),
 	})
 
 	self.TabHolder = Create("ScrollingFrame", {
@@ -267,38 +250,34 @@ function Library:New(config)
 		CanvasSize = UDim2.new(0,0,0,0),
 		Parent = self.Sidebar
 	}, {
-		Create("UIListLayout", {Padding = UDim.new(0, 6), HorizontalAlignment = "Center"}),
-		Create("UIPadding", {PaddingTop = UDim.new(0, 10), PaddingBottom = UDim.new(0, 10)})
+		Create("UIListLayout", {Padding = UDim.new(0, 4), HorizontalAlignment = "Center"}),
+		Create("UIPadding", {PaddingTop = UDim.new(0, 8), PaddingBottom = UDim.new(0, 8)})
 	})
 
 	self.Pages = Create("Frame", {
-		Size = UDim2.new(0.72, -35, 1, -15),
-		Position = UDim2.new(0.28, 25, 0, 0),
+		Size = UDim2.new(0.72, -30, 1, -10),
+		Position = UDim2.new(0.28, 20, 0, 0),
 		BackgroundTransparency = 1,
 		Parent = self.Container
 	})
 
-	-- Logic Ẩn/Hiện UI (Animation Spring cực nảy và mượt)
+	-- Logic Ẩn/Hiện UI mượt mà
 	local IsOpen = true
 	local function ToggleUI(state)
 		IsOpen = state
 		if IsOpen then
 			self.Main.Visible = true
-			FloatingBtn.Visible = false
-			-- Hiệu ứng Back (Nảy nhẹ khi mở)
-			TweenService:Create(self.Main.Scale, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
-			TweenService:Create(self.Main, TweenInfo.new(0.3), {BackgroundTransparency = 0}):Play()
-			TweenService:Create(self.Main.AmbientGlow, TweenInfo.new(0.4), {ImageTransparency = 0.75}):Play()
+			FloatingHolder.Visible = false
+			TweenService:Create(self.Main.Scale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
+			TweenService:Create(self.Main, TweenInfo.new(0.25), {BackgroundTransparency = 0}):Play()
 		else
-			-- Hiệu ứng thu nhỏ mượt mà
-			local hideTween = TweenService:Create(self.Main.Scale, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Scale = 0.85})
+			local hideTween = TweenService:Create(self.Main.Scale, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {Scale = 0.9})
 			TweenService:Create(self.Main, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
-			TweenService:Create(self.Main.AmbientGlow, TweenInfo.new(0.2), {ImageTransparency = 1}):Play()
 			hideTween:Play()
 			hideTween.Completed:Connect(function()
 				if not IsOpen then 
 					self.Main.Visible = false 
-					FloatingBtn.Visible = true 
+					FloatingHolder.Visible = true 
 				end
 			end)
 		end
@@ -334,7 +313,7 @@ function Library:New(config)
 		UIS.InputChanged:Connect(function(input)
 			if input == dragInput and dragging then
 				local delta = input.Position - dragStart
-				TweenService:Create(self.Main, TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				TweenService:Create(self.Main, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
 					Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 				}):Play()
 			end
@@ -456,39 +435,31 @@ function Library:New(config)
 function self:NewTab(name)
 		local Tab = {}
 
-		-- [TỐI TÂN]: Tab Button có Gradient và Glow
+		-- [FIX LỖI ẢNH 1]: Tab Button căn lề chuẩn bằng UIPadding, không dùng dấu cách
 		local TabBtn = Create("TextButton", {
-			Size = UDim2.new(1, -16, 0, 34),
-			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+			Size = UDim2.new(1, -12, 0, 34),
+			BackgroundColor3 = AccentColor,
 			BackgroundTransparency = 1,
-			Text = "   " .. name,
+			Text = name,
 			Font = Enum.Font.GothamMedium,
 			TextSize = 13,
 			TextColor3 = TextMuted,
 			TextXAlignment = "Left",
 			Parent = self.TabHolder
 		}, {
-			Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
-			Create("UIGradient", {
-				Color = ColorSequence.new{
-					ColorSequenceKeypoint.new(0, AccentColor),
-					ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 110, 200))
-				}
-			})
+			Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
+			Create("UIPadding", {PaddingLeft = UDim.new(0, 12)}) -- Căn lề chữ chuẩn xác
 		})
 
-		-- Thanh Glow Indicator
+		-- Indicator dạng Pill hiện đại
 		local Indicator = Create("Frame", {
-			Size = UDim2.new(0, 3, 0, 0), -- Bắt đầu từ 0 để làm animation
-			Position = UDim2.new(0, 8, 0.5, 0),
+			Size = UDim2.new(0, 3, 0, 14),
+			Position = UDim2.new(0, -6, 0.5, 0), -- Đặt bên ngoài chữ
 			AnchorPoint = Vector2.new(0, 0.5),
-			BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+			BackgroundColor3 = AccentColor,
 			BackgroundTransparency = 1,
 			Parent = TabBtn
-		}, { 
-			Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
-			Create("UIStroke", {Color = AccentColor, Thickness = 1, Transparency = 0.5}) -- Tạo độ sáng
-		})
+		}, { Create("UICorner", {CornerRadius = UDim.new(1, 0)}) })
 
 		local Page = Create("ScrollingFrame", {
 			Size = UDim2.fromScale(1, 1),
@@ -508,22 +479,19 @@ function self:NewTab(name)
 			for _, p in pairs(self.Pages:GetChildren()) do if p:IsA("ScrollingFrame") then p.Visible = false end end
 			for _, btn in pairs(self.TabHolder:GetChildren()) do
 				if btn:IsA("TextButton") then
-					TweenService:Create(btn, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 1, TextColor3 = TextMuted}):Play()
+					TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 1, TextColor3 = TextMuted}):Play()
 					local ind = btn:FindFirstChild("Frame")
-					if ind then
-						TweenService:Create(ind, TweenInfo.new(0.3), {Size = UDim2.new(0, 3, 0, 0), BackgroundTransparency = 1}):Play()
-					end
+					if ind then TweenService:Create(ind, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play() end
 				end
 			end
 			
 			Page.Visible = true
-			-- Animation Fade in cho Page
-			Page.CanvasPosition = Vector2.new(0, 20)
-			TweenService:Create(Page, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {CanvasPosition = Vector2.new(0, 0)}):Play()
+			-- Hiệu ứng trượt mượt mà khi đổi Tab
+			Page.Position = UDim2.new(0, 10, 0, 0)
+			TweenService:Create(Page, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
 
-			-- Animation cho Tab Button
-			TweenService:Create(TabBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {BackgroundTransparency = 0.85, TextColor3 = TextMain}):Play()
-			TweenService:Create(Indicator, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Size = UDim2.new(0, 3, 0, 18), BackgroundTransparency = 0}):Play()
+			TweenService:Create(TabBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.85, TextColor3 = AccentColor}):Play()
+			TweenService:Create(Indicator, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
 		end)
 
 		function Tab:Button(config)
