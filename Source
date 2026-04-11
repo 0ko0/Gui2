@@ -53,11 +53,10 @@ end
 function Library:New(config)
 	local self = setmetatable({}, Library)
 	
-	-- Bảng màu chuẩn Premium (Tối giản, Sang trọng)
 	local AccentColor = Color3.fromRGB(110, 150, 255)
-	local MainBg = Color3.fromRGB(15, 15, 20) -- Đen nhạt sâu hơn
-	local SecBg = Color3.fromRGB(22, 22, 28) -- Màu nền cho Sidebar/Element
-	local OutlineColor = Color3.fromRGB(45, 45, 55) -- Viền mỏng
+	local MainBg = Color3.fromRGB(15, 15, 20) 
+	local SecBg = Color3.fromRGB(22, 22, 28) 
+	local OutlineColor = Color3.fromRGB(45, 45, 55) 
 	local TextMain = Color3.fromRGB(255, 255, 255)
 	local TextMuted = Color3.fromRGB(140, 140, 160)
 
@@ -69,49 +68,31 @@ function Library:New(config)
 		IgnoreGuiInset = true
 	})
 
-	-- [FIX LỖI ẢNH 2]: Nút Mobile tròn hoàn hảo, không bị viền vuông
-	local FloatingHolder = Create("Frame", {
-		Size = UDim2.fromOffset(46, 46),
-		Position = UDim2.new(0.5, -23, 0, 20),
-		BackgroundTransparency = 1, -- Trong suốt hoàn toàn để không bị lỗi hình vuông
-		Visible = false,
-		Parent = self.Gui
-	})
-
-	-- Bóng đổ cho nút Mobile (Đen mềm, không dùng màu xanh)
-	Create("ImageLabel", {
-		Size = UDim2.new(1, 30, 1, 30),
-		Position = UDim2.fromScale(0.5, 0.5),
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		BackgroundTransparency = 1,
-		Image = "rbxassetid://6015897843",
-		ImageColor3 = Color3.new(0, 0, 0),
-		ImageTransparency = 0.4,
-		ZIndex = 0,
-		Parent = FloatingHolder
-	})
-
 	local FloatingBtn = Create("ImageButton", {
-		Size = UDim2.fromScale(1, 1),
+		Size = UDim2.fromOffset(35, 35),
+		Position = UDim2.new(0.5, -23, 0, 20),
 		BackgroundColor3 = SecBg,
+		BackgroundTransparency = 0.05, 
+		Visible = false,
 		Active = true,
-		Draggable = true,
-		ZIndex = 1,
-		Parent = FloatingHolder
+		Draggable = true, 
+		Parent = self.Gui
 	}, {
-		Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
-		Create("UIStroke", {Color = AccentColor, Thickness = 1.5, Transparency = 0.2}),
+		Create("UICorner", {CornerRadius = UDim.new(1, 0)}), 
+		Create("UIStroke", {
+			Color = AccentColor, 
+			Thickness = 1.5, 
+			Transparency = 0.2
+		}),
 		Create("ImageLabel", {
 			Size = UDim2.fromScale(0.5, 0.5),
 			Position = UDim2.fromScale(0.25, 0.25),
 			BackgroundTransparency = 1,
 			Image = "rbxassetid://10709791437",
-			ImageColor3 = AccentColor,
-			ZIndex = 2
+			ImageColor3 = AccentColor
 		})
 	})
 
-	-- [FIX LỖI ẢNH 1]: Main Window thiết kế phẳng, viền kính, bóng đen sâu
 	self.Main = Create("Frame", {
 		Size = UDim2.new(0.7, 0, 0.7, 0), 
 		Position = UDim2.fromScale(0.5, 0.5),
@@ -129,7 +110,6 @@ function Library:New(config)
 		Create("UIScale", {Name = "Scale", Scale = 1})
 	})
 
-	-- Đường viền Accent mỏng ở trên cùng (Tạo điểm nhấn Premium)
 	Create("Frame", {
 		Size = UDim2.new(1, -20, 0, 1),
 		Position = UDim2.new(0, 10, 0, 0),
@@ -146,7 +126,6 @@ function Library:New(config)
 		})
 	})
 
-	-- Bóng đen sâu (Soft Drop Shadow) - Bỏ hào quang xanh gắt
 	Create("ImageLabel", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.52),
@@ -154,21 +133,19 @@ function Library:New(config)
 		BackgroundTransparency = 1,
 		Image = "rbxassetid://6015897843",
 		ImageColor3 = Color3.new(0, 0, 0),
-		ImageTransparency = 0.3, -- Bóng mờ tinh tế
+		ImageTransparency = 0.3, 
 		SliceCenter = Rect.new(49, 49, 450, 450),
 		ScaleType = Enum.ScaleType.Slice,
 		ZIndex = -1,
 		Parent = self.Main
 	})
 
-	-- Topbar
 	self.Top = Create("Frame", {
 		Size = UDim2.new(1, 0, 0, 50),
 		BackgroundTransparency = 1,
 		Parent = self.Main
 	})
 
-	-- Avatar bo tròn hoàn hảo
 	local AvatarFrame = Create("Frame", {
 		Size = UDim2.fromOffset(28, 28),
 		Position = UDim2.fromOffset(15, 11),
@@ -210,13 +187,12 @@ function Library:New(config)
 		Parent = self.Top
 	})
 
-	-- Nút Close Icon Vector (Không dùng text ✕ để tránh lỗi font)
 	local CloseBtn = Create("ImageButton", {
 		BackgroundTransparency = 1,
 		Size = UDim2.fromOffset(20, 20),
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -15, 0, 15), 
-		Image = "rbxassetid://10747384394", -- Icon X chuẩn UI
+		Image = "rbxassetid://10747384394", 
 		ImageColor3 = TextMuted,
 		Parent = self.Top
 	})
@@ -231,7 +207,6 @@ function Library:New(config)
 		Parent = self.Main
 	})
 
-	-- Sidebar (Tách biệt bằng 1 đường line mờ bên phải)
 	self.Sidebar = Create("Frame", {
 		Size = UDim2.new(0.28, 0, 1, -10), 
 		Position = UDim2.fromOffset(10, 0),
@@ -261,13 +236,12 @@ function Library:New(config)
 		Parent = self.Container
 	})
 
-	-- Logic Ẩn/Hiện UI mượt mà
 	local IsOpen = true
 	local function ToggleUI(state)
 		IsOpen = state
 		if IsOpen then
 			self.Main.Visible = true
-			FloatingHolder.Visible = false
+			FloatingBtn.Visible = false
 			TweenService:Create(self.Main.Scale, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Scale = 1}):Play()
 			TweenService:Create(self.Main, TweenInfo.new(0.25), {BackgroundTransparency = 0}):Play()
 		else
@@ -277,7 +251,7 @@ function Library:New(config)
 			hideTween.Completed:Connect(function()
 				if not IsOpen then 
 					self.Main.Visible = false 
-					FloatingHolder.Visible = true 
+					FloatingBtn.Visible = true 
 				end
 			end)
 		end
@@ -292,7 +266,6 @@ function Library:New(config)
 		end
 	end)
 
-	-- Smooth Dragging
 	do
 		local dragging, dragInput, dragStart, startPos
 		self.Top.InputBegan:Connect(function(input)
