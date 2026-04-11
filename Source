@@ -153,6 +153,24 @@ function Library:New(config)
 		Create("UIStroke", {Color = Color3.fromRGB(255, 255, 255), Thickness = 1, Transparency = 0.9}),
 	})
 
+	self.TabHolder = Create("ScrollingFrame", {
+		Size = UDim2.fromScale(1, 1),
+		BackgroundTransparency = 1,
+		ScrollBarThickness = 0,
+		Parent = self.Sidebar
+	}, {
+		Create("UIListLayout", {Padding = UDim.new(0, 5), HorizontalAlignment = "Center"}),
+		Create("UIPadding", {PaddingTop = UDim.new(0, 10), PaddingLeft = UDim.new(0, 10), PaddingRight = UDim.new(0, 10)})
+	})
+
+	self.TabHighlight = Create("Frame", {
+		Size = UDim2.new(0, 3, 0, 20),
+		BackgroundColor3 = Color3.fromRGB(80, 150, 255),
+		Visible = false,
+		ZIndex = 2,
+		Parent = self.Sidebar
+	}, { Create("UICorner", {CornerRadius = UDim.new(1, 0)}) })
+
 	self.Pages = Create("Frame", {
 		Size = UDim2.new(0.7, -25, 1, -16),
 		Position = UDim2.new(0.3, 15, 0, 8),
@@ -600,6 +618,7 @@ function Library:New(config)
 					Update(i) 
 				end 
 			end)
+			end
 			
 			UIS.InputEnded:Connect(function(i) 
 				if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then 
@@ -742,6 +761,7 @@ function Library:New(config)
 				
 				TweenService:Create(Arrow, TweenInfo.new(0.3), {Rotation = expanded and 180 or 0}):Play()
 			end)
+			end
 
 		function Tab:Label(config)
 			local text = config.Text or "Label"
