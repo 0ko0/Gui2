@@ -496,201 +496,64 @@ function Library:New(config)
 	end
 
 	
-function self:NewTab(name, iconId)
+function self:NewTab(name)
 		local Tab = {}
-		iconId = iconId or "rbxassetid://11433532654" -- Icon mặc định (Hình ngôi nhà/danh mục)
 
-		-- Bảng màu chuẩn của UI
-		local AccentColor = Color3.fromRGB(110, 150, 255)
-		local TextMain = Color3.fromRGB(255, 255, 255)
-		local TextMuted = Color3.fromRGB(140, 140, 160)
-		local HoverBg = Color3.fromRGB(255, 255, 255)
-
-		-- 1. NÚT TAB (TAB BUTTON)
 		local TabBtn = Create("TextButton", {
-			Size = UDim2.new(1, -12, 0, 38),
+			Size = UDim2.new(1, -12, 0, 34),
 			BackgroundColor3 = AccentColor,
-			BackgroundTransparency = 1,
-			Text = "",
-			AutoButtonColor = false,
-			ClipsDescendants = true,
-			Parent = self.TabHolder
-		}, {
-			Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
-			Create("UIGradient", {
-				Color = ColorSequence.new({
-					ColorSequenceKeypoint.new(0, AccentColor),
-					ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 100, 200))
-				}),
-				Transparency = NumberSequence.new({
-					NumberSequenceKeypoint.new(0, 0.85),
-					NumberSequenceKeypoint.new(1, 1)
-				}),
-				Rotation = 0
-			})
-		})
-
-		local Indicator = Create("Frame", {
-			Size = UDim2.new(0, 3, 0, 0),
-			Position = UDim2.new(0, 0, 0.5, 0), 
-			AnchorPoint = Vector2.new(0, 0.5),
-			BackgroundColor3 = AccentColor,
-			BackgroundTransparency = 1,
-			Parent = TabBtn
-		}, { 
-			Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
-			Create("UIStroke", {Color = AccentColor, Thickness = 1, Transparency = 0.5})
-		})
-
-		local TabIcon = Create("ImageLabel", {
-			Size = UDim2.fromOffset(18, 18),
-			Position = UDim2.new(0, 14, 0.5, 0),
-			AnchorPoint = Vector2.new(0, 0.5),
-			BackgroundTransparency = 1,
-			Image = iconId,
-			ImageColor3 = TextMuted,
-			Parent = TabBtn
-		})
-
-		local TabText = Create("TextLabel", {
-			Size = UDim2.new(1, -40, 1, 0),
-			Position = UDim2.new(0, 40, 0, 0),
 			BackgroundTransparency = 1,
 			Text = name,
 			Font = Enum.Font.GothamMedium,
 			TextSize = 13,
 			TextColor3 = TextMuted,
-			TextXAlignment = Enum.TextXAlignment.Left,
-			Parent = TabBtn
+			TextXAlignment = "Left",
+			Parent = self.TabHolder
+		}, {
+			Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
+			Create("UIPadding", {PaddingLeft = UDim.new(0, 12)}) 
 		})
 
-		-- 2. TRANG CHỨA NỘI DUNG (PAGE WRAPPER & SCROLLING FRAME)
-		-- Dùng CanvasGroup để có thể làm hiệu ứng Fade-in mượt mà
-		local PageWrapper = Create("CanvasGroup", {
+		local Indicator = Create("Frame", {
+			Size = UDim2.new(0, 3, 0, 14),
+			Position = UDim2.new(0, -6, 0.5, 0), 
+			AnchorPoint = Vector2.new(0, 0.5),
+			BackgroundColor3 = AccentColor,
+			BackgroundTransparency = 1,
+			Parent = TabBtn
+		}, { Create("UICorner", {CornerRadius = UDim.new(1, 0)}) })
+
+		local Page = Create("ScrollingFrame", {
 			Size = UDim2.fromScale(1, 1),
 			BackgroundTransparency = 1,
 			Visible = false,
-			GroupTransparency = 1,
-			BorderSizePixel = 0,
-			Parent = self.Pages
-		})
-
-		local ScrollPage = Create("ScrollingFrame", {
-			Size = UDim2.fromScale(1, 1),
-			BackgroundTransparency = 1,
 			ScrollBarThickness = 2, 
 			ScrollBarImageColor3 = AccentColor,
 			AutomaticCanvasSize = Enum.AutomaticSize.Y, 
 			CanvasSize = UDim2.new(0, 0, 0, 0), 
-			BorderSizePixel = 0,
-			Parent = PageWrapper
+			Parent = self.Pages
 		}, {
 			Create("UIListLayout", {Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder}),
 			Create("UIPadding", {PaddingTop = UDim.new(0, 2), PaddingBottom = UDim.new(0, 10), PaddingRight = UDim.new(0, 6)})
 		})
 
-		-- 3. HIỆU ỨNG TƯƠNG TÁC (HOVER & CLICK)
-		TabBtn.MouseEnter:Connect(function()
-			if TabBtn.BackgroundTransparency > 0.1 then
-				TweenService:Create(TabBtn, TweenInfo.new(0.3), {BackgroundColor3 = HoverBg, BackgroundTransparency = 0.95}):Play()
-				TweenService:Create(TabText, TweenInfo.new(0.3), {TextColor3 = Color3.fromRGB(200, 200, 220)}):Play()
-				TweenService:Create(TabIcon, TweenInfo.new(0.3), {ImageColor3 = Color3.fromRGB(200, 200, 220)}):Play()
-			end
-		end)
-
-		TabBtn.MouseLeave:Connect(function()
-			if TabBtn.BackgroundTransparency > 0.1 then
-				TweenService:Create(TabBtn, TweenInfo.new(0.3), {BackgroundColor3 = AccentColor, BackgroundTransparency = 1}):Play()
-				TweenService:Create(TabText, TweenInfo.new(0.3), {TextColor3 = TextMuted}):Play()
-				TweenService:Create(TabIcon, TweenInfo.new(0.3), {ImageColor3 = TextMuted}):Play()
-			end
-		end)
-
 		TabBtn.MouseButton1Click:Connect(function()
-			-- Hiệu ứng Ripple (Gợn sóng)
-			task.spawn(function()
-				local mousePos = UIS:GetMouseLocation()
-				local absolutePos = TabBtn.AbsolutePosition
-				local relativeX = mousePos.X - absolutePos.X
-				local relativeY = (mousePos.Y - 36) - absolutePos.Y -- Trừ đi 36px của Topbar Inset
-
-				local Ripple = Create("Frame", {
-					BackgroundColor3 = Color3.new(1, 1, 1),
-					BackgroundTransparency = 0.6,
-					Position = UDim2.fromOffset(relativeX, relativeY),
-					Size = UDim2.fromOffset(0, 0),
-					AnchorPoint = Vector2.new(0.5, 0.5),
-					ZIndex = 0,
-					Parent = TabBtn
-				}, { Create("UICorner", {CornerRadius = UDim.new(1, 0)}) })
-
-				local tween = TweenService:Create(Ripple, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {
-					Size = UDim2.fromOffset(150, 150),
-					BackgroundTransparency = 1
-				})
-				tween:Play()
-				tween.Completed:Connect(function() Ripple:Destroy() end)
-			end)
-
-			-- Reset các tab khác
+			for _, p in pairs(self.Pages:GetChildren()) do if p:IsA("ScrollingFrame") then p.Visible = false end end
 			for _, btn in pairs(self.TabHolder:GetChildren()) do
-				if btn:IsA("TextButton") and btn ~= TabBtn then
-					TweenService:Create(btn, TweenInfo.new(0.3), {BackgroundColor3 = AccentColor, BackgroundTransparency = 1}):Play()
-					local txt = btn:FindFirstChildOfClass("TextLabel")
-					local icn = btn:FindFirstChildOfClass("ImageLabel")
+				if btn:IsA("TextButton") then
+					TweenService:Create(btn, TweenInfo.new(0.2), {BackgroundTransparency = 1, TextColor3 = TextMuted}):Play()
 					local ind = btn:FindFirstChild("Frame")
-					
-					if txt then TweenService:Create(txt, TweenInfo.new(0.3), {TextColor3 = TextMuted}):Play() end
-					if icn then TweenService:Create(icn, TweenInfo.new(0.3), {ImageColor3 = TextMuted}):Play() end
-					if ind then 
-						TweenService:Create(ind, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-							Size = UDim2.new(0, 3, 0, 0), BackgroundTransparency = 1
-						}):Play() 
-					end
+					if ind then TweenService:Create(ind, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play() end
 				end
 			end
-
-			-- Active Tab hiện tại
-			TweenService:Create(TabBtn, TweenInfo.new(0.3), {BackgroundColor3 = AccentColor, BackgroundTransparency = 0}):Play()
-			TweenService:Create(TabText, TweenInfo.new(0.3), {TextColor3 = TextMain}):Play()
-			TweenService:Create(TabIcon, TweenInfo.new(0.3), {ImageColor3 = TextMain}):Play()
-			TweenService:Create(Indicator, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-				Size = UDim2.new(0, 3, 0, 20), BackgroundTransparency = 0
-			}):Play()
-
-			-- Chuyển trang (Slide-up + Fade-in)
-			for _, p in pairs(self.Pages:GetChildren()) do 
-				if p:IsA("CanvasGroup") and p ~= PageWrapper then 
-					TweenService:Create(p, TweenInfo.new(0.2), {GroupTransparency = 1}):Play()
-					task.delay(0.2, function() p.Visible = false end)
-				end 
-			end
 			
-			PageWrapper.Visible = true
-			PageWrapper.Position = UDim2.new(0, 0, 0, 15)
-			PageWrapper.GroupTransparency = 1
-			
-			TweenService:Create(PageWrapper, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-				Position = UDim2.new(0, 0, 0, 0),
-				GroupTransparency = 0
-			}):Play()
+			Page.Visible = true
+			Page.Position = UDim2.new(0, 10, 0, 0)
+			TweenService:Create(Page, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
+
+			TweenService:Create(TabBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.85, TextColor3 = AccentColor}):Play()
+			TweenService:Create(Indicator, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
 		end)
-
-		-- Tự động Active Tab đầu tiên
-		local tabCount = 0
-		for _, child in pairs(self.TabHolder:GetChildren()) do
-			if child:IsA("TextButton") then tabCount = tabCount + 1 end
-		end
-		if tabCount == 1 then
-			TabBtn.BackgroundTransparency = 0
-			TabText.TextColor3 = TextMain
-			TabIcon.ImageColor3 = TextMain
-			Indicator.Size = UDim2.new(0, 3, 0, 20)
-			Indicator.BackgroundTransparency = 0
-			PageWrapper.Visible = true
-			PageWrapper.Position = UDim2.new(0, 0, 0, 0)
-			PageWrapper.GroupTransparency = 0
-		end
 
 		function Tab:Button(config)
 			local text = config.Name or config.Text or "Button"
