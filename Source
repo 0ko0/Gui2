@@ -42,7 +42,7 @@ function Library.SettingManager()
 			Name = "Unload UI",
 			Callback = function()
 				local core = gethui() or Player:WaitForChild("PlayerGui")
-				local gui = core:FindFirstChild("DcusHub_v2.3 UI") or Player.PlayerGui:FindFirstChild("DcusHub_v2.3 UI")
+				local gui = core:FindFirstChild("skibidi") or Player.PlayerGui:FindFirstChild("skibidi")
 				if gui then gui:Destroy() end
 			end
 		})
@@ -61,7 +61,7 @@ function Library:New(config)
 	local TextMuted = Color3.fromRGB(140, 140, 160)
 
 	self.Gui = Create("ScreenGui", {
-		Name = "DcusHub_Premium",
+		Name = "skibidi",
 		ResetOnSpawn = false,
 		Parent = GetSafeParent(), 
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
@@ -69,7 +69,7 @@ function Library:New(config)
 	})
 
 	local FloatingBtn = Create("ImageButton", {
-		Size = UDim2.fromOffset(35, 35),
+		Size = UDim2.fromOffset(40, 40),
 		Position = UDim2.new(0.5, -23, 0, 20),
 		BackgroundColor3 = SecBg,
 		BackgroundTransparency = 0.05, 
@@ -88,7 +88,7 @@ function Library:New(config)
 			Size = UDim2.fromScale(0.5, 0.5),
 			Position = UDim2.fromScale(0.25, 0.25),
 			BackgroundTransparency = 1,
-			Image = "rbxassetid://10709791437",
+			Image = "rbxassetid://105048918205765",
 			ImageColor3 = AccentColor
 		})
 	})
@@ -164,7 +164,7 @@ function Library:New(config)
 	AvatarFrame:FindFirstChildOfClass("ImageLabel").Parent = AvatarFrame
 
 	Create("TextLabel", {
-		Text = config.Title or "Morten UI",
+		Text = config.Title or "skibidi",
 		Font = Enum.Font.GothamBold,
 		TextSize = 15,
 		TextColor3 = TextMain,
@@ -323,7 +323,6 @@ function Library:New(config)
 			})
 		end
 
-		-- 通知本体の作成
 		local Notif = Create("Frame", {
 			Size = UDim2.new(1, 0, 0, 20),
 			BackgroundColor3 = Color3.fromRGB(20, 20, 28),
@@ -408,7 +407,6 @@ function Library:New(config)
 function self:NewTab(name)
 		local Tab = {}
 
-		-- [FIX LỖI ẢNH 1]: Tab Button căn lề chuẩn bằng UIPadding, không dùng dấu cách
 		local TabBtn = Create("TextButton", {
 			Size = UDim2.new(1, -12, 0, 34),
 			BackgroundColor3 = AccentColor,
@@ -421,13 +419,12 @@ function self:NewTab(name)
 			Parent = self.TabHolder
 		}, {
 			Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
-			Create("UIPadding", {PaddingLeft = UDim.new(0, 12)}) -- Căn lề chữ chuẩn xác
+			Create("UIPadding", {PaddingLeft = UDim.new(0, 12)}) 
 		})
 
-		-- Indicator dạng Pill hiện đại
 		local Indicator = Create("Frame", {
 			Size = UDim2.new(0, 3, 0, 14),
-			Position = UDim2.new(0, -6, 0.5, 0), -- Đặt bên ngoài chữ
+			Position = UDim2.new(0, -6, 0.5, 0), 
 			AnchorPoint = Vector2.new(0, 0.5),
 			BackgroundColor3 = AccentColor,
 			BackgroundTransparency = 1,
@@ -459,7 +456,6 @@ function self:NewTab(name)
 			end
 			
 			Page.Visible = true
-			-- Hiệu ứng trượt mượt mà khi đổi Tab
 			Page.Position = UDim2.new(0, 10, 0, 0)
 			TweenService:Create(Page, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0, 0, 0, 0)}):Play()
 
@@ -676,7 +672,6 @@ function self:NewTab(name)
 				end 
 			end)
 			
-			-- Dùng UserInputService để bắt chuột kể cả khi kéo ra ngoài Frame
 			UIS.InputChanged:Connect(function(i) 
 				if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then 
 					Update(i) 
