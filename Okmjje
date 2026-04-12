@@ -11,6 +11,7 @@ end
 
 local Library = {}
 Library.__index = Library
+Library.ToggleKey = Enum.KeyCode.RightControl 
 
 function Library.SettingManager()
 	local Manager = {}
@@ -42,6 +43,7 @@ end
 
 function Library:New(config)
 	local self = setmetatable({}, Library)
+	self.Open = true
 
 	self.Gui = Create("ScreenGui", {
 		Name = "skibidi",
@@ -178,19 +180,12 @@ function Library:New(config)
 		self.Gui.Enabled = not self.Gui.Enabled
 	end)
 
-		local targetMainSize = IsOpen and UDim2.fromOffset(600, 400) or UDim2.fromOffset(600, 55 + 47)
-		TweenService:Create(self.DropShadowHolder, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-			Size = targetMainSize
-		}):Play()
-		if not IsOpen then
-			self.Container.Visible = false
-		else
-			task.delay(0.1, function()
-				if IsOpen then self.Container.Visible = true end
-			end)
-		end
-	end)
-
+self.Container = Create("Frame", {
+		Size = UDim2.new(1, 0, 1, -55),
+		Position = UDim2.fromOffset(0, 55),
+		BackgroundTransparency = 1,
+		Parent = self.Main
+	})
 
 	self.Sidebar = Create("Frame", {
 		Size = UDim2.new(0, 150, 1, -16),
