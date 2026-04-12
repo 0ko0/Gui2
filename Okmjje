@@ -171,20 +171,22 @@ function Library:New(config)
 	local dragging = false
 	local dragStart = nil
 	local startPos = nil
-	local isClick = true 
 
 	FloatingBtn.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
 			dragging = true
-			isClick = true 
 			dragStart = input.Position
 			startPos = FloatingFrame.Position
 
-			input.Changed:Connect(function()
+			local inputEndedConnection
+			inputEndedConnection = input.Changed:Connect(function()
 				if input.UserInputState == Enum.UserInputState.End then
 					dragging = false
+					inputEndedConnection:Disconnect() 
+
+					local delta = input.Position - dragStart
 					
-					if isClick then
+					if math.abs(delta.X) <= 5 and math.abs(delta.Y) <= 5 then
 						if zoomedIn then  
 							TweenService:Create(FloatingIcon, tweenInfo, {Size = originalSize}):Play()  
 						else  
@@ -201,11 +203,6 @@ function Library:New(config)
 	UIS.InputChanged:Connect(function(input)
 		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
 			local delta = input.Position - dragStart
-			
-			if math.abs(delta.X) > 5 or math.abs(delta.Y) > 5 then
-				isClick = false
-			end
-			
 			FloatingFrame.Position = UDim2.new(
 				startPos.X.Scale, startPos.X.Offset + delta.X, 
 				startPos.Y.Scale, startPos.Y.Offset + delta.Y
@@ -406,7 +403,7 @@ self.Container = Create("Frame", {
 
 	function self:NewTab(name)
 		local Tab = {}
-		local AccentColor = Color3.fromRGB(110, 150, 255)
+		local AccentColor = Color3.fromRGB(80, 150, 255) 
 
 		local TabBg = Create("Frame", {
 			Size = UDim2.new(1, 0, 0, 34),
@@ -415,12 +412,13 @@ self.Container = Create("Frame", {
 			Parent = self.TabHolder
 		}, {
 			Create("UICorner", {CornerRadius = UDim.new(0, 5)}),
-			Create("UIStroke", {Color = AccentColor, Thickness = 1, Transparency = 0.7})
+			Create("UIStroke", {Color = AccentColor, Thickness = 1, Transparency = 0.8})
 		})
 
 		local Dot = Create("Frame", {
 			Size = UDim2.fromOffset(4, 4),
-			Position = UDim2.new(0, 10, 0.5, -2),
+			AnchorPoint = Vector2.new(0.5, 0.5), 
+			Position = UDim2.new(0, 12, 0.5, 0),
 			BackgroundColor3 = Color3.fromRGB(150, 150, 170),
 			Parent = TabBg
 		}, { Create("UICorner", {CornerRadius = UDim.new(1, 0)}) })
@@ -431,17 +429,20 @@ self.Container = Create("Frame", {
 			TextSize = 13,
 			TextColor3 = Color3.fromRGB(150, 150, 170),
 			BackgroundTransparency = 1,
-			Size = UDim2.fromScale(1, 1),
+			Position = UDim2.new(0, 25, 0, 0), 
+			Size = UDim2.new(1, -25, 1, 0),
+			TextXAlignment = "Left",
 			Parent = TabBg
 		})
 
 		local Page = Create("ScrollingFrame", {
-			Size = UDim2.fromScale(1, 1),
+			Size = UDim2.new(1, 0, 1, 0), 
 			BackgroundTransparency = 1,
 			Visible = false,
-			ScrollBarThickness = 2,
+			ScrollBarThickness = 3, 
 			ScrollBarImageColor3 = AccentColor,
-			CanvasSize = UDim2.new(0, 0, 0, 0), 
+			CanvasSize = UDim2.new(0, 0, 0, 0),
+			BorderSizePixel = 0,
 			Parent = self.Pages
 		}, {
 			Create("UIListLayout", {
@@ -451,38 +452,105 @@ self.Container = Create("Frame", {
 			Create("UIPadding", {
 				PaddingTop = UDim.new(0, 2), 
 				PaddingLeft = UDim.new(0, 2), 
-				PaddingRight = UDim.new(0, 8)
+				PaddingRight = UDim.new(0, 10), 
+				PaddingBottom = UDim.new(0, 10)
 			})
 		})
 
 		local UIListLayout = Page:FindFirstChildOfClass("UIListLayout")
 
 		local function UpdateCanvasSize()
-			Page.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 15)
+		
+			Page.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 25)
 		end
 		UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateCanvasSize)
 		task.spawn(UpdateCanvasSize)
 
-		TabBtn.MouseButton1Click:Connect(function()
-			self.TabHighlight.Visible = true
-			local yPos = TabBg.AbsolutePosition.Y - self.Sidebar.AbsolutePosition.Y
-			TweenService:Create(self.TabHighlight, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-				Position = UDim2.fromOffset(8, yPos)
-			}):Play()
+		TabBg:SetAttribute("Active", false)
 
-			for _, p in pairs(self.Pages:GetChildren()) do if p:IsA("ScrollingFrame") then p.Visible = false end end
-			for _, bg in pairs(self.TabHolder:GetChildren()) do
-				if bg:IsA("Frame") and bg:FindFirstChild("Frame") then
-					TweenService:Create(bg:FindFirstChildOfClass("TextButton"), TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(150, 150, 170)}):Play()
-					TweenService:Create(bg:FindFirstChild("Frame"), TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(150, 150, 170)}):Play()
-					TweenService:Create(bg:FindFirstChildOfClass("UIStroke"), TweenInfo.new(0.2), {Transparency = 0.7}):Play()
+		TabBtn.MouseEnter:Connect(function()
+			if not TabBg:GetAttribute("Active") then
+				TweenService:Create(TabBg, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {BackgroundColor3 = Color3.fromRGB(30, 30, 42)}):Play()
+				TweenService:Create(TabBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {TextColor3 = Color3.fromRGB(200, 200, 220)}):Play()
+			end
+		end)
+
+		TabBtn.MouseLeave:Connect(function()
+			if not TabBg:GetAttribute("Active") then
+				TweenService:Create(TabBg, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {BackgroundColor3 = Color3.fromRGB(0, 0, 0)}):Play()
+				TweenService:Create(TabBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {TextColor3 = Color3.fromRGB(150, 150, 170)}):Play()
+			end
+		end)
+
+		local function SwitchToThisTab()
+			if TabBg:GetAttribute("Active") then return end 
+
+			local yPos = TabBg.AbsolutePosition.Y - self.Sidebar.AbsolutePosition.Y
+			
+			if not self.TabHighlight.Visible then
+				self.TabHighlight.Position = UDim2.fromOffset(8, yPos)
+				self.TabHighlight.Visible = true
+				TweenService:Create(self.TabHighlight, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {BackgroundTransparency = 0.9}):Play()
+			else
+				TweenService:Create(self.TabHighlight, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+					Position = UDim2.fromOffset(8, yPos)
+				}):Play()
+			end
+
+			for _, bg in ipairs(self.TabHolder:GetChildren()) do
+				if bg:IsA("Frame") and bg ~= TabBg and bg:GetAttribute("Active") == true then
+					bg:SetAttribute("Active", false)
+					
+					local otherBtn = bg:FindFirstChildOfClass("TextButton")
+					local otherDot = bg:FindFirstChild("Frame")
+					local otherStroke = bg:FindFirstChildOfClass("UIStroke")
+
+					TweenService:Create(otherBtn, TweenInfo.new(0.3), {TextColor3 = Color3.fromRGB(150, 150, 170)}):Play()
+					TweenService:Create(bg, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(0, 0, 0)}):Play()
+					
+					TweenService:Create(otherDot, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {
+						BackgroundColor3 = Color3.fromRGB(150, 150, 170),
+						Size = UDim2.fromOffset(4, 4)
+					}):Play()
+					
+					if otherStroke then
+						TweenService:Create(otherStroke, TweenInfo.new(0.3), {Transparency = 0.8}):Play()
+					end
 				end
 			end
+
+			TabBg:SetAttribute("Active", true)
+			TweenService:Create(TabBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+			TweenService:Create(TabBg, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {BackgroundColor3 = Color3.fromRGB(22, 22, 30)}):Play()
+			
+			TweenService:Create(Dot, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+				BackgroundColor3 = AccentColor, 
+				Size = UDim2.fromOffset(7, 7)
+			}):Play()
+			TweenService:Create(TabBg:FindFirstChildOfClass("UIStroke"), TweenInfo.new(0.3), {Transparency = 0}):Play()
+
+			for _, p in ipairs(self.Pages:GetChildren()) do 
+				if p:IsA("ScrollingFrame") then p.Visible = false end 
+			end
+			
+			Page.Position = UDim2.new(0, 0, 0, 15) 
 			Page.Visible = true
-			TweenService:Create(TabBtn, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-			TweenService:Create(Dot, TweenInfo.new(0.2), {BackgroundColor3 = AccentColor}):Play()
-			TweenService:Create(TabBg:FindFirstChildOfClass("UIStroke"), TweenInfo.new(0.2), {Transparency = 0}):Play()
-		end)
+			TweenService:Create(Page, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+				Position = UDim2.new(0, 0, 0, 0)
+			}):Play()
+		end
+
+		TabBtn.MouseButton1Click:Connect(SwitchToThisTab)
+
+		local PageCount = 0
+		for _, v in pairs(self.Pages:GetChildren()) do if v:IsA("ScrollingFrame") then PageCount += 1 end end
+		
+		if PageCount == 1 then
+			task.spawn(function()
+				task.wait()
+				SwitchToThisTab()
+			end)
+		end
 
 		function Tab:Button(config)
 			local text = config.Name or config.Text or "Button"
