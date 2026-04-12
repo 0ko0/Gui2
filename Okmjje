@@ -138,9 +138,9 @@ function Library:New(config)
 		BackgroundColor3 = Color3.fromRGB(0, 0, 0),
 		BackgroundTransparency = 0.25,
 		Position = UDim2.new(0, 20, 0.1, -6),
-		Size = UDim2.new(0, 40, 0, 40),
+		Size = UDim2.new(0, 45, 0, 45),
 		Active = true,
-		Draggable = true, 
+		
 		Parent = self.FloatingGui
 	}, {
 		Create("UICorner", {CornerRadius = UDim.new(1, 0)}), 
@@ -168,16 +168,49 @@ function Library:New(config)
 	local zoomedSize = UDim2.new(0, 22, 0, 22)  
 	local tweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)  
 
-	FloatingBtn.MouseButton1Down:Connect(function()
-		
-		if zoomedIn then  
-			TweenService:Create(FloatingIcon, tweenInfo, {Size = originalSize}):Play()  
-		else  
-			TweenService:Create(FloatingIcon, tweenInfo, {Size = zoomedSize}):Play()  
-		end  
-		zoomedIn = not zoomedIn  
+	local dragging = false
+	local dragStart = nil
+	local startPos = nil
+	local isClick = true 
 
-		self.Gui.Enabled = not self.Gui.Enabled
+	FloatingBtn.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			isClick = true 
+			dragStart = input.Position
+			startPos = FloatingFrame.Position
+
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+					
+					if isClick then
+						if zoomedIn then  
+							TweenService:Create(FloatingIcon, tweenInfo, {Size = originalSize}):Play()  
+						else  
+							TweenService:Create(FloatingIcon, tweenInfo, {Size = zoomedSize}):Play()  
+						end  
+						zoomedIn = not zoomedIn  
+						self.Gui.Enabled = not self.Gui.Enabled
+					end
+				end
+			end)
+		end
+	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			local delta = input.Position - dragStart
+			
+			if math.abs(delta.X) > 5 or math.abs(delta.Y) > 5 then
+				isClick = false
+			end
+			
+			FloatingFrame.Position = UDim2.new(
+				startPos.X.Scale, startPos.X.Offset + delta.X, 
+				startPos.Y.Scale, startPos.Y.Offset + delta.Y
+			)
+		end
 	end)
 
 self.Container = Create("Frame", {
@@ -291,7 +324,6 @@ self.Container = Create("Frame", {
 			})
 		end
 
-		-- 通知本体の作成
 		local Notif = Create("Frame", {
 			Size = UDim2.new(1, 0, 0, 20),
 			BackgroundColor3 = Color3.fromRGB(20, 20, 28),
