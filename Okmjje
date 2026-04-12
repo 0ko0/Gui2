@@ -32,7 +32,7 @@ function Library.SettingManager()
 			Name = "Unload UI",
 			Callback = function()
 				local core = gethui() or Player:WaitForChild("PlayerGui")
-				local gui = core:FindFirstChild("DcusHub_v2.3 UI") or Player.PlayerGui:FindFirstChild("DcusHub_v2.3 UI")
+				local gui = core:FindFirstChild("skibidi") or Player.PlayerGui:FindFirstChild("skibidi")
 				if gui then gui:Destroy() end
 			end
 		})
@@ -44,7 +44,7 @@ function Library:New(config)
 	local self = setmetatable({}, Library)
 
 	self.Gui = Create("ScreenGui", {
-		Name = "DcusHub_v2.3 UI",
+		Name = "skibidi",
 		ResetOnSpawn = false,
 		Parent = gethui()
 	})
@@ -100,7 +100,7 @@ function Library:New(config)
 	})
 
 	Create("TextLabel", {
-		Text = config.Title or "Dcus Hub",
+		Text = config.Title or "skibidi",
 		Font = Enum.Font.GothamBold,
 		TextSize = 18,
 		TextColor3 = Color3.fromRGB(255, 255, 255),
@@ -112,7 +112,7 @@ function Library:New(config)
 	})
 
 	Create("TextLabel", {
-		Text = config.Footer or "Premium Interface • v2.3",
+		Text = config.Footer or "skibidi",
 		Font = Enum.Font.GothamMedium,
 		TextSize = 11,
 		TextColor3 = Color3.fromRGB(100, 100, 130),
@@ -123,49 +123,60 @@ function Library:New(config)
 		Parent = self.Top
 	})
 
-	local IsOpen = true
-
-	local ToggleBtn = Create("TextButton", {
-		Name = "ToggleBtn",
-		Text = "≡",
-		Font = Enum.Font.GothamBold,
-		TextSize = 22,
-		TextColor3 = Color3.fromRGB(200, 200, 255),
-		BackgroundTransparency = 1,
-		Size = UDim2.fromOffset(35, 35),
-		AnchorPoint = Vector2.new(0, 0.5),
-		Position = UDim2.new(1, -45, 0, 27),
-		ZIndex = 50,
-		Parent = self.Main
+	self.FloatingGui = Create("ScreenGui", {
+		Name = "FloatingToggleUI",
+		ResetOnSpawn = false,
+		DisplayOrder = 100,
+		Parent = gethui()
 	})
 
-	local BtnBg = Create("Frame", {
-		Name = "BtnBg",
-		Size = UDim2.fromScale(1, 1),
-		BackgroundColor3 = Color3.fromRGB(30, 30, 45),
-		ZIndex = 49,
-		Parent = ToggleBtn
+	local FloatingFrame = Create("Frame", {
+		Name = "FloatingFrame",
+		AnchorPoint = Vector2.new(0.1, 0.1),
+		BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+		BackgroundTransparency = 0.25,
+		Position = UDim2.new(0, 20, 0.1, -6),
+		Size = UDim2.new(0, 40, 0, 40),
+		Active = true,
+		Draggable = true, 
+		Parent = self.FloatingGui
 	}, {
-		Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
-		Create("UIStroke", {
-			Color = Color3.fromRGB(60, 60, 80), 
-			Thickness = 1,
-			ApplyStrokeMode = Enum.ApplyStrokeMode.Border 
-		})
+		Create("UICorner", {CornerRadius = UDim.new(1, 0)}), 
+		Create("UIStroke", {Color = Color3.fromRGB(110, 150, 255), Thickness = 1.5}) 
 	})
 
-	self.Container = Create("Frame", {
-		Size = UDim2.new(1, 0, 1, -55),
-		Position = UDim2.fromOffset(0, 55),
+	local FloatingIcon = Create("ImageLabel", {
+		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundTransparency = 1,
-		ClipsDescendants = true,
-		Visible = true,
-		ZIndex = 1,
-		Parent = self.Main
+		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Size = UDim2.new(0, 30, 0, 30),
+		Image = "rbxassetid://118443505655784", 
+		Parent = FloatingFrame
 	})
 
-	ToggleBtn.MouseButton1Click:Connect(function()
-		IsOpen = not IsOpen
+	local FloatingBtn = Create("TextButton", {
+		BackgroundTransparency = 1,
+		Size = UDim2.fromScale(1, 1),
+		Text = "",
+		Parent = FloatingFrame
+	})
+
+	local zoomedIn = false  
+	local originalSize = UDim2.new(0, 30, 0, 30)  
+	local zoomedSize = UDim2.new(0, 22, 0, 22)  
+	local tweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)  
+
+	FloatingBtn.MouseButton1Down:Connect(function()
+		
+		if zoomedIn then  
+			TweenService:Create(FloatingIcon, tweenInfo, {Size = originalSize}):Play()  
+		else  
+			TweenService:Create(FloatingIcon, tweenInfo, {Size = zoomedSize}):Play()  
+		end  
+		zoomedIn = not zoomedIn  
+
+		self.Gui.Enabled = not self.Gui.Enabled
+	end)
 
 		local targetMainSize = IsOpen and UDim2.fromOffset(600, 400) or UDim2.fromOffset(600, 55 + 47)
 		TweenService:Create(self.DropShadowHolder, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
