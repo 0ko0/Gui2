@@ -55,27 +55,25 @@ local RunService = game:GetService("RunService")
 function Library:New(config)
 	local self = setmetatable({}, Library)
 	
-	-- [ BẢNG MÀU HIỆN ĐẠI (OBSIDIAN GLASS) ] --
-	local AccentColor = Color3.fromRGB(100, 160, 255)   -- Xanh Neon thanh lịch
-	local MainBg = Color3.fromRGB(12, 12, 15)           -- Đen Obsidian sâu thẳm
-	local SurfaceBg = Color3.fromRGB(22, 22, 28)        -- Nền nổi bật nhẹ
-	local BorderColor = Color3.fromRGB(45, 45, 55)      -- Viền kim loại tối
+	local AccentColor = Color3.fromRGB(90, 130, 255)    
+	local MainBg = Color3.fromRGB(10, 10, 12)           
+	local SurfaceBg = Color3.fromRGB(16, 16, 20)        
+	local BorderColor = Color3.fromRGB(35, 35, 42)      
 	local TextMain = Color3.fromRGB(255, 255, 255)
-	local TextMuted = Color3.fromRGB(160, 160, 175)
+	local TextMuted = Color3.fromRGB(150, 150, 165)
 
 	self.Gui = Create("ScreenGui", {
-		Name = "skibidi_modern_ultra",
+		Name = "skibidi",
 		ResetOnSpawn = false,
 		Parent = GetSafeParent(), 
 		ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
 		IgnoreGuiInset = true
 	})
 
-	-- [ NÚT FLOAT CHO MOBILE (TỐI ƯU HÓA) ] --
 	local FloatingBtn = Create("ImageButton", {
-		Size = UDim2.fromOffset(48, 48),
-		Position = UDim2.new(0.5, -24, 0, 20),
-		BackgroundColor3 = MainBg,
+		Size = UDim2.fromOffset(46, 46),
+		Position = UDim2.new(0.5, -23, 0, 20),
+		BackgroundColor3 = SurfaceBg,
 		BackgroundTransparency = 0.1,
 		Visible = false,
 		Active = true,
@@ -83,10 +81,10 @@ function Library:New(config)
 		Parent = self.Gui
 	}, {
 		Create("UICorner", {CornerRadius = UDim.new(1, 0)}), 
-		Create("UIStroke", {Color = AccentColor, Thickness = 1.5, Transparency = 0.2}),
+		Create("UIStroke", {Color = AccentColor, Thickness = 1, Transparency = 0.3}),
 		Create("ImageLabel", {
-			Size = UDim2.fromScale(0.45, 0.45),
-			Position = UDim2.fromScale(0.275, 0.275),
+			Size = UDim2.fromScale(0.4, 0.4),
+			Position = UDim2.fromScale(0.3, 0.3),
 			BackgroundTransparency = 1,
 			Image = "rbxassetid://118443505655784",
 			ImageColor3 = AccentColor
@@ -96,21 +94,20 @@ function Library:New(config)
 	local Wrapper = Create("Frame", {
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		Position = UDim2.fromScale(0.5, 0.5),
-		Size = UDim2.new(0, 620, 0, 430),
+		Size = UDim2.new(0, 450, 0, 300),
 		BackgroundTransparency = 1,
 		Parent = self.Gui
 	})
 
-	-- [ MAIN WINDOW - THIẾT KẾ KÍNH OBSIDIAN KHÔNG SHADOW ] --
 	self.Main = Create("Frame", {
 		Size = UDim2.fromScale(1, 1),
 		BackgroundColor3 = MainBg,
-		BackgroundTransparency = 0.03, -- Độ trong suốt cực nhẹ tạo cảm giác kính cao cấp
+		BackgroundTransparency = 0.02, 
 		BorderSizePixel = 0,
 		ClipsDescendants = true,
 		Parent = Wrapper
 	}, {
-		Create("UICorner", {CornerRadius = UDim.new(0, 10)}), -- Bo góc chuẩn Apple/Win11
+		Create("UICorner", {CornerRadius = UDim.new(0, 12)}), 
 		Create("UISizeConstraint", {
 			MaxSize = Vector2.new(1000, 700),
 			MinSize = Vector2.new(450, 300) 
@@ -118,25 +115,22 @@ function Library:New(config)
 		Create("UIScale", {Name = "Scale", Scale = 1})
 	})
 
-	-- Viền Gradient Đa Điểm (Tạo hiệu ứng viền kim loại phản quang thay cho Shadow)
 	local WindowStroke = Create("UIStroke", {
 		Color = Color3.new(1, 1, 1),
-		Thickness = 1.2,
-		Transparency = 0.1,
+		Thickness = 1,
+		Transparency = 0.2,
 		Parent = self.Main
 	})
 	Create("UIGradient", {
 		Color = ColorSequence.new{
 			ColorSequenceKeypoint.new(0, AccentColor), 
-			ColorSequenceKeypoint.new(0.25, BorderColor),
-			ColorSequenceKeypoint.new(0.75, BorderColor),
-			ColorSequenceKeypoint.new(1, AccentColor) 
+			ColorSequenceKeypoint.new(0.4, BorderColor),
+			ColorSequenceKeypoint.new(1, Color3.fromRGB(15, 15, 18)) 
 		},
 		Rotation = 45,
 		Parent = WindowStroke
 	})
 
-	-- Inner Highlight (Đường sáng siêu mỏng ở mép trên tạo độ nổi 3D quang học)
 	Create("Frame", {
 		Size = UDim2.new(1, 0, 0, 1),
 		BackgroundColor3 = Color3.new(1, 1, 1),
@@ -148,80 +142,71 @@ function Library:New(config)
 			Color = ColorSequence.new(AccentColor),
 			Transparency = NumberSequence.new{
 				NumberSequenceKeypoint.new(0, 1),
-				NumberSequenceKeypoint.new(0.5, 0.3), -- Sáng nhất ở giữa
+				NumberSequenceKeypoint.new(0.5, 0.5), 
 				NumberSequenceKeypoint.new(1, 1)
 			}
 		})
 	})
 
-	-- [ HEADER (TOP) - SANG TRỌNG & TINH TẾ ] --
 	self.Top = Create("Frame", {
-		Size = UDim2.new(1, 0, 0, 60), -- Tăng chiều cao nhẹ cho thoáng
+		Size = UDim2.new(1, 0, 0, 55),
 		BackgroundTransparency = 1,
 		Parent = self.Main
 	})
 
-	-- Đường phân cách Header (Glow Gradient Line)
 	Create("Frame", {
 		Size = UDim2.new(1, -40, 0, 1),
 		Position = UDim2.new(0, 20, 1, 0),
-		BackgroundColor3 = AccentColor,
+		BackgroundColor3 = BorderColor,
 		BorderSizePixel = 0,
 		Parent = self.Top
 	}, {
 		Create("UIGradient", {
 			Transparency = NumberSequence.new{
-				NumberSequenceKeypoint.new(0, 1), 
-				NumberSequenceKeypoint.new(0.2, 0.6),
-				NumberSequenceKeypoint.new(0.5, 0.2), -- Điểm nhấn sáng ở giữa
-				NumberSequenceKeypoint.new(0.8, 0.6), 
-				NumberSequenceKeypoint.new(1, 1)
+				NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.1, 0),
+				NumberSequenceKeypoint.new(0.9, 0), NumberSequenceKeypoint.new(1, 1)
 			}
 		})
 	})
 
-	-- Avatar Frame (Bo tròn hoàn hảo + Viền phát sáng nhẹ)
 	local AvatarFrame = Create("Frame", {
-		Size = UDim2.fromOffset(36, 36),
-		Position = UDim2.fromOffset(20, 12),
+		Size = UDim2.fromOffset(32, 32),
+		Position = UDim2.fromOffset(20, 11),
 		BackgroundColor3 = SurfaceBg,
 		Parent = self.Top
 	}, {
 		Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
-		Create("UIStroke", {Color = AccentColor, Thickness = 1.5, Transparency = 0.5}),
+		Create("UIStroke", {Color = BorderColor, Thickness = 1}),
 		Create("ImageLabel", {
 			Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1,
 			Image = "rbxthumb://type=AvatarHeadShot&id=" .. Player.UserId .. "&w=48&h=48",
 		}, { Create("UICorner", {CornerRadius = UDim.new(1, 0)}) })
 	})
 
-	-- Title (Typography sắc nét)
 	Create("TextLabel", {
-		Text = config.Title or "SKIBIDI",
-		Font = Enum.Font.GothamBlack, -- Font đậm, hiện đại
-		TextSize = 15,
+		Text = config.Title or "skibidi",
+		Font = Enum.Font.GothamBold,
+		TextSize = 14,
 		TextColor3 = TextMain,
 		TextXAlignment = "Left",
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(68, 12),
+		Position = UDim2.fromOffset(62, 10),
 		Size = UDim2.new(0.5, 0, 0, 20),
 		Parent = self.Top
 	})
 
-	-- Subtitle / Welcome Text
 	Create("TextLabel", {
-		Text = "Welcome back, " .. Player.Name,
+		Text = "Welcome, " .. Player.Name,
 		Font = Enum.Font.GothamMedium,
 		TextSize = 11,
 		TextColor3 = TextMuted,
 		TextXAlignment = "Left",
 		BackgroundTransparency = 1,
 		Size = UDim2.new(0.5, 0, 0, 15),
-		Position = UDim2.fromOffset(68, 32),
+		Position = UDim2.fromOffset(62, 28),
 		Parent = self.Top
 	})
 
-	-- [ CONTROL BUTTONS - MICRO-INTERACTIONS ] --
 	local ControlLayout = Create("Frame", {
 		AnchorPoint = Vector2.new(1, 0.5),
 		Position = UDim2.new(1, -15, 0.5, 0),
@@ -237,7 +222,6 @@ function Library:New(config)
 		})
 	})
 
-	-- Hàm tạo nút với hiệu ứng "Pop" (Phóng to nhẹ khi hover)
 	local function CreateWinBtn(icon, hoverColor)
 		local btn = Create("ImageButton", {
 			Size = UDim2.fromOffset(30, 30),
@@ -247,7 +231,7 @@ function Library:New(config)
 			Parent = ControlLayout
 		}, {
 			Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
-			Create("UIScale", {Scale = 1}), -- Dùng cho hiệu ứng Pop
+			Create("UIScale", {Scale = 1}), 
 			Create("ImageLabel", {
 				Size = UDim2.fromOffset(14, 14),
 				AnchorPoint = Vector2.new(0.5, 0.5),
@@ -273,10 +257,9 @@ function Library:New(config)
 		return btn
 	end
 
-	local MinimizeBtn = CreateWinBtn("rbxassetid://10736953311", TextMain)
+	local MinimizeBtn = CreateWinBtn("rbxassetid://118333435295150", TextMain)
 	local CloseBtn = CreateWinBtn("rbxassetid://10747384394", Color3.fromRGB(255, 75, 75))
 
-	-- [ CONTAINERS ] --
 	self.Container = Create("Frame", {
 		Size = UDim2.new(1, 0, 1, -55),
 		Position = UDim2.fromOffset(0, 55),
@@ -326,9 +309,8 @@ function Library:New(config)
 		Parent = self.Container
 	})
 
-	-- [ RESIZE GRIP (TỐI ƯU MOBILE) ] --
 	local ResizeGrip = Create("TextButton", {
-		Size = UDim2.fromOffset(40, 40), -- Hitbox to hơn để dễ chạm trên điện thoại
+		Size = UDim2.fromOffset(40, 40), 
 		AnchorPoint = Vector2.new(1, 1),
 		Position = UDim2.new(1, 0, 1, 0),
 		BackgroundTransparency = 1,
@@ -338,15 +320,14 @@ function Library:New(config)
 	})
 	Create("ImageLabel", {
 		Size = UDim2.fromOffset(12, 12),
-		Position = UDim2.new(1, -12, 1, -12), -- Icon vẫn nhỏ gọn ở góc
+		Position = UDim2.new(1, -12, 1, -12), 
 		BackgroundTransparency = 1,
-		Image = "rbxassetid://11552289329", -- Icon resize hiện đại
+		Image = "rbxassetid://89846709811461", 
 		ImageColor3 = TextMuted,
 		ImageTransparency = 0.4,
 		Parent = ResizeGrip
 	})
 
-	-- [ TOGGLE LOGIC ] --
 	local IsOpen = true
 	local function ToggleUI(state)
 		IsOpen = state
@@ -378,7 +359,6 @@ function Library:New(config)
 		end
 	end)
 
-	-- [ ZERO-LATENCY DRAGGING (TỐI ƯU FPS & MOBILE) ] --
 	do
 		local dragging, dragInput, dragStart, startPos
 		self.Top.InputBegan:Connect(function(input)
@@ -396,7 +376,7 @@ function Library:New(config)
 				dragInput = input
 			end
 		end)
-		-- Dùng Heartbeat và gán trực tiếp để không bị delay/cao su khi kéo
+		
 		RunService.Heartbeat:Connect(function()
 			if dragging and dragInput then
 				local delta = dragInput.Position - dragStart
@@ -405,7 +385,6 @@ function Library:New(config)
 		end)
 	end
 
-	-- [ ZERO-LATENCY RESIZING ] --
 	do
 		local resizing, resizeInput, resizeStart, startSize
 		ResizeGrip.InputBegan:Connect(function(input)
