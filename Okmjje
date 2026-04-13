@@ -67,13 +67,13 @@ function Library:New(config)
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundTransparency = 1,
 		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.new(1, 25, 1, 25), 
+		Size = UDim2.new(1, -15, 1, -15), 
 		ZIndex = 0,
-		Image = "rbxassetid://6015897843",
-		ImageTransparency = 0.25,
+		Image = "rbxassetid://1316045217", 
+		ImageTransparency = 0.4, 
 		ImageColor3 = Color3.fromRGB(0, 0, 0),
-		ScaleType = Enum.ScaleType.Slice, 
-		SliceCenter = Rect.new(49, 49, 463, 463), 
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(10, 10, 118, 118), 
 		Parent = self.DropShadowHolder
 	})
 
