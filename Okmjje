@@ -407,21 +407,9 @@ self.Container = Create("Frame", {
 
 		local TabBg = Create("Frame", {
 			Size = UDim2.new(1, 0, 0, 34),
-			BackgroundColor3 = Color3.fromRGB(0, 0, 0),
-			BackgroundTransparency = 0.8,
+			BackgroundTransparency = 1,
 			Parent = self.TabHolder
-		}, {
-			Create("UICorner", {CornerRadius = UDim.new(0, 5)}),
-			Create("UIStroke", {Color = AccentColor, Thickness = 1, Transparency = 0.8})
 		})
-
-		local Dot = Create("Frame", {
-			Size = UDim2.fromOffset(4, 4),
-			AnchorPoint = Vector2.new(0.5, 0.5), 
-			Position = UDim2.new(0, 12, 0.5, 0),
-			BackgroundColor3 = Color3.fromRGB(150, 150, 170),
-			Parent = TabBg
-		}, { Create("UICorner", {CornerRadius = UDim.new(1, 0)}) })
 
 		local TabBtn = Create("TextButton", {
 			Text = name,
@@ -429,8 +417,8 @@ self.Container = Create("Frame", {
 			TextSize = 13,
 			TextColor3 = Color3.fromRGB(150, 150, 170),
 			BackgroundTransparency = 1,
-			Position = UDim2.new(0, 25, 0, 0), 
-			Size = UDim2.new(1, -25, 1, 0),
+			Position = UDim2.new(0, 10, 0, 0), 
+			Size = UDim2.new(1, -10, 1, 0),
 			TextXAlignment = "Left",
 			Parent = TabBg
 		})
@@ -460,7 +448,6 @@ self.Container = Create("Frame", {
 		local UIListLayout = Page:FindFirstChildOfClass("UIListLayout")
 
 		local function UpdateCanvasSize()
-		
 			Page.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 25)
 		end
 		UIListLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(UpdateCanvasSize)
@@ -470,14 +457,12 @@ self.Container = Create("Frame", {
 
 		TabBtn.MouseEnter:Connect(function()
 			if not TabBg:GetAttribute("Active") then
-				TweenService:Create(TabBg, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {BackgroundColor3 = Color3.fromRGB(30, 30, 42)}):Play()
 				TweenService:Create(TabBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {TextColor3 = Color3.fromRGB(200, 200, 220)}):Play()
 			end
 		end)
 
 		TabBtn.MouseLeave:Connect(function()
 			if not TabBg:GetAttribute("Active") then
-				TweenService:Create(TabBg, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {BackgroundColor3 = Color3.fromRGB(0, 0, 0)}):Play()
 				TweenService:Create(TabBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {TextColor3 = Color3.fromRGB(150, 150, 170)}):Play()
 			end
 		end)
@@ -502,32 +487,14 @@ self.Container = Create("Frame", {
 					bg:SetAttribute("Active", false)
 					
 					local otherBtn = bg:FindFirstChildOfClass("TextButton")
-					local otherDot = bg:FindFirstChild("Frame")
-					local otherStroke = bg:FindFirstChildOfClass("UIStroke")
-
-					TweenService:Create(otherBtn, TweenInfo.new(0.3), {TextColor3 = Color3.fromRGB(150, 150, 170)}):Play()
-					TweenService:Create(bg, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(0, 0, 0)}):Play()
-					
-					TweenService:Create(otherDot, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {
-						BackgroundColor3 = Color3.fromRGB(150, 150, 170),
-						Size = UDim2.fromOffset(4, 4)
-					}):Play()
-					
-					if otherStroke then
-						TweenService:Create(otherStroke, TweenInfo.new(0.3), {Transparency = 0.8}):Play()
+					if otherBtn then
+						TweenService:Create(otherBtn, TweenInfo.new(0.3), {TextColor3 = Color3.fromRGB(150, 150, 170)}):Play()
 					end
 				end
 			end
 
 			TabBg:SetAttribute("Active", true)
 			TweenService:Create(TabBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
-			TweenService:Create(TabBg, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {BackgroundColor3 = Color3.fromRGB(22, 22, 30)}):Play()
-			
-			TweenService:Create(Dot, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-				BackgroundColor3 = AccentColor, 
-				Size = UDim2.fromOffset(7, 7)
-			}):Play()
-			TweenService:Create(TabBg:FindFirstChildOfClass("UIStroke"), TweenInfo.new(0.3), {Transparency = 0}):Play()
 
 			for _, p in ipairs(self.Pages:GetChildren()) do 
 				if p:IsA("ScrollingFrame") then p.Visible = false end 
