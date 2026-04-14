@@ -1122,17 +1122,28 @@ self.Container = Create("Frame", {
 			Hitbox.InputEnded:Connect(function(input)
 				if locked then return end
 				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-					if isPressing then
-						isPressing = false
-						state = not state
-						
-						local inputPos = input.Position
-						CreateRipple(inputPos.X, inputPos.Y)
-						
-						UpdateVisuals()
-						task.spawn(callback, state)
-					end
+					isPressing = false
+					UpdateVisuals()
 				end
+			end)
+
+			Hitbox.Activated:Connect(function(inputObject)
+				if locked then return end
+				
+				state = not state
+				isPressing = false 
+				
+				local X = TglBg.AbsolutePosition.X + (TglBg.AbsoluteSize.X / 2)
+				local Y = TglBg.AbsolutePosition.Y + (TglBg.AbsoluteSize.Y / 2)
+				
+				if inputObject and inputObject.Position then
+					X = inputObject.Position.X
+					Y = inputObject.Position.Y
+				end
+				
+				CreateRipple(X, Y)
+				UpdateVisuals()
+				task.spawn(callback, state)
 			end)
 
 			local ToggleAPI = {
