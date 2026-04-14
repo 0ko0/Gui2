@@ -1174,15 +1174,30 @@ self.Container = Create("Frame", {
 		end
 
 		function Tab:Slider(config)
-			local text = config.Name or "Slider"
+			
+			local text = config.Name or config.Text or "Slider"
 			local min = config.Min or 0
 			local max = config.Max or 100
 			local default = config.Default or min
-			local rounding = config.Rounding or 0
+			local decimals = config.Decimals or config.Rounding or 0 
+			local prefix = config.Prefix or ""
+			local suffix = config.Suffix or "" 
 			local callback = config.Callback or function() end
 
+			local currentValue = default
+			local dragging = false
+
+			local function FormatValue(val)
+				local mult = 10 ^ decimals
+				local rounded = math.floor(val * mult + 0.5) / mult
+				local formattedText = decimals > 0 and string.format("%."..decimals.."f", rounded) or tostring(rounded)
+				return rounded, prefix .. formattedText .. suffix
+			end
+
+			local startVal, startText = FormatValue(default)
+
 			local SliderBg = Create("Frame", {
-				Size = UDim2.new(1, 0, 0, 50),
+				Size = UDim2.new(1, 0, 0, 55), 
 				BackgroundColor3 = Color3.fromRGB(22, 22, 30),
 				Parent = Page
 			}, {
@@ -1196,63 +1211,168 @@ self.Container = Create("Frame", {
 				TextSize = 14,
 				TextColor3 = Color3.fromRGB(200, 200, 220),
 				BackgroundTransparency = 1,
-				Position = UDim2.fromOffset(15, 8),
-				Size = UDim2.new(1, -100, 0, 20),
+				Position = UDim2.fromOffset(15, 10),
+				Size = UDim2.new(1, -100, 0, 16),
 				TextXAlignment = "Left",
 				Parent = SliderBg
 			})
 
-			local ValueLabel = Create("TextLabel", {
-				Text = tostring(default),
+			local ValueInputHolder = Create("Frame", {
+				Size = UDim2.new(0, 60, 0, 22),
+				Position = UDim2.new(1, -75, 0, 7),
+				BackgroundColor3 = Color3.fromRGB(15, 15, 20),
+				ClipsDescendants = true,
+				Parent = SliderBg
+			}, {
+				Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
+				Create("UIStroke", {Name = "Stroke", Color = Color3.fromRGB(45, 45, 60), Thickness = 1})
+			})
+
+			local ValueInput = Create("TextBox", {
+				Text = startText,
 				Font = Enum.Font.GothamBold,
-				TextSize = 13,
+				TextSize = 12,
 				TextColor3 = Color3.fromRGB(80, 150, 255),
 				BackgroundTransparency = 1,
-				Position = UDim2.new(1, -65, 0, 8),
-				Size = UDim2.new(0, 50, 0, 20),
-				TextXAlignment = "Right",
+				Size = UDim2.fromScale(1, 1),
+				TextXAlignment = "Center",
+				ClearTextOnFocus = false,
+				Parent = ValueInputHolder
+			})
+
+			local TrackArea = Create("TextButton", {
+				Size = UDim2.new(1, -30, 0, 20),
+				Position = UDim2.new(0, 15, 1, -22),
+				BackgroundTransparency = 1,
+				Text = "",
 				Parent = SliderBg
 			})
 
-			local Tray = Create("Frame", {
-				Size = UDim2.new(1, -30, 0, 4),
-				Position = UDim2.new(0, 15, 1, -12),
+			local Track = Create("Frame", {
+				Size = UDim2.new(1, 0, 0, 4),
+				AnchorPoint = Vector2.new(0, 0.5),
+				Position = UDim2.new(0, 0, 0.5, 0),
 				BackgroundColor3 = Color3.fromRGB(40, 40, 55),
-				Parent = SliderBg
+				Parent = TrackArea
 			}, { Create("UICorner", {CornerRadius = UDim.new(1, 0)}) })
 
 			local Fill = Create("Frame", {
 				Size = UDim2.fromScale((default - min) / (max - min), 1),
 				BackgroundColor3 = Color3.fromRGB(80, 150, 255),
-				Parent = Tray
+				Parent = Track
 			}, { Create("UICorner", {CornerRadius = UDim.new(1, 0)}) })
 
 			local Knob = Create("Frame", {
-				Size = UDim2.fromOffset(8, 8),
+				Size = UDim2.fromOffset(10, 10),
 				AnchorPoint = Vector2.new(0.5, 0.5),
 				Position = UDim2.fromScale((default - min) / (max - min), 0.5),
-				BackgroundColor3 = Color3.fromRGB(22, 22, 30),
-				Parent = Tray
-			}, { 
-				Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
-				Create("UIStroke", {Color = Color3.fromRGB(80, 150, 255), Thickness = 1.5})
-			})
+				BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+				Parent = Track
+			}, { Create("UICorner", {CornerRadius = UDim.new(1, 0)}) })
 
-			local function Update(input)
-				local pos = math.clamp((input.Position.X - Tray.AbsolutePosition.X) / Tray.AbsoluteSize.X, 0, 1)
-				local rawVal = min + (max - min) * pos
-				local val = rounding == 1 and (math.floor(rawVal * 10) / 10) or math.floor(rawVal)
+			local KnobGlow = Create("Frame", {
+				Size = UDim2.fromOffset(0, 0), 
+				AnchorPoint = Vector2.new(0.5, 0.5),
+				Position = UDim2.fromScale(0.5, 0.5),
+				BackgroundColor3 = Color3.fromRGB(80, 150, 255),
+				BackgroundTransparency = 0.8,
+				ZIndex = 0,
+				Parent = Knob
+			}, { Create("UICorner", {CornerRadius = UDim.new(1, 0)}) })
 
-				ValueLabel.Text = tostring(val)
-				TweenService:Create(Fill, TweenInfo.new(0.1), {Size = UDim2.fromScale(pos, 1)}):Play()
-				TweenService:Create(Knob, TweenInfo.new(0.1), {Position = UDim2.fromScale(pos, 0.5)}):Play()
-				callback(val)
+			local function SetSlider(value, doCallback)
+				local clampedValue = math.clamp(value, min, max)
+				local finalValue, formattedText = FormatValue(clampedValue)
+				currentValue = finalValue
+
+				local percentage = (finalValue - min) / (max - min)
+				
+				TweenService:Create(Fill, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.fromScale(percentage, 1)}):Play()
+				TweenService:Create(Knob, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Position = UDim2.fromScale(percentage, 0.5)}):Play()
+				
+				if not ValueInput:IsFocused() then
+					ValueInput.Text = formattedText
+				end
+
+				if doCallback then
+					task.spawn(callback, finalValue)
+				end
 			end
 
-			local dragging = false
-			SliderBg.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true; Update(i) end end)
-			UIS.InputChanged:Connect(function(i) if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then Update(i) end end)
-			UIS.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+			local function UpdateFromInput(input)
+				local trackPos = Track.AbsolutePosition.X
+				local trackSize = Track.AbsoluteSize.X
+				local inputPos = input.Position.X
+				
+				local percentage = math.clamp((inputPos - trackPos) / trackSize, 0, 1)
+				local rawValue = min + (max - min) * percentage
+				SetSlider(rawValue, true)
+			end
+
+			TrackArea.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					dragging = true
+					UpdateFromInput(input)
+					
+					TweenService:Create(Knob, TweenInfo.new(0.2), {Size = UDim2.fromOffset(14, 14)}):Play()
+					TweenService:Create(KnobGlow, TweenInfo.new(0.2), {Size = UDim2.fromOffset(28, 28), BackgroundTransparency = 0.6}):Play()
+				end
+			end)
+
+			UIS.InputChanged:Connect(function(input)
+				if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+					UpdateFromInput(input)
+				end
+			end)
+
+			UIS.InputEnded:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					if dragging then
+						dragging = false
+						
+						TweenService:Create(Knob, TweenInfo.new(0.2), {Size = UDim2.fromOffset(10, 10)}):Play()
+						TweenService:Create(KnobGlow, TweenInfo.new(0.2), {Size = UDim2.fromOffset(0, 0), BackgroundTransparency = 1}):Play()
+					end
+				end
+			end)
+
+			TrackArea.MouseEnter:Connect(function()
+				if not dragging then
+					TweenService:Create(KnobGlow, TweenInfo.new(0.2), {Size = UDim2.fromOffset(20, 20), BackgroundTransparency = 0.8}):Play()
+				end
+			end)
+			TrackArea.MouseLeave:Connect(function()
+				if not dragging then
+					TweenService:Create(KnobGlow, TweenInfo.new(0.2), {Size = UDim2.fromOffset(0, 0), BackgroundTransparency = 1}):Play()
+				end
+			end)
+
+			ValueInput.Focused:Connect(function()
+				TweenService:Create(ValueInputHolder.Stroke, TweenInfo.new(0.3), {Color = Color3.fromRGB(80, 150, 255)}):Play()
+				ValueInput.Text = tostring(currentValue)
+			end)
+
+			ValueInput.FocusLost:Connect(function()
+				TweenService:Create(ValueInputHolder.Stroke, TweenInfo.new(0.3), {Color = Color3.fromRGB(45, 45, 60)}):Play()
+				
+				local num = tonumber(string.match(ValueInput.Text, "-?%d+%.?%d*"))
+				if num then
+					SetSlider(num, true)
+				else
+					
+					SetSlider(currentValue, false)
+				end
+			end)
+
+			local SliderAPI = {}
+			function SliderAPI:SetValue(val)
+				SetSlider(val, true)
+			end
+			function SliderAPI:GetValue()
+				return currentValue
+			end
+
+			return SliderAPI
 		end
 
 		function Tab:Dropdown(config)
