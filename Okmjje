@@ -2506,7 +2506,7 @@ local CloseNotification
 
 			local InputHolder = Create("Frame", {
 				Size = UDim2.new(0, 130, 0, 30), 
-				Position = UDim2.new(1, -135, 0.5, -15),
+				Position = UDim2.new(1, -140, 0.5, -15),
 				BackgroundColor3 = Color3.fromRGB(15, 15, 20),
 				ClipsDescendants = true,
 				Parent = BoxBg
@@ -2577,102 +2577,53 @@ local CloseNotification
 
 			local Stroke = InputHolder:FindFirstChildOfClass("UIStroke")
 
+			local fadeInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+
 			Input.Focused:Connect(function()
 				
-				TweenService:Create(InputHolder, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-					Size = UDim2.new(0, 120, 0, 34), 
-					Position = UDim2.new(1, -135, 0.5, -17), 
+				TweenService:Create(InputHolder, fadeInfo, {
 					BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 				}):Play()
 				
-				TweenService:Create(Stroke, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+				TweenService:Create(Stroke, fadeInfo, {
 					Color = Color3.fromRGB(80, 150, 255), 
-					Thickness = 1.5
+					Transparency = 0
 				}):Play()
 
-				TweenService:Create(Label, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-					Position = UDim2.fromOffset(25, 0), 
-					TextColor3 = Color3.fromRGB(80, 150, 255)
+				TweenService:Create(Label, fadeInfo, {
+					TextColor3 = Color3.fromRGB(255, 255, 255)
 				}):Play()
 
-				TweenService:Create(BoxBg, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+				TweenService:Create(BoxBg, fadeInfo, {
 					BackgroundColor3 = Color3.fromRGB(28, 28, 38)
 				}):Play()
 				
 				if charLimit > 0 then
-					TweenService:Create(CharCounter, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
+					TweenService:Create(CharCounter, fadeInfo, {TextTransparency = 0}):Play()
 				end
-			end)
-
-			Input:GetPropertyChangedSignal("Text"):Connect(function()
-				local currentText = Input.Text
-
-				if numericOnly then
-					currentText = currentText:gsub("%D", "")
-					if Input.Text ~= currentText then
-						Input.Text = currentText
-					end
-				end
-
-				if charLimit > 0 and #currentText > charLimit then
-					currentText = currentText:sub(1, charLimit)
-					if Input.Text ~= currentText then
-						Input.Text = currentText
-					end
-				end
-
-				if charLimit > 0 then
-					CharCounter.Text = #currentText .. "/" .. charLimit
-					if #currentText >= charLimit then
-						TweenService:Create(CharCounter, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(200, 100, 100)}):Play()
-					else
-						TweenService:Create(CharCounter, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(100, 100, 130)}):Play()
-					end
-				end
-
-				if #currentText > 0 then
-					ClearBtn.Visible = true
-					TweenService:Create(ClearBtn, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-						ImageTransparency = 0, 
-						Rotation = 0,
-						Size = UDim2.new(0, 16, 0, 16) 
-					}):Play()
-				else
-					TweenService:Create(ClearBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {
-						ImageTransparency = 1, 
-						Rotation = -90,
-						Size = UDim2.new(0, 10, 0, 10)
-					}):Play()
-					task.delay(0.3, function() if Input.Text == "" then ClearBtn.Visible = false end end)
-				end
-
-				onTextChanged(currentText)
 			end)
 
 			Input.FocusLost:Connect(function(enterPressed)
 				
-				TweenService:Create(InputHolder, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-					Size = UDim2.new(0, 130, 0, 30),
-					Position = UDim2.new(1, -135, 0.5, -15),
+				TweenService:Create(InputHolder, fadeInfo, {
 					BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 				}):Play()
 				
-				TweenService:Create(Stroke, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+				TweenService:Create(Stroke, fadeInfo, {
 					Color = Color3.fromRGB(50, 50, 70), 
-					Thickness = 1
+					Transparency = 0
 				}):Play()
 
-				TweenService:Create(Label, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-					Position = UDim2.fromOffset(15, 0),
+				TweenService:Create(Label, fadeInfo, {
 					TextColor3 = Color3.fromRGB(200, 200, 220)
 				}):Play()
 
-				TweenService:Create(BoxBg, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+				TweenService:Create(BoxBg, fadeInfo, {
 					BackgroundColor3 = Color3.fromRGB(22, 22, 30)
 				}):Play()
 				
 				if charLimit > 0 then
-					TweenService:Create(CharCounter, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+					TweenService:Create(CharCounter, fadeInfo, {TextTransparency = 1}):Play()
 				end
 
 				callback(Input.Text, enterPressed)
