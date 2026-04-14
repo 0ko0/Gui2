@@ -220,11 +220,11 @@ self.Container = Create("Frame", {
 	self.Sidebar = Create("Frame", {
 		Size = UDim2.new(0, 150, 1, -16),
 		Position = UDim2.fromOffset(10, 8),
-		BackgroundColor3 = Color3.fromRGB(14, 14, 18), 
+		BackgroundColor3 = Color3.fromRGB(12, 12, 12), 
 		Parent = self.Container
 	}, {
 		Create("UICorner", {CornerRadius = UDim.new(0, 8)}), 
-		Create("UIStroke", {Color = Color3.fromRGB(30, 30, 38), Thickness = 1}), 
+		Create("UIStroke", {Color = Color3.fromRGB(30, 30, 30), Thickness = 1}), 
 	})
 
 	self.TabHighlight = Create("Frame", {
