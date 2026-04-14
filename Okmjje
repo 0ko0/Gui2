@@ -690,60 +690,228 @@ self.Container = Create("Frame", {
 		end
 
 		function Tab:Button(config)
+			
 			local text = config.Name or config.Text or "Button"
+			local desc = config.Description or config.Desc or nil
+			local icon = config.Icon or nil 
 			local callback = config.Callback or function() end
+			local doubleClick = config.DoubleClick or nil
+			local confirm = config.Confirm or false
+			local disabled = config.Disabled or false
+			local accentColor = config.Color or Color3.fromRGB(80, 150, 255)
+			
+			local buttonHeight = desc and 55 or 45
+			local textOffset = icon and 40 or 15
 
 			local BtnBg = Create("Frame", {
-				Size = UDim2.new(1, 0, 0, 45),
+				Size = UDim2.new(1, 0, 0, buttonHeight),
 				BackgroundColor3 = Color3.fromRGB(22, 22, 30),
+				ClipsDescendants = true, 
 				Parent = Page
 			}, {
 				Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
 				Create("UIStroke", {Color = Color3.fromRGB(45, 45, 60), Thickness = 1})
 			})
 
-			Create("TextLabel", {
+			local TextContainer = Create("Frame", {
+				BackgroundTransparency = 1,
+				Position = UDim2.fromOffset(textOffset, 0),
+				Size = UDim2.new(1, -(textOffset + 60), 1, 0),
+				Parent = BtnBg
+			}, {
+				Create("UIListLayout", {
+					SortOrder = Enum.SortOrder.LayoutOrder,
+					VerticalAlignment = Enum.VerticalAlignment.Center,
+					Padding = UDim.new(0, 2)
+				})
+			})
+
+			local TitleLabel = Create("TextLabel", {
 				Text = text,
 				Font = Enum.Font.GothamMedium,
 				TextSize = 14,
-				TextColor3 = Color3.fromRGB(200, 200, 220),
+				TextColor3 = disabled and Color3.fromRGB(100, 100, 120) or Color3.fromRGB(200, 200, 220),
 				BackgroundTransparency = 1,
-				Position = UDim2.fromOffset(15, 0),
-				Size = UDim2.new(1, -100, 1, 0),
+				Size = UDim2.new(1, 0, 0, 16),
 				TextXAlignment = "Left",
-				Parent = BtnBg
+				LayoutOrder = 1,
+				Parent = TextContainer
 			})
+
+			local DescLabel
+			if desc then
+				DescLabel = Create("TextLabel", {
+					Text = desc,
+					Font = Enum.Font.Gotham,
+					TextSize = 11,
+					TextColor3 = Color3.fromRGB(120, 120, 140),
+					BackgroundTransparency = 1,
+					Size = UDim2.new(1, 0, 0, 12),
+					TextXAlignment = "Left",
+					TextTruncate = Enum.TextTruncate.AtEnd,
+					LayoutOrder = 2,
+					Parent = TextContainer
+				})
+			end
+
+			local IconImage
+			if icon then
+				IconImage = Create("ImageLabel", {
+					Image = icon,
+					BackgroundTransparency = 1,
+					Position = UDim2.new(0, 12, 0.5, -10),
+					Size = UDim2.new(0, 20, 0, 20),
+					ImageColor3 = disabled and Color3.fromRGB(100, 100, 120) or accentColor,
+					Parent = BtnBg
+				})
+			end
 
 			local RunBadge = Create("Frame", {
 				Size = UDim2.fromOffset(45, 22),
 				Position = UDim2.new(1, -55, 0.5, -11),
-				BackgroundColor3 = Color3.fromRGB(40, 40, 55),
+				BackgroundColor3 = disabled and Color3.fromRGB(30, 30, 40) or Color3.fromRGB(40, 40, 55),
 				Parent = BtnBg
 			}, {
 				Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
 				Create("UIStroke", {Color = Color3.fromRGB(60, 60, 80), Thickness = 1}),
 				Create("TextLabel", {
+					Name = "BadgeText",
 					Text = "Run",
 					Font = Enum.Font.GothamBold,
 					TextSize = 11,
-					TextColor3 = Color3.fromRGB(255, 255, 255),
+					TextColor3 = disabled and Color3.fromRGB(100, 100, 120) or Color3.fromRGB(255, 255, 255),
 					BackgroundTransparency = 1,
 					Size = UDim2.fromScale(1, 1),
 					Parent = nil
 				})
 			})
-			RunBadge:FindFirstChild("TextLabel").Parent = RunBadge
+			RunBadge:FindFirstChild("BadgeText").Parent = RunBadge
 
-			local Hit = Create("TextButton", {Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ZIndex = 5, Parent = BtnBg})
-			Hit.MouseButton1Down:Connect(function()
-				TweenService:Create(BtnBg, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(28, 32, 50)}):Play()
-				TweenService:Create(RunBadge, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(80, 150, 255)}):Play()
+			local Hit = Create("TextButton", {
+				Text = "", 
+				BackgroundTransparency = 1, 
+				Size = UDim2.fromScale(1, 1), 
+				ZIndex = 10, 
+				Parent = BtnBg
+			})
+
+			local isConfirming = false
+			local lastClickTime = 0
+			local Stroke = BtnBg:FindFirstChildOfClass("UIStroke")
+
+			local function CreateRipple(X, Y)
+				local Ripple = Create("Frame", {
+					BackgroundColor3 = accentColor,
+					BackgroundTransparency = 0.6,
+					Position = UDim2.new(0, X - BtnBg.AbsolutePosition.X, 0, Y - BtnBg.AbsolutePosition.Y),
+					Size = UDim2.new(0, 0, 0, 0),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					ZIndex = 5,
+					Parent = BtnBg
+				}, {
+					Create("UICorner", {CornerRadius = UDim.new(1, 0)})
+				})
+
+				local maxSize = math.max(BtnBg.AbsoluteSize.X, BtnBg.AbsoluteSize.Y) * 1.5
+				local tweenIn = TweenService:Create(Ripple, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					Size = UDim2.new(0, maxSize, 0, maxSize),
+					BackgroundTransparency = 1
+				})
+				tweenIn:Play()
+				tweenIn.Completed:Connect(function() Ripple:Destroy() end)
+			end
+
+			Hit.MouseEnter:Connect(function()
+				if disabled then return end
+				TweenService:Create(Stroke, TweenInfo.new(0.3), {Color = accentColor}):Play()
+				TweenService:Create(BtnBg, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(26, 26, 36)}):Play()
 			end)
-			Hit.MouseButton1Up:Connect(function()
+
+			Hit.MouseLeave:Connect(function()
+				if disabled then return end
+				TweenService:Create(Stroke, TweenInfo.new(0.3), {Color = Color3.fromRGB(45, 45, 60)}):Play()
 				TweenService:Create(BtnBg, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(22, 22, 30)}):Play()
-				TweenService:Create(RunBadge, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(40, 40, 55)}):Play()
-				callback()
+				if isConfirming then
+					isConfirming = false
+					TweenService:Create(TitleLabel, TweenInfo.new(0.3), {TextColor3 = Color3.fromRGB(200, 200, 220)}):Play()
+					TitleLabel.Text = text
+				end
 			end)
+
+			Hit.InputBegan:Connect(function(input)
+				if disabled then return end
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					TweenService:Create(BtnBg, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+						Size = UDim2.new(1, -4, 0, buttonHeight - 4)
+					}):Play()
+					TweenService:Create(RunBadge, TweenInfo.new(0.15), {BackgroundColor3 = accentColor}):Play()
+					
+					CreateRipple(input.Position.X, input.Position.Y)
+				end
+			end)
+
+			Hit.InputEnded:Connect(function(input)
+				if disabled then return end
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					TweenService:Create(BtnBg, TweenInfo.new(0.2, Enum.EasingStyle.Bounce, Enum.EasingDirection.Out), {
+						Size = UDim2.new(1, 0, 0, buttonHeight)
+					}):Play()
+					TweenService:Create(RunBadge, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(40, 40, 55)}):Play()
+
+					local currentTime = tick()
+					if doubleClick and (currentTime - lastClickTime) <= 0.3 then
+						doubleClick()
+						lastClickTime = 0
+						return
+					end
+					lastClickTime = currentTime
+
+					if confirm then
+						if not isConfirming then
+							isConfirming = true
+							TitleLabel.Text = "Are you sure?"
+							TweenService:Create(TitleLabel, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255, 100, 100)}):Play()
+							return
+						else
+							isConfirming = false
+							TitleLabel.Text = text
+							TweenService:Create(TitleLabel, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(200, 200, 220)}):Play()
+						end
+					end
+
+					task.spawn(callback)
+				end
+			end)
+
+			local ButtonAPI = {}
+			
+			function ButtonAPI:SetText(newText)
+				text = newText
+				if not isConfirming then TitleLabel.Text = text end
+			end
+
+			function ButtonAPI:SetDesc(newDesc)
+				if DescLabel then DescLabel.Text = newDesc end
+			end
+
+			function ButtonAPI:SetDisabled(state)
+				disabled = state
+				local targetColor = disabled and Color3.fromRGB(100, 100, 120) or Color3.fromRGB(200, 200, 220)
+				local badgeBg = disabled and Color3.fromRGB(30, 30, 40) or Color3.fromRGB(40, 40, 55)
+				
+				TweenService:Create(TitleLabel, TweenInfo.new(0.3), {TextColor3 = targetColor}):Play()
+				TweenService:Create(RunBadge, TweenInfo.new(0.3), {BackgroundColor3 = badgeBg}):Play()
+				RunBadge:FindFirstChild("BadgeText").TextColor3 = disabled and Color3.fromRGB(100, 100, 120) or Color3.fromRGB(255, 255, 255)
+				if IconImage then
+					TweenService:Create(IconImage, TweenInfo.new(0.3), {ImageColor3 = disabled and Color3.fromRGB(100, 100, 120) or accentColor}):Play()
+				end
+			end
+
+			function ButtonAPI:Fire()
+				if not disabled then task.spawn(callback) end
+			end
+
+			return ButtonAPI
 		end
 
 		function Tab:Toggle(config)
