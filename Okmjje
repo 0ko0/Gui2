@@ -590,6 +590,8 @@ self.Container = Create("Frame", {
 			Parent = Notif
 		})
 
+local CloseNotification
+
 		if hasButtons then
 			local BtnHolder = Create("Frame", {
 				Size = UDim2.new(1, 0, 0, 30),
@@ -625,7 +627,7 @@ self.Container = Create("Frame", {
 
 				ActionBtn.MouseButton1Click:Connect(function()
 					btnCallback()
-					CloseBtn:( ) 
+					if CloseNotification then CloseNotification() end
 				end)
 			end
 		end
@@ -659,7 +661,7 @@ self.Container = Create("Frame", {
 
 		local isClosing = false
 
-		local function CloseNotification()
+		CloseNotification = function() 
 			if isClosing then return end
 			isClosing = true
 
