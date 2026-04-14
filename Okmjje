@@ -2505,8 +2505,8 @@ local CloseNotification
 			})
 
 			local InputHolder = Create("Frame", {
-				Size = UDim2.new(0, 150, 0, 30), 
-				Position = UDim2.new(1, -115, 0.5, -15),
+				Size = UDim2.new(0, 130, 0, 30), 
+				Position = UDim2.new(1, -125, 0.5, -15),
 				BackgroundColor3 = Color3.fromRGB(15, 15, 20),
 				ClipsDescendants = true,
 				Parent = BoxBg
@@ -2652,8 +2652,8 @@ local CloseNotification
 			Input.FocusLost:Connect(function(enterPressed)
 				
 				TweenService:Create(InputHolder, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-					Size = UDim2.new(0, 150, 0, 30),
-					Position = UDim2.new(1, -115, 0.5, -15),
+					Size = UDim2.new(0, 130, 0, 30),
+					Position = UDim2.new(1, -125, 0.5, -15),
 					BackgroundColor3 = Color3.fromRGB(15, 15, 20)
 				}):Play()
 				
