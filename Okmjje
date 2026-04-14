@@ -794,7 +794,7 @@ self.Container = Create("Frame", {
 			end
 
 			local ActionIcon = Create("ImageLabel", {
-				Image = "rbxassetid://10888331510", -- Icon Chevron Right
+				Image = "rbxassetid://140368827114972", 
 				Size = UDim2.fromOffset(16, 16),
 				Position = UDim2.new(1, -25, 0.5, -8),
 				BackgroundTransparency = 1,
@@ -942,72 +942,224 @@ self.Container = Create("Frame", {
 		end
 
 		function Tab:Toggle(config)
-			local text = config.Name or "Toggle"
+			
+			local text = config.Name or config.Title or "Toggle"
+			local desc = config.Description or config.Subtext or nil
+			local icon = config.Icon or nil
+			local default = config.Default or false
 			local callback = config.Callback or function() end
-			local state = config.Default or false
+			local flag = config.Flag or text
+			local locked = config.Disabled or config.Locked or false
+			
+			local state = default
+			local isHovering = false
+			local isPressing = false
 
+			local TglHeight = desc and 55 or 45 
+			
 			local TglBg = Create("Frame", {
-				Size = UDim2.new(1, 0, 0, 45),
+				Size = UDim2.new(1, 0, 0, TglHeight),
 				BackgroundColor3 = Color3.fromRGB(22, 22, 30),
+				ClipsDescendants = true, 
 				Parent = Page
 			}, {
 				Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
-				Create("UIStroke", {Color = Color3.fromRGB(45, 45, 60), Thickness = 1})
+				Create("UIStroke", {
+					Name = "Border",
+					Color = Color3.fromRGB(45, 45, 60), 
+					Thickness = 1
+				})
 			})
 
-			Create("TextLabel", {
+			local textOffsetX = 15
+			if icon then
+				textOffsetX = 40
+				Create("ImageLabel", {
+					Size = UDim2.fromOffset(18, 18),
+					Position = UDim2.new(0, 12, 0.5, desc and -16 or 0),
+					AnchorPoint = Vector2.new(0, 0.5),
+					BackgroundTransparency = 1,
+					Image = icon,
+					ImageColor3 = Color3.fromRGB(200, 200, 220),
+					Parent = TglBg
+				})
+			end
+
+			local TitleLabel = Create("TextLabel", {
 				Text = text,
 				Font = Enum.Font.GothamMedium,
 				TextSize = 14,
-				TextColor3 = Color3.fromRGB(200, 200, 220),
+				TextColor3 = locked and Color3.fromRGB(100, 100, 110) or Color3.fromRGB(200, 200, 220),
 				BackgroundTransparency = 1,
-				Position = UDim2.fromOffset(15, 0),
-				Size = UDim2.new(1, -70, 1, 0),
+				Position = UDim2.fromOffset(textOffsetX, desc and 10 or 0),
+				Size = UDim2.new(1, -100, desc and 0 or 1, desc and 16 or 0),
 				TextXAlignment = "Left",
 				Parent = TglBg
 			})
 
-			local Switch = Create("Frame", {
-				Size = UDim2.fromOffset(40, 20),
-				Position = UDim2.new(1, -50, 0.5, -10),
+			if desc then
+				Create("TextLabel", {
+					Text = desc,
+					Font = Enum.Font.Gotham,
+					TextSize = 11,
+					TextColor3 = Color3.fromRGB(120, 120, 140),
+					BackgroundTransparency = 1,
+					Position = UDim2.fromOffset(textOffsetX, 28),
+					Size = UDim2.new(1, -100, 0, 14),
+					TextXAlignment = "Left",
+					TextTruncate = Enum.TextTruncate.AtEnd,
+					Parent = TglBg
+				})
+			end
+
+			local SwitchBg = Create("Frame", {
+				Size = UDim2.fromOffset(42, 22),
+				Position = UDim2.new(1, -55, 0.5, -11),
 				BackgroundColor3 = state and Color3.fromRGB(80, 150, 255) or Color3.fromRGB(40, 40, 55),
 				Parent = TglBg
 			}, {
 				Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
-				Create("UIStroke", {Color = Color3.fromRGB(60, 60, 80), Thickness = 1})
+				Create("UIStroke", {
+					Name = "Glow",
+					Color = Color3.fromRGB(80, 150, 255),
+					Thickness = 2,
+					Transparency = state and 0.6 or 1 
+				})
 			})
 
 			local Knob = Create("Frame", {
-				Size = UDim2.fromOffset(16, 16),
+				Size = UDim2.fromOffset(18, 18),
 				Position = state and UDim2.fromOffset(22, 2) or UDim2.fromOffset(2, 2),
 				BackgroundColor3 = Color3.new(1, 1, 1),
-				Parent = Switch
-			}, { Create("UICorner", {CornerRadius = UDim.new(1, 0)}) })
+				Parent = SwitchBg
+			}, { 
+				Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
+				Create("ImageLabel", { 
+					Size = UDim2.new(1, 6, 1, 6),
+					Position = UDim2.new(0.5, 0, 0.5, 2),
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					BackgroundTransparency = 1,
+					Image = "rbxassetid://6015897843",
+					ImageColor3 = Color3.fromRGB(0, 0, 0),
+					ImageTransparency = 0.6,
+					ZIndex = 0
+				})
+			})
 
-			local function updateView(val)
-				TweenService:Create(Switch, TweenInfo.new(0.2), {
-					BackgroundColor3 = val and Color3.fromRGB(80, 150, 255) or Color3.fromRGB(40, 40, 55)
+			local Hitbox = Create("TextButton", {
+				Text = "", 
+				BackgroundTransparency = 1, 
+				Size = UDim2.fromScale(1, 1), 
+				ZIndex = 5, 
+				Parent = TglBg
+			})
+
+			local function UpdateVisuals(instant)
+				local tweenInfo = TweenInfo.new(instant and 0 or 0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
+				
+				TweenService:Create(SwitchBg, tweenInfo, {
+					BackgroundColor3 = state and Color3.fromRGB(80, 150, 255) or Color3.fromRGB(40, 40, 55)
 				}):Play()
-				TweenService:Create(Knob, TweenInfo.new(0.2), {
-					Position = val and UDim2.fromOffset(22, 2) or UDim2.fromOffset(2, 2)
+
+				TweenService:Create(SwitchBg.Glow, tweenInfo, {
+					Transparency = state and 0.6 or 1
 				}):Play()
+
+				local knobWidth = isPressing and 24 or 18
+				local knobPos = state and UDim2.fromOffset(42 - knobWidth - 2, 2) or UDim2.fromOffset(2, 2)
+				
+				TweenService:Create(Knob, TweenInfo.new(instant and 0 or 0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+					Size = UDim2.fromOffset(knobWidth, 18),
+					Position = knobPos
+				}):Play()
+
+				local borderColor = Color3.fromRGB(45, 45, 60)
+				if state then borderColor = Color3.fromRGB(60, 100, 180) end
+				if isHovering then borderColor = Color3.fromRGB(80, 150, 255) end
+				
+				TweenService:Create(TglBg.Border, tweenInfo, {Color = borderColor}):Play()
 			end
 
-			local Hit = Create("TextButton", {Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ZIndex = 5, Parent = TglBg})
+			local function CreateRipple(X, Y)
+				local Ripple = Create("Frame", {
+					BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+					BackgroundTransparency = 0.8,
+					AnchorPoint = Vector2.new(0.5, 0.5),
+					Position = UDim2.new(0, X - TglBg.AbsolutePosition.X, 0, Y - TglBg.AbsolutePosition.Y),
+					Size = UDim2.fromOffset(0, 0),
+					ZIndex = 4,
+					Parent = TglBg
+				}, { Create("UICorner", {CornerRadius = UDim.new(1, 0)}) })
 
-			Hit.MouseButton1Click:Connect(function()
-				state = not state
-				updateView(state)
-				callback(state)
+				local tween = TweenService:Create(Ripple, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+					Size = UDim2.fromOffset(200, 200),
+					BackgroundTransparency = 1
+				})
+				tween:Play()
+				tween.Completed:Connect(function() Ripple:Destroy() end)
+			end
+
+			Hitbox.MouseEnter:Connect(function()
+				if locked then return end
+				isHovering = true
+				UpdateVisuals()
 			end)
-			local ToggleFunctions = {}
-			function ToggleFunctions:SetValue(val)
-				state = val
-				updateView(state)
-				callback(state)
+
+			Hitbox.MouseLeave:Connect(function()
+				isHovering = false
+				isPressing = false
+				UpdateVisuals()
+			end)
+
+			Hitbox.InputBegan:Connect(function(input)
+				if locked then return end
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					isPressing = true
+					UpdateVisuals()
+				end
+			end)
+
+			Hitbox.InputEnded:Connect(function(input)
+				if locked then return end
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					if isPressing then
+						isPressing = false
+						state = not state
+						
+						local inputPos = input.Position
+						CreateRipple(inputPos.X, inputPos.Y)
+						
+						UpdateVisuals()
+						task.spawn(callback, state)
+					end
+				end
+			end)
+
+			local ToggleAPI = {
+				Value = state,
+				Flag = flag
+			}
+
+			function ToggleAPI:Set(newState)
+				if locked then return end
+				state = newState
+				self.Value = state
+				UpdateVisuals()
+				task.spawn(callback, state)
 			end
 
-			return ToggleFunctions
+			function ToggleAPI:Lock(bool)
+				locked = bool
+				TitleLabel.TextColor3 = locked and Color3.fromRGB(100, 100, 110) or (state and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 220))
+				TweenService:Create(TglBg, TweenInfo.new(0.3), {
+					BackgroundTransparency = locked and 0.5 or 0
+				}):Play()
+			end
+
+			UpdateVisuals(true)
+			if default then task.spawn(callback, state) end
+
+			return ToggleAPI
 		end
 
 		function Tab:Slider(config)
