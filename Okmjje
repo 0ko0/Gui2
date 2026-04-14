@@ -1717,74 +1717,303 @@ self.Container = Create("Frame", {
 		end
 
 		function Tab:Label(config)
-			local text = config.Text or "Label"
+			
+			local text = config.Text or config.Name or "Label"
+			local richText = config.RichText == nil and true or config.RichText 
+			local textColor = config.Color or config.TextColor or Color3.fromRGB(180, 180, 200)
+			local font = config.Font or Enum.Font.GothamMedium
+			local textSize = config.TextSize or config.Size or 13
+			local alignment = config.Alignment or config.Align or "Left" -- "Left", "Center", "Right"
+			
+			local iconId = config.Icon or config.Image or nil 
+			local iconColor = config.IconColor or Color3.fromRGB(80, 150, 255)
+			
+			local bgColor = config.BackgroundColor or config.BgColor or Color3.fromRGB(22, 22, 30)
+			local strokeColor = config.StrokeColor or Color3.fromRGB(45, 45, 60)
+			
+			local copyable = config.Copyable or false 
+			local hoverEffect = config.HoverEffect == nil and true or config.HoverEffect
 
 			local LabelBg = Create("Frame", {
 				Size = UDim2.new(1, 0, 0, 30),
-				BackgroundColor3 = Color3.fromRGB(22, 22, 30),
+				BackgroundColor3 = bgColor,
 				BackgroundTransparency = 0.5,
+				ClipsDescendants = true,
 				Parent = Page
 			}, {
 				Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
-				Create("UIStroke", {Color = Color3.fromRGB(45, 45, 60), Thickness = 1, Transparency = 0.5})
+				Create("UIStroke", {Color = strokeColor, Thickness = 1, Transparency = 0.2})
 			})
 
-			local Text = Create("TextLabel", {
+			local UIStroke = LabelBg:FindFirstChildOfClass("UIStroke")
+
+			local IconImage = nil
+			local textOffsetX = 15
+			if iconId then
+				textOffsetX = 40
+				IconImage = Create("ImageLabel", {
+					Size = UDim2.new(0, 16, 0, 16),
+					Position = UDim2.new(0, 15, 0, 7),
+					BackgroundTransparency = 1,
+					Image = iconId,
+					ImageColor3 = iconColor,
+					Parent = LabelBg
+				})
+			end
+
+			local textXAlign = Enum.TextXAlignment.Left
+			if alignment:lower() == "center" then textXAlign = Enum.TextXAlignment.Center
+			elseif alignment:lower() == "right" then textXAlign = Enum.TextXAlignment.Right end
+
+			local TextLabel = Create("TextLabel", {
 				Text = text,
-				Font = Enum.Font.GothamMedium,
-				TextSize = 13,
-				TextColor3 = Color3.fromRGB(180, 180, 200),
+				RichText = richText,
+				Font = font,
+				TextSize = textSize,
+				TextColor3 = textColor,
 				BackgroundTransparency = 1,
-				Position = UDim2.fromOffset(15, 8),
-				Size = UDim2.new(1, -30, 0, 0),
-				TextXAlignment = "Left",
-				TextYAlignment = "Center",
+				Position = UDim2.fromOffset(textOffsetX, 8),
+				Size = UDim2.new(1, -(textOffsetX + 15), 0, 0),
+				TextXAlignment = textXAlign,
+				TextYAlignment = Enum.TextYAlignment.Center,
 				TextWrapped = true,
 				Parent = LabelBg
 			})
 
-			local function Resize()
-				local ts = game:GetService("TextService"):GetTextSize(
-					Text.Text, Text.TextSize, Text.Font, Vector2.new(Text.AbsoluteSize.X, 10000)
-				)
-				LabelBg.Size = UDim2.new(1, 0, 0, ts.Y + 16)
-				Text.Size = UDim2.new(1, -30, 0, ts.Y)
+			local CopyIcon = nil
+			if copyable then
+				CopyIcon = Create("ImageLabel", {
+					Size = UDim2.new(0, 14, 0, 14),
+					Position = UDim2.new(1, -25, 0, 8),
+					BackgroundTransparency = 1,
+					Image = "rbxassetid://106757930519028", -- Icon copy
+					ImageColor3 = Color3.fromRGB(100, 100, 130),
+					ImageTransparency = 1,
+					Parent = LabelBg
+				})
+				
+				TextLabel.Size = UDim2.new(1, -(textOffsetX + 35), 0, 0)
 			end
 
-			Text:GetPropertyChangedSignal("AbsoluteSize"):Connect(Resize)
+			local InteractBtn = Create("TextButton", {
+				Size = UDim2.fromScale(1, 1),
+				BackgroundTransparency = 1,
+				Text = "",
+				ZIndex = 10,
+				Parent = LabelBg
+			})
+
+			local function Resize()
+				
+				local rawText = TextLabel.Text
+				if richText then rawText = rawText:gsub("<[^>]+>", "") end
+				
+				local ts = game:GetService("TextService"):GetTextSize(
+					rawText, TextLabel.TextSize, TextLabel.Font, Vector2.new(TextLabel.AbsoluteSize.X, 10000)
+				)
+				
+				local targetHeight = math.max(30, ts.Y + 16)
+				LabelBg.Size = UDim2.new(1, 0, 0, targetHeight)
+				TextLabel.Size = UDim2.new(1, -(textOffsetX + (copyable and 35 or 15)), 0, ts.Y)
+				
+				if IconImage then
+					IconImage.Position = UDim2.new(0, 15, 0.5, -8) 
+				end
+				if CopyIcon then
+					CopyIcon.Position = UDim2.new(1, -25, 0.5, -7)
+				end
+			end
+
+			TextLabel:GetPropertyChangedSignal("AbsoluteSize"):Connect(Resize)
+			TextLabel:GetPropertyChangedSignal("Text"):Connect(Resize)
 			task.spawn(Resize)
+
+			if hoverEffect or copyable then
+				InteractBtn.MouseEnter:Connect(function()
+					if hoverEffect then
+						TweenService:Create(LabelBg, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {BackgroundColor3 = Color3.fromRGB(30, 30, 40)}):Play()
+						TweenService:Create(UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Color = Color3.fromRGB(80, 150, 255), Transparency = 0}):Play()
+					end
+					if copyable and CopyIcon then
+						TweenService:Create(CopyIcon, TweenInfo.new(0.3), {ImageTransparency = 0}):Play()
+					end
+				end)
+
+				InteractBtn.MouseLeave:Connect(function()
+					if hoverEffect then
+						TweenService:Create(LabelBg, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {BackgroundColor3 = bgColor}):Play()
+						TweenService:Create(UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quart), {Color = strokeColor, Transparency = 0.2}):Play()
+					end
+					if copyable and CopyIcon then
+						TweenService:Create(CopyIcon, TweenInfo.new(0.3), {ImageTransparency = 1}):Play()
+					end
+				end)
+			end
+
+			if copyable then
+				InteractBtn.MouseButton1Click:Connect(function()
+					if setclipboard then
+						local rawText = TextLabel.Text
+						if richText then rawText = rawText:gsub("<[^>]+>", "") end
+						setclipboard(rawText)
+					end
+					
+					local originalText = TextLabel.Text
+					local originalColor = TextLabel.TextColor3
+					
+					TextLabel.Text = "Copied to clipboard"
+					TextLabel.TextColor3 = Color3.fromRGB(80, 255, 100)
+					TweenService:Create(LabelBg, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(40, 50, 40)}):Play()
+					
+					task.wait(0.1)
+					TweenService:Create(LabelBg, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(30, 30, 40)}):Play()
+					
+					task.wait(1)
+					TextLabel.Text = originalText
+					TextLabel.TextColor3 = originalColor
+				end)
+			end
+
+			local LabelAPI = {}
+			
+			function LabelAPI:SetText(newText)
+				TextLabel.Text = tostring(newText)
+			end
+			
+			function LabelAPI:SetColor(newColor)
+				TweenService:Create(TextLabel, TweenInfo.new(0.3), {TextColor3 = newColor}):Play()
+			end
+			
+			function LabelAPI:SetIcon(newIconId, newIconColor)
+				if IconImage then
+					IconImage.Image = newIconId
+					if newIconColor then
+						TweenService:Create(IconImage, TweenInfo.new(0.3), {ImageColor3 = newIconColor}):Play()
+					end
+				end
+			end
+			
+			function LabelAPI:Destroy()
+				LabelBg:Destroy()
+			end
+
+			return LabelAPI
 		end
 
 		function Tab:Paragraph(config)
-			local title = config.Title or "Paragraph Title"
-			local content = config.Content or "Content description goes here."
+			
+			local title = config.Title or config.Name or "Paragraph Title"
+			local content = config.Content or config.Text or "Content description goes here"
+			local iconId = config.Icon or nil 
+			local richText = config.RichText == nil and true or config.RichText
+			local align = config.Align or "Left" -- "Left", "Center", "Right"
+			local copyable = config.Copyable or false 
+			local collapsible = config.Collapsible or false 
+			local defaultState = config.DefaultState == nil and true or config.DefaultState 
+			
+			local titleColor = config.TitleColor or Color3.fromRGB(80, 150, 255)
+			local contentColor = config.ContentColor or Color3.fromRGB(150, 150, 170)
+			
+			local textAlignment = Enum.TextXAlignment.Left
+			if align:lower() == "center" then textAlignment = Enum.TextXAlignment.Center
+			elseif align:lower() == "right" then textAlignment = Enum.TextXAlignment.Right end
+
+			local isExpanded = defaultState
 
 			local SectionBg = Create("Frame", {
 				Size = UDim2.new(1, 0, 0, 65), 
 				BackgroundColor3 = Color3.fromRGB(22, 22, 30),
+				ClipsDescendants = true,
 				Parent = Page
 			}, {
 				Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
 				Create("UIStroke", {Color = Color3.fromRGB(45, 45, 60), Thickness = 1})
 			})
 
+			local TopBar = Create("Frame", {
+				Size = UDim2.new(1, 0, 0, 30),
+				BackgroundTransparency = 1,
+				Parent = SectionBg
+			})
+
+			local TitleOffset = 15
+			if iconId then
+				Create("ImageLabel", {
+					Size = UDim2.new(0, 16, 0, 16),
+					Position = UDim2.fromOffset(15, 7),
+					BackgroundTransparency = 1,
+					Image = iconId,
+					ImageColor3 = titleColor,
+					Parent = TopBar
+				})
+				TitleOffset = 38
+			end
+
 			local Title = Create("TextLabel", {
 				Text = title:upper(),
 				Font = Enum.Font.GothamBold,
 				TextSize = 12,
-				TextColor3 = Color3.fromRGB(80, 150, 255),
+				TextColor3 = titleColor,
+				RichText = richText,
 				BackgroundTransparency = 1,
-				Position = UDim2.fromOffset(15, 8),
-				Size = UDim2.new(1, -30, 0, 20),
-				TextXAlignment = "Left",
-				Parent = SectionBg
+				Position = UDim2.fromOffset(TitleOffset, 0),
+				Size = UDim2.new(1, -(TitleOffset + 60), 1, 0),
+				TextXAlignment = textAlignment,
+				Parent = TopBar
 			})
+
+			local ActionContainer = Create("Frame", {
+				Size = UDim2.new(0, 60, 1, 0),
+				Position = UDim2.new(1, -65, 0, 0),
+				BackgroundTransparency = 1,
+				Parent = TopBar
+			}, {
+				Create("UIListLayout", {
+					FillDirection = Enum.FillDirection.Horizontal,
+					HorizontalAlignment = Enum.HorizontalAlignment.Right,
+					VerticalAlignment = Enum.VerticalAlignment.Center,
+					Padding = UDim.new(0, 8)
+				})
+			})
+
+			local CopyBtn, CollapseBtn, CollapseIcon
+
+			if copyable then
+				CopyBtn = Create("ImageButton", {
+					Size = UDim2.new(0, 16, 0, 16),
+					BackgroundTransparency = 1,
+					Image = "rbxassetid://106757930519028", -- Copy Icon
+					ImageColor3 = Color3.fromRGB(100, 100, 130),
+					Parent = ActionContainer
+				})
+			end
+
+			if collapsible then
+				CollapseBtn = Create("ImageButton", {
+					Size = UDim2.new(0, 16, 0, 16),
+					BackgroundTransparency = 1,
+					Image = "rbxassetid://6031094678", -- Arrow Icon
+					ImageColor3 = Color3.fromRGB(100, 100, 130),
+					Rotation = isExpanded and 0 or -90,
+					Parent = ActionContainer
+				})
+				CollapseIcon = CollapseBtn
+			end
 
 			local Divider = Create("Frame", {
 				Size = UDim2.new(1, -30, 0, 1),
 				Position = UDim2.fromOffset(15, 30),
 				BackgroundColor3 = Color3.fromRGB(45, 45, 60),
 				BorderSizePixel = 0,
+				BackgroundTransparency = isExpanded and 0 or 1,
+				Parent = SectionBg
+			})
+
+			local ContentHolder = Create("Frame", {
+				Size = UDim2.new(1, 0, 0, 0),
+				Position = UDim2.fromOffset(0, 35),
+				BackgroundTransparency = 1,
+				ClipsDescendants = true,
 				Parent = SectionBg
 			})
 
@@ -1792,37 +2021,147 @@ self.Container = Create("Frame", {
 				Text = content,
 				Font = Enum.Font.GothamMedium,
 				TextSize = 13,
-				TextColor3 = Color3.fromRGB(150, 150, 170),
+				TextColor3 = contentColor,
+				RichText = richText,
 				BackgroundTransparency = 1,
-				Position = UDim2.fromOffset(15, 38),
-				Size = UDim2.new(1, -30, 0, 0),
-				TextXAlignment = "Left",
-				TextYAlignment = "Top",
+				Position = UDim2.fromOffset(15, 0),
+				Size = UDim2.new(1, -30, 1, 0),
+				TextXAlignment = textAlignment,
+				TextYAlignment = Enum.TextYAlignment.Top,
 				TextWrapped = true,
-				Parent = SectionBg
+				Parent = ContentHolder
 			})
 
-			local function Resize()
+			local function CalculateSize()
 				local ts = game:GetService("TextService"):GetTextSize(
-					Desc.Text, Desc.TextSize, Desc.Font, Vector2.new(Desc.AbsoluteSize.X, 10000)
+					Desc.Text, Desc.TextSize, Desc.Font, Vector2.new(SectionBg.AbsoluteSize.X - 30, 10000)
 				)
-				SectionBg.Size = UDim2.new(1, 0, 0, ts.Y + 50)
-				Desc.Size = UDim2.new(1, -30, 0, ts.Y)
+				local targetHeight = ts.Y + 10
+				
+				if isExpanded then
+					TweenService:Create(SectionBg, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 35 + targetHeight)}):Play()
+					TweenService:Create(ContentHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, targetHeight)}):Play()
+					TweenService:Create(Divider, TweenInfo.new(0.3), {BackgroundTransparency = 0}):Play()
+				else
+					TweenService:Create(SectionBg, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 30)}):Play()
+					TweenService:Create(ContentHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 0, 0)}):Play()
+					TweenService:Create(Divider, TweenInfo.new(0.3), {BackgroundTransparency = 1}):Play()
+				end
 			end
 
-			Desc:GetPropertyChangedSignal("AbsoluteSize"):Connect(Resize)
-			task.spawn(Resize)
+			Desc:GetPropertyChangedSignal("AbsoluteSize"):Connect(CalculateSize)
+			SectionBg:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+				if SectionBg.AbsoluteSize.X > 0 then CalculateSize() end
+			end)
+			task.spawn(CalculateSize)
+
+			SectionBg.MouseEnter:Connect(function()
+				TweenService:Create(SectionBg:FindFirstChildOfClass("UIStroke"), TweenInfo.new(0.3), {Color = Color3.fromRGB(80, 150, 255)}):Play()
+				TweenService:Create(SectionBg, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(26, 26, 36)}):Play()
+			end)
+
+			SectionBg.MouseLeave:Connect(function()
+				TweenService:Create(SectionBg:FindFirstChildOfClass("UIStroke"), TweenInfo.new(0.3), {Color = Color3.fromRGB(45, 45, 60)}):Play()
+				TweenService:Create(SectionBg, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(22, 22, 30)}):Play()
+			end)
+
+			if copyable and CopyBtn then
+				CopyBtn.MouseEnter:Connect(function() TweenService:Create(CopyBtn, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(255, 255, 255)}):Play() end)
+				CopyBtn.MouseLeave:Connect(function() TweenService:Create(CopyBtn, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(100, 100, 130)}):Play() end)
+				
+				CopyBtn.MouseButton1Click:Connect(function()
+					if setclipboard then
+						setclipboard(Desc.Text)
+						
+						CopyBtn.Image = "rbxassetid://131759733061758" -- Check icon
+						CopyBtn.ImageColor3 = Color3.fromRGB(80, 255, 100)
+						TweenService:Create(CopyBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back), {Size = UDim2.new(0, 20, 0, 20)}):Play()
+						
+						task.delay(1, function()
+							CopyBtn.Image = "rbxassetid://106757930519028"
+							TweenService:Create(CopyBtn, TweenInfo.new(0.2), {ImageColor3 = Color3.fromRGB(100, 100, 130), Size = UDim2.new(0, 16, 0, 16)}):Play()
+						end)
+					end
+				end)
+			end
+
+			if collapsible and CollapseBtn then
+				local function ToggleCollapse()
+					isExpanded = not isExpanded
+					TweenService:Create(CollapseIcon, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+						Rotation = isExpanded and 0 or -90,
+						ImageColor3 = isExpanded and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(100, 100, 130)
+					}):Play()
+					CalculateSize()
+				end
+
+				CollapseBtn.MouseButton1Click:Connect(ToggleCollapse)
+				
+				local TopBarBtn = Create("TextButton", {
+					Size = UDim2.fromScale(1, 1),
+					BackgroundTransparency = 1,
+					Text = "",
+					ZIndex = 5,
+					Parent = TopBar
+				})
+				TopBarBtn.MouseButton1Click:Connect(ToggleCollapse)
+			end
+
+			local ParagraphAPI = {}
+			
+			function ParagraphAPI:SetTitle(newTitle)
+				Title.Text = newTitle:upper()
+			end
+			
+			function ParagraphAPI:SetContent(newContent)
+				Desc.Text = newContent
+				CalculateSize() 
+			end
+			
+			function ParagraphAPI:Toggle(state)
+				if collapsible then
+					if state ~= nil then isExpanded = state else isExpanded = not isExpanded end
+					TweenService:Create(CollapseIcon, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Rotation = isExpanded and 0 or -90}):Play()
+					CalculateSize()
+				end
+			end
+
+			return ParagraphAPI
 		end
 
 		function Tab:Keybind(config)
-			local text = config.Name or "Keybind"
-			local default = config.Default or Enum.KeyCode.E
+			local text = config.Name or config.Text or "Keybind"
+			local defaultKey = config.Default or Enum.KeyCode.Unknown
+			local defaultMode = config.Mode or "Toggle" -- "Toggle" or "Hold"
 			local callback = config.Callback or function() end
 			local onChange = config.OnChange or function() end
-			local listening = false
+			
+			local blacklist = config.Blacklist or {
+				Enum.KeyCode.W, Enum.KeyCode.A, Enum.KeyCode.S, Enum.KeyCode.D,
+				Enum.KeyCode.Escape, Enum.KeyCode.Space, Enum.KeyCode.Tab, Enum.KeyCode.Unknown
+			}
+
+			local currentKey = defaultKey
+			local currentMode = defaultMode
+			local isListening = false
+			local isActive = false
+			local pulseTween = nil
+
+			local function formatKeyName(key, inputType)
+				if key and key ~= Enum.KeyCode.Unknown then
+					return key.Name
+				elseif inputType then
+					local name = inputType.Name
+					if name:find("MouseButton") then
+						return "MB" .. name:sub(-1)
+					end
+					return name
+				end
+				return "None"
+			end
 
 			local BindBg = Create("Frame", {
-				Size = UDim2.new(1, 0, 0, 40),
+				Size = UDim2.new(1, 0, 0, 45),
 				BackgroundColor3 = Color3.fromRGB(22, 22, 30),
 				Parent = Page
 			}, {
@@ -1833,60 +2172,189 @@ self.Container = Create("Frame", {
 			local Label = Create("TextLabel", {
 				Text = text,
 				Font = Enum.Font.GothamMedium,
-				TextSize = 13,
+				TextSize = 14,
 				TextColor3 = Color3.fromRGB(200, 200, 220),
 				BackgroundTransparency = 1,
 				Position = UDim2.fromOffset(15, 0),
-				Size = UDim2.new(1, -85, 1, 0),
+				Size = UDim2.new(1, -120, 1, 0),
 				TextXAlignment = "Left",
 				Parent = BindBg
 			})
 
-			local BindDisplay = Create("Frame", {
-				Size = UDim2.fromOffset(60, 24),
-				Position = UDim2.new(1, -75, 0.5, -12),
+			local ModeBtn = Create("TextButton", {
+				Size = UDim2.fromOffset(40, 20),
+				Position = UDim2.new(1, -115, 0.5, -10),
 				BackgroundColor3 = Color3.fromRGB(30, 30, 40),
+				Text = currentMode,
+				Font = Enum.Font.GothamBold,
+				TextSize = 10,
+				TextColor3 = Color3.fromRGB(150, 150, 170),
 				Parent = BindBg
 			}, {
-				Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
+				Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
 				Create("UIStroke", {Color = Color3.fromRGB(60, 60, 80), Thickness = 1})
 			})
 
+			local BindDisplay = Create("Frame", {
+				Size = UDim2.fromOffset(60, 26),
+				Position = UDim2.new(1, -70, 0.5, -13),
+				BackgroundColor3 = Color3.fromRGB(25, 25, 35),
+				Parent = BindBg
+			}, {
+				Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
+				Create("UIStroke", {Name = "Stroke", Color = Color3.fromRGB(60, 60, 80), Thickness = 1}),
+			
+				Create("Frame", {
+					Size = UDim2.new(1, 0, 0, 2),
+					Position = UDim2.new(0, 0, 1, -2),
+					BackgroundColor3 = Color3.fromRGB(15, 15, 20),
+					BorderSizePixel = 0,
+					ZIndex = 2
+				}, {Create("UICorner", {CornerRadius = UDim.new(0, 6)})})
+			})
+
 			local BindText = Create("TextLabel", {
-				Text = default.Name,
+				Text = formatKeyName(currentKey),
 				Font = Enum.Font.GothamBold,
-				TextSize = 11,
+				TextSize = 12,
 				TextColor3 = Color3.fromRGB(255, 255, 255),
 				BackgroundTransparency = 1,
 				Size = UDim2.fromScale(1, 1),
+				ZIndex = 3,
 				Parent = BindDisplay
 			})
 
-			local Hit = Create("TextButton", {Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ZIndex = 5, Parent = BindBg})
+			local Hit = Create("TextButton", {Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ZIndex = 5, Parent = BindDisplay})
+
+			ModeBtn.MouseButton1Click:Connect(function()
+				currentMode = currentMode == "Toggle" and "Hold" or "Toggle"
+				ModeBtn.Text = currentMode
+				TweenService:Create(ModeBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 40, 55)}):Play()
+				task.delay(0.2, function()
+					TweenService:Create(ModeBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(30, 30, 40)}):Play()
+				end)
+			end)
 
 			Hit.MouseButton1Click:Connect(function()
-				listening = true
+				if isListening then return end
+				isListening = true
 				BindText.Text = "..."
-				TweenService:Create(BindDisplay:FindFirstChildOfClass("UIStroke"), TweenInfo.new(0.2), {Color = Color3.fromRGB(80, 150, 255)}):Play()
+				
+				TweenService:Create(BindDisplay, TweenInfo.new(0.1), {Size = UDim2.fromOffset(56, 24), Position = UDim2.new(1, -68, 0.5, -12)}):Play()
+				task.delay(0.1, function()
+					TweenService:Create(BindDisplay, TweenInfo.new(0.1), {Size = UDim2.fromOffset(60, 26), Position = UDim2.new(1, -70, 0.5, -13)}):Play()
+				end)
+
+				local stroke = BindDisplay:FindFirstChild("Stroke")
+				pulseTween = TweenService:Create(stroke, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut, -1, true), {Color = Color3.fromRGB(80, 150, 255), Thickness = 2})
+				pulseTween:Play()
 			end)
 
-			UIS.InputBegan:Connect(function(input, gpe)
-				if gpe then return end
-				if listening and input.UserInputType == Enum.UserInputType.Keyboard then
-					listening = false
-					default = input.KeyCode
-					BindText.Text = input.KeyCode.Name
-					TweenService:Create(BindDisplay:FindFirstChildOfClass("UIStroke"), TweenInfo.new(0.2), {Color = Color3.fromRGB(60, 60, 80)}):Play()
-					onChange(input.KeyCode) 
-				elseif not listening and input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == default then
-					local t = TweenService:Create(BindDisplay, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(80, 150, 255)})
-					t:Play()
-					t.Completed:Connect(function()
-						TweenService:Create(BindDisplay, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(30, 30, 40)}):Play()
-					end)
-					callback()
+			local inputConnection
+			inputConnection = UIS.InputBegan:Connect(function(input, gpe)
+				
+				if isListening then
+					local key = input.KeyCode
+					local inputType = input.UserInputType
+
+					if key == Enum.KeyCode.Backspace or key == Enum.KeyCode.Delete then
+						currentKey = Enum.KeyCode.Unknown
+						BindText.Text = "None"
+						isListening = false
+				
+					elseif (key ~= Enum.KeyCode.Unknown and not table.find(blacklist, key)) or (inputType.Name:find("MouseButton")) then
+						currentKey = key ~= Enum.KeyCode.Unknown and key or inputType
+						BindText.Text = formatKeyName(key, inputType)
+						isListening = false
+					end
+
+					if not isListening then
+						if pulseTween then pulseTween:Cancel() end
+						local stroke = BindDisplay:FindFirstChild("Stroke")
+						TweenService:Create(stroke, TweenInfo.new(0.3), {Color = Color3.fromRGB(60, 60, 80), Thickness = 1}):Play()
+						
+						TweenService:Create(BindDisplay, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40, 200, 100)}):Play()
+						task.delay(0.2, function()
+							TweenService:Create(BindDisplay, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(25, 25, 35)}):Play()
+						end)
+						
+						onChange(currentKey)
+					end
+					return
+				end
+
+				if not gpe and not isListening then
+					local isMatch = false
+					if typeof(currentKey) == "EnumItem" then
+						if currentKey.EnumType == Enum.KeyCode and input.KeyCode == currentKey then isMatch = true end
+						if currentKey.EnumType == Enum.UserInputType and input.UserInputType == currentKey then isMatch = true end
+					end
+
+					if isMatch then
+						if currentMode == "Toggle" then
+							isActive = not isActive
+							callback(isActive)
+						elseif currentMode == "Hold" then
+							isActive = true
+							callback(isActive)
+						end
+						
+						TweenService:Create(BindDisplay, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(80, 150, 255)}):Play()
+					end
 				end
 			end)
+
+			UIS.InputEnded:Connect(function(input, gpe)
+				if not gpe and not isListening and currentMode == "Hold" then
+					local isMatch = false
+					if typeof(currentKey) == "EnumItem" then
+						if currentKey.EnumType == Enum.KeyCode and input.KeyCode == currentKey then isMatch = true end
+						if currentKey.EnumType == Enum.UserInputType and input.UserInputType == currentKey then isMatch = true end
+					end
+
+					if isMatch then
+						isActive = false
+						callback(isActive)
+						TweenService:Create(BindDisplay, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(25, 25, 35)}):Play()
+					end
+				end
+				
+				if not gpe and not isListening and currentMode == "Toggle" then
+					local isMatch = false
+					if typeof(currentKey) == "EnumItem" then
+						if currentKey.EnumType == Enum.KeyCode and input.KeyCode == currentKey then isMatch = true end
+						if currentKey.EnumType == Enum.UserInputType and input.UserInputType == currentKey then isMatch = true end
+					end
+					if isMatch then
+						TweenService:Create(BindDisplay, TweenInfo.new(0.3), {BackgroundColor3 = Color3.fromRGB(25, 25, 35)}):Play()
+					end
+				end
+			end)
+
+			local KeybindAPI = {}
+			
+			function KeybindAPI:SetKey(newKey)
+				currentKey = newKey
+				BindText.Text = formatKeyName(newKey)
+				onChange(currentKey)
+			end
+			
+			function KeybindAPI:SetMode(newMode)
+				if newMode == "Toggle" or newMode == "Hold" then
+					currentMode = newMode
+					ModeBtn.Text = currentMode
+				end
+			end
+			
+			function KeybindAPI:GetState()
+				return isActive
+			end
+			
+			function KeybindAPI:GetKey()
+				return currentKey
+			end
+
+			return KeybindAPI
 		end
 
 		function Tab:Textbox(config)
