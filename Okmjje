@@ -265,7 +265,7 @@ self.Container = Create("Frame", {
 		Name = "SearchBar",
 		Size = UDim2.new(0, 155, 0, 30), 
 		Position = UDim2.new(1, -170, 0.5, -15),
-		BackgroundColor3 = Color3.fromRGB(12, 12, 12),
+		BackgroundColor3 = Color3.fromRGB(12, 12, 12), 
 		ClipsDescendants = false,
 		Parent = self.Top
 	}, {
@@ -347,11 +347,11 @@ self.Container = Create("Frame", {
 		
 		TweenService:Create(self.SearchBarHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
 			Position = UDim2.new(1, -170, 0.5, -15),
-			BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+			BackgroundColor3 = Color3.fromRGB(12, 12, 12)
 		}):Play()
 		
 		TweenService:Create(Stroke, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-			Color = Color3.fromRGB(45, 45, 60),
+			Color = Color3.fromRGB(30, 30, 30),
 			Thickness = 1
 		}):Play()
 
