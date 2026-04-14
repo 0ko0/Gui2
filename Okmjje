@@ -2720,6 +2720,9 @@ self.Container = Create("Frame", {
 			return TextboxMethods
 		end
 
+return Tab
+	end
+
 	return self
 end
 
