@@ -52,76 +52,104 @@ function Library:New(config)
 	})
 
 	self.DropShadowHolder = Create("Frame", {
-		Name = "DropShadowHolder",
+		Name = "Main",
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		BackgroundColor3 = Color3.fromRGB(163, 163, 163),
+		BackgroundColor3 = Color3.fromRGB(42, 42, 42),
 		BackgroundTransparency = 1,
 		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.new(0, 600, 0, 400),
+		Size = UDim2.new(0, 629, 0, 359), 
 		ZIndex = 1,
 		Parent = self.Gui
 	})
 
-	self.DropShadow = Create("ImageLabel", {
-		Name = "DropShadow",
+	self.MainGlow = Create("ImageLabel", {
+		Name = "maingui",
 		AnchorPoint = Vector2.new(0.5, 0.5),
 		BackgroundTransparency = 1,
 		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.new(1, 30, 1, 15),
+		Size = UDim2.new(1, 30, 1, 30),
+		Image = "rbxassetid://8068653048",
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(15, 15, 175, 175),
+		SliceScale = 1.300,
+		ImageColor3 = Color3.fromRGB(110, 150, 255),
+		ImageTransparency = 0.4,
 		ZIndex = 0,
-		Image = "rbxassetid://6015897843",
-		ImageTransparency = 0.25,
-		ImageColor3 = Color3.fromRGB(0, 0, 0),
+		Parent = self.DropShadowHolder
+	})
+
+	self.DropShadow = Create("ImageLabel", {
+		Name = "Shadow",
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		BackgroundTransparency = 1,
+		Position = UDim2.new(0.5, 0, 0.5, 0),
+		Size = UDim2.new(1, 40, 1, 40),
+		ZIndex = 0,
+		Image = "rbxassetid://5028857084",
+		ImageTransparency = 0.35,
+		ScaleType = Enum.ScaleType.Slice,
+		SliceCenter = Rect.new(24, 24, 276, 276),
 		Parent = self.DropShadowHolder
 	})
 
 	self.Main = Create("Frame", {
-		Name = "Main",
-		AnchorPoint = Vector2.new(0.5, 0.5),
-		BackgroundColor3 = Color3.fromRGB(0, 0, 0),
-		BackgroundTransparency = 0.5,
-		Position = UDim2.new(0.5, 0, 0.5, 0),
-		Size = UDim2.new(1, -47, 1, -47),
+		Name = "MainContainer",
+		Size = UDim2.new(1, 0, 1, 0),
+		BackgroundColor3 = Color3.fromRGB(18, 18, 22), 
+		ZIndex = 1,
 		Parent = self.DropShadowHolder
 	}, {
 		Create("UICorner", {CornerRadius = UDim.new(0, 5)}),
-		Create("UIStroke", {Color = Color3.fromRGB(110, 150, 255), Thickness = 2.5})
+		Create("UIStroke", {Color = Color3.fromRGB(110, 150, 255), Thickness = 1, Transparency = 0.3}),
+		Create("UIGradient", {
+			Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200))
+			}),
+			Rotation = 90,
+			Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0.92),
+				NumberSequenceKeypoint.new(1, 0.92)
+			})
+		})
 	})
 
 	self.Top = Create("Frame", {
-		Size = UDim2.new(1, 0, 0, 55),
+		Name = "TopMain",
+		Size = UDim2.new(1, 0, 0, 30),
 		BackgroundTransparency = 1,
 		Parent = self.Main
 	}, {
 		Create("Frame", {
+			Name = "TopStroke",
 			Size = UDim2.new(1, 0, 0, 1),
 			Position = UDim2.new(0, 0, 1, -1),
-			BackgroundColor3 = Color3.fromRGB(45, 45, 60),
+			BackgroundColor3 = Color3.fromRGB(110, 150, 255),
+			BackgroundTransparency = 0.4,
 			BorderSizePixel = 0,
 		})
 	})
 
-	Create("TextLabel", {
-		Text = config.Title or "skibidi",
-		Font = Enum.Font.GothamBold,
-		TextSize = 18,
-		TextColor3 = Color3.fromRGB(255, 255, 255),
-		TextXAlignment = "Left",
+	Create("ImageLabel", {
+		Name = "Logo",
+		Size = UDim2.new(0, 20, 0, 20),
+		Position = UDim2.new(0, 8, 0.5, -10),
 		BackgroundTransparency = 1,
-		Position = UDim2.fromOffset(18, 8),
-		Size = UDim2.new(0, 200, 0, 30),
+		Image = "rbxassetid://128185233852701",
+		ImageColor3 = Color3.fromRGB(110, 150, 255),
 		Parent = self.Top
 	})
 
 	Create("TextLabel", {
-		Text = config.Footer or "skibidi",
-		Font = Enum.Font.GothamMedium,
-		TextSize = 11,
-		TextColor3 = Color3.fromRGB(100, 100, 130),
+		Text = string.format('<font color="rgb(110, 150, 255)">%s</font> <font color="rgb(150, 150, 150)">%s</font>', config.Title or "skibidi", config.Footer or ""),
+		RichText = true,
+		Font = Enum.Font.GothamBold,
+		TextSize = 14,
+		TextColor3 = Color3.fromRGB(235, 235, 230),
 		TextXAlignment = "Left",
 		BackgroundTransparency = 1,
-		Size = UDim2.new(0, 200, 0, 20),
-		Position = UDim2.fromOffset(18, 28),
+		Position = UDim2.fromOffset(35, 0),
+		Size = UDim2.new(1, -35, 1, 0),
 		Parent = self.Top
 	})
 
@@ -211,33 +239,48 @@ function Library:New(config)
 	end)
 
 self.Container = Create("Frame", {
-		Size = UDim2.new(1, 0, 1, -55),
-		Position = UDim2.fromOffset(0, 55),
+		Name = "Concacontainer",
+		Size = UDim2.new(1, 0, 1, -30),
+		Position = UDim2.fromOffset(0, 30),
 		BackgroundTransparency = 1,
+		ClipsDescendants = true,
 		Parent = self.Main
 	})
 
 	self.Sidebar = Create("Frame", {
-		Size = UDim2.new(0, 150, 1, -16),
-		Position = UDim2.fromOffset(10, 8),
-		BackgroundColor3 = Color3.fromRGB(12, 12, 12), 
+		Name = "PageControl",
+		Size = UDim2.new(0, 170, 1, -10),
+		Position = UDim2.fromOffset(5, 5),
+		BackgroundColor3 = Color3.fromRGB(28, 28, 34), 
+		BackgroundTransparency = 0.1,
 		Parent = self.Container
 	}, {
-		Create("UICorner", {CornerRadius = UDim.new(0, 8)}), 
-		Create("UIStroke", {Color = Color3.fromRGB(30, 30, 30), Thickness = 1}), 
+		Create("UICorner", {CornerRadius = UDim.new(0, 4)}), 
+		Create("UIStroke", {Color = Color3.fromRGB(110, 150, 255), Thickness = 1, Transparency = 0.5}), 
+		Create("UIGradient", {
+			Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Color3.fromRGB(28, 28, 34)),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(38, 38, 46))
+			}),
+			Rotation = 90,
+			Transparency = NumberSequence.new({
+				NumberSequenceKeypoint.new(0, 0.06),
+				NumberSequenceKeypoint.new(1, 0.12)
+			})
+		})
 	})
 
 	self.TabHighlight = Create("Frame", {
-		Size = UDim2.new(1, -16, 0, 34),
-		Position = UDim2.fromOffset(8, 8),
-		BackgroundColor3 = Color3.fromRGB(80, 150, 255),
-		BackgroundTransparency = 0.9,
+		Size = UDim2.new(1, -10, 0, 30),
+		Position = UDim2.fromOffset(5, 5),
+		BackgroundColor3 = Color3.fromRGB(110, 150, 255),
+		BackgroundTransparency = 0.85,
 		Visible = false,
 		ZIndex = 2,
 		Parent = self.Sidebar
 	}, {
-		Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
-		Create("UIStroke", {Color = Color3.fromRGB(80, 150, 255), Thickness = 1, Transparency = 0.6})
+		Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
+		Create("UIStroke", {Color = Color3.fromRGB(110, 150, 255), Thickness = 1, Transparency = 0.3})
 	})
 
 	self.TabHolder = Create("Frame", {
@@ -247,62 +290,60 @@ self.Container = Create("Frame", {
 		Parent = self.Sidebar
 	}, {
 		Create("UIListLayout", {Padding = UDim.new(0, 5)}),
-		Create("UIPadding", {PaddingTop = UDim.new(0, 8), PaddingLeft = UDim.new(0, 8), PaddingRight = UDim.new(0, 8)})
+		Create("UIPadding", {PaddingTop = UDim.new(0, 5), PaddingLeft = UDim.new(0, 5), PaddingRight = UDim.new(0, 5)})
 	})
 
 	self.Pages = Create("Frame", {
-		Size = UDim2.new(1, -180, 1, -16),
-		Position = UDim2.fromOffset(170, 8),
-		BackgroundColor3 = Color3.fromRGB(12, 12, 12), 
-		BackgroundTransparency = 0, 
+		Name = "MainPage",
+		Size = UDim2.new(1, -185, 1, -10),
+		Position = UDim2.fromOffset(180, 5),
+		BackgroundColor3 = Color3.fromRGB(18, 18, 22), 
+		BackgroundTransparency = 1, 
 		Parent = self.Container
-	}, {
-		Create("UICorner", {CornerRadius = UDim.new(0, 8)}), 
-		Create("UIStroke", {Color = Color3.fromRGB(30, 30, 30), Thickness = 1}) 
 	})
 
 	self.SearchBarHolder = Create("Frame", {
 		Name = "SearchBar",
-		Size = UDim2.new(0, 155, 0, 30), 
-		Position = UDim2.new(1, -170, 0.5, -15),
-		BackgroundColor3 = Color3.fromRGB(12, 12, 12), 
-		ClipsDescendants = false,
+		Size = UDim2.new(0, 155, 0, 22), 
+		Position = UDim2.new(1, -165, 0.5, -11),
+		BackgroundColor3 = Color3.fromRGB(28, 28, 34), 
+		ClipsDescendants = true,
 		Parent = self.Top
 	}, {
-		Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
-		Create("UIStroke", {Color = Color3.fromRGB(30, 30, 30), Thickness = 1})
+		Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
+		Create("UIStroke", {Color = Color3.fromRGB(110, 150, 255), Thickness = 1, Transparency = 0.5})
 	})
 
 	local SearchIcon = Create("ImageLabel", {
-		Size = UDim2.new(0, 14, 0, 14),
-		Position = UDim2.new(0, 10, 0.5, -7),
+		Size = UDim2.new(0, 12, 0, 12),
+		Position = UDim2.new(0, 8, 0.5, -6),
 		BackgroundTransparency = 1,
-		Image = "rbxassetid://6031154871", 
-		ImageColor3 = Color3.fromRGB(100, 100, 130),
+		Image = "rbxassetid://8154282545",
+		ImageColor3 = Color3.fromRGB(240, 240, 230),
 		Parent = self.SearchBarHolder
 	})
 
 	self.SearchInput = Create("TextBox", {
 		Text = "",
-		Size = UDim2.new(1, -55, 1, 0),
-		Position = UDim2.new(0, 32, 0, 0),
+		Size = UDim2.new(1, -45, 1, 0),
+		Position = UDim2.new(0, 26, 0, 0),
 		BackgroundTransparency = 1,
-		Font = Enum.Font.GothamMedium,
+		Font = Enum.Font.GothamBold,
 		TextSize = 12,
-		TextColor3 = Color3.fromRGB(255, 255, 255),
-		PlaceholderText = "Search features...",
-		PlaceholderColor3 = Color3.fromRGB(100, 100, 130),
+		TextColor3 = Color3.fromRGB(235, 235, 230),
+		PlaceholderText = "Search...",
+		PlaceholderColor3 = Color3.fromRGB(170, 170, 160),
 		TextXAlignment = "Left",
 		ClearTextOnFocus = false,
 		Parent = self.SearchBarHolder
 	})
 
 	local ClearBtn = Create("ImageButton", {
-		Size = UDim2.new(0, 14, 0, 14),
-		Position = UDim2.new(1, -22, 0.5, -7),
+		Size = UDim2.new(0, 12, 0, 12),
+		Position = UDim2.new(1, -20, 0.5, -6),
 		BackgroundTransparency = 1,
 		Image = "rbxassetid://6031094678",
-		ImageColor3 = Color3.fromRGB(200, 100, 100),
+		ImageColor3 = Color3.fromRGB(255, 80, 80),
 		ImageTransparency = 1,
 		Rotation = -90,
 		Visible = false,
@@ -313,7 +354,7 @@ self.Container = Create("Frame", {
 		Text = "No results found.",
 		Font = Enum.Font.GothamMedium,
 		TextSize = 14,
-		TextColor3 = Color3.fromRGB(100, 100, 130),
+		TextColor3 = Color3.fromRGB(170, 170, 160),
 		BackgroundTransparency = 1,
 		Size = UDim2.new(1, 0, 1, 0),
 		Position = UDim2.new(0, 0, 0, 0),
@@ -325,106 +366,40 @@ self.Container = Create("Frame", {
 	local Stroke = self.SearchBarHolder:FindFirstChildOfClass("UIStroke")
 
 	self.SearchInput.Focused:Connect(function()
-		
 		TweenService:Create(self.SearchBarHolder, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-			Position = UDim2.new(1, -170, 0.5, -17), 
-			BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+			Position = UDim2.new(1, -165, 0.5, -11), 
+			BackgroundColor3 = Color3.fromRGB(38, 38, 46)
 		}):Play()
 		
 		TweenService:Create(Stroke, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-			Color = Color3.fromRGB(80, 150, 255),
-			Thickness = 1.5
+			Color = Color3.fromRGB(110, 150, 255),
+			Thickness = 1.5,
+			Transparency = 0
 		}):Play()
 
 		SearchIcon.Rotation = 0
 		TweenService:Create(SearchIcon, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-			ImageColor3 = Color3.fromRGB(80, 150, 255),
+			ImageColor3 = Color3.fromRGB(110, 150, 255),
 			Rotation = 360
 		}):Play()
 	end)
 
 	self.SearchInput.FocusLost:Connect(function()
-		
 		TweenService:Create(self.SearchBarHolder, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-			Position = UDim2.new(1, -170, 0.5, -15),
-			BackgroundColor3 = Color3.fromRGB(12, 12, 12)
+			Position = UDim2.new(1, -165, 0.5, -11),
+			BackgroundColor3 = Color3.fromRGB(28, 28, 34)
 		}):Play()
 		
 		TweenService:Create(Stroke, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-			Color = Color3.fromRGB(30, 30, 30),
-			Thickness = 1
+			Color = Color3.fromRGB(110, 150, 255),
+			Thickness = 1,
+			Transparency = 0.5
 		}):Play()
 
 		TweenService:Create(SearchIcon, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-			ImageColor3 = Color3.fromRGB(100, 100, 130),
+			ImageColor3 = Color3.fromRGB(240, 240, 230),
 			Rotation = -360
 		}):Play()
-	end)
-
-	ClearBtn.MouseButton1Click:Connect(function()
-		self.SearchInput.Text = ""
-		self.SearchInput:ReleaseFocus()
-	end)
-
-	self.SearchInput:GetPropertyChangedSignal("Text"):Connect(function()
-		local rawQuery = self.SearchInput.Text
-		local query = string.lower(string.gsub(rawQuery, " ", "")) 
-		
-		if #query > 0 then
-			ClearBtn.Visible = true
-			TweenService:Create(ClearBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {ImageTransparency = 0, Rotation = 0}):Play()
-		else
-			TweenService:Create(ClearBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {ImageTransparency = 1, Rotation = -90}):Play()
-			task.delay(0.3, function() if self.SearchInput.Text == "" then ClearBtn.Visible = false end end)
-		end
-
-		local totalMatches = 0
-		local tabBgs = {}
-		local pagesList = {}
-
-		for _, v in ipairs(self.TabHolder:GetChildren()) do if v:IsA("Frame") then table.insert(tabBgs, v) end end
-		for _, v in ipairs(self.Pages:GetChildren()) do if v:IsA("ScrollingFrame") then table.insert(pagesList, v) end end
-
-		for i = 1, #pagesList do
-			local page = pagesList[i]
-			local tabBg = tabBgs[i]
-			local tabBtn = tabBg and tabBg:FindFirstChildOfClass("TextButton")
-			local tabName = tabBtn and string.lower(string.gsub(tabBtn.Text, " ", "")) or ""
-			
-			local pageHasMatch = false
-
-			for _, comp in ipairs(page:GetChildren()) do
-				if comp:IsA("Frame") then
-					local compMatch = false
-					for _, child in ipairs(comp:GetChildren()) do
-						if (child:IsA("TextLabel") or child:IsA("TextButton")) and child.Text ~= "" and child.Text ~= "▼" then
-							local cleanText = string.lower(string.gsub(child.Text, " ", ""))
-							if string.find(cleanText, query) then
-								compMatch = true
-								break
-							end
-						end
-					end
-					
-					comp.Visible = (query == "" or compMatch)
-					if compMatch then pageHasMatch = true end
-				end
-			end
-
-			if query == "" or string.find(tabName, query) or pageHasMatch then
-				if tabBg then tabBg.Visible = true end
-				totalMatches = totalMatches + 1
-			else
-				if tabBg then tabBg.Visible = false end
-			end
-		end
-
-		if query ~= "" and totalMatches == 0 then
-			NoResultLabel.Visible = true
-			NoResultLabel.Text = 'No results for "' .. rawQuery .. '"'
-		else
-			NoResultLabel.Visible = false
-		end
 	end)
 
 	do
