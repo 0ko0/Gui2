@@ -727,7 +727,7 @@ local CloseNotification
 
 	function self:NewTab(name)
 		local Tab = {}
-		local AccentColor = Color3.fromRGB(80, 150, 255) 
+		local AccentColor = Color3.fromRGB(110, 150, 255)
 
 		local TabBg = Create("Frame", {
 			Size = UDim2.new(1, 0, 0, 34),
@@ -866,22 +866,15 @@ local CloseNotification
 				AnchorPoint = Vector2.new(0.5, 0.5),
 				Position = UDim2.new(0.5, 0, 0.5, 0),
 				Size = UDim2.new(1, 0, 1, 0),
-				BackgroundColor3 = Color3.fromRGB(25, 25, 35),
+				BackgroundColor3 = Color3.fromRGB(28, 28, 34), -- Đen sang trọng
 				ClipsDescendants = true,
 				Parent = Container
 			}, {
-				Create("UICorner", {CornerRadius = UDim.new(0, 10)}), 
+				Create("UICorner", {CornerRadius = UDim.new(0, 6)}), 
 				Create("UIStroke", {
-					Color = Color3.fromRGB(50, 50, 70), 
-					Thickness = 1.5, 
-					Transparency = 0.3
-				}),
-				Create("UIGradient", {
-					Color = ColorSequence.new({
-						ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
-						ColorSequenceKeypoint.new(1, Color3.new(0.7, 0.7, 0.8))
-					}),
-					Rotation = 45
+					Color = Color3.fromRGB(110, 150, 255), 
+					Thickness = 1, 
+					Transparency = 0.5
 				})
 			})
 
@@ -890,11 +883,11 @@ local CloseNotification
 				IconHolder = Create("Frame", {
 					Size = UDim2.fromOffset(32, 32),
 					Position = UDim2.new(0, 10, 0.5, -16),
-					BackgroundColor3 = Color3.fromRGB(35, 35, 50),
+					BackgroundColor3 = Color3.fromRGB(15, 15, 20),
 					Parent = BtnBg
 				}, {
 					Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
-					Create("UIStroke", {Color = accentColor, Thickness = 1, Transparency = 0.5}),
+					Create("UIStroke", {Color = accentColor, Thickness = 1, Transparency = 0.2}),
 					Create("ImageLabel", {
 						Image = icon,
 						Size = UDim2.fromOffset(18, 18),
@@ -922,8 +915,8 @@ local CloseNotification
 			local TitleLabel = Create("TextLabel", {
 				Text = text,
 				Font = Enum.Font.GothamBold, 
-				TextSize = 14,
-				TextColor3 = disabled and Color3.fromRGB(100, 100, 120) or Color3.fromRGB(240, 240, 255),
+				TextSize = 13,
+				TextColor3 = disabled and Color3.fromRGB(100, 100, 120) or Color3.fromRGB(235, 235, 230),
 				BackgroundTransparency = 1,
 				Size = UDim2.new(1, 0, 0, 16),
 				TextXAlignment = "Left",
@@ -937,7 +930,7 @@ local CloseNotification
 					Text = desc,
 					Font = Enum.Font.GothamMedium,
 					TextSize = 11,
-					TextColor3 = Color3.fromRGB(130, 130, 150),
+					TextColor3 = Color3.fromRGB(150, 150, 160),
 					BackgroundTransparency = 1,
 					Size = UDim2.new(1, 0, 0, 12),
 					TextXAlignment = "Left",
@@ -952,7 +945,7 @@ local CloseNotification
 				Size = UDim2.fromOffset(16, 16),
 				Position = UDim2.new(1, -25, 0.5, -8),
 				BackgroundTransparency = 1,
-				ImageColor3 = disabled and Color3.fromRGB(100, 100, 120) or Color3.fromRGB(150, 150, 170),
+				ImageColor3 = disabled and Color3.fromRGB(100, 100, 120) or Color3.fromRGB(110, 150, 255),
 				Parent = BtnBg
 			})
 
@@ -962,7 +955,7 @@ local CloseNotification
 				BackgroundTransparency = 1,
 				ZIndex = 5,
 				Parent = BtnBg
-			}, { Create("UICorner", {CornerRadius = UDim.new(0, 10)}) })
+			}, { Create("UICorner", {CornerRadius = UDim.new(0, 6)}) })
 
 			local Hit = Create("TextButton", {
 				Text = "", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ZIndex = 10, Parent = BtnBg
@@ -996,7 +989,7 @@ local CloseNotification
 				if disabled then return end
 				TweenService:Create(BtnBg, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
 					Size = UDim2.new(1, -4, 1, 4), 
-					BackgroundColor3 = Color3.fromRGB(30, 30, 42)
+					BackgroundColor3 = Color3.fromRGB(38, 38, 46)
 				}):Play()
 				TweenService:Create(Stroke, TweenInfo.new(0.3), {Color = accentColor, Transparency = 0}):Play()
 				TweenService:Create(ActionIcon, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
@@ -1009,7 +1002,7 @@ local CloseNotification
 				if disabled then return end
 				TweenService:Create(BtnBg, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
 					Size = UDim2.new(1, 0, 1, 0),
-					BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+					BackgroundColor3 = Color3.fromRGB(28, 28, 34)
 				}):Play()
 				TweenService:Create(Stroke, TweenInfo.new(0.3), {Color = Color3.fromRGB(50, 50, 70), Transparency = 0.3}):Play()
 				TweenService:Create(ActionIcon, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
@@ -1113,14 +1106,14 @@ local CloseNotification
 			
 			local TglBg = Create("Frame", {
 				Size = UDim2.new(1, 0, 0, TglHeight),
-				BackgroundColor3 = Color3.fromRGB(22, 22, 30),
+				BackgroundColor3 = Color3.fromRGB(28, 28, 34),
 				ClipsDescendants = true, 
 				Parent = Page
 			}, {
-				Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
+				Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
 				Create("UIStroke", {
 					Name = "Border",
-					Color = Color3.fromRGB(45, 45, 60), 
+					Color = Color3.fromRGB(45, 45, 55), 
 					Thickness = 1
 				})
 			})
@@ -1134,7 +1127,7 @@ local CloseNotification
 					AnchorPoint = Vector2.new(0, 0.5),
 					BackgroundTransparency = 1,
 					Image = icon,
-					ImageColor3 = Color3.fromRGB(200, 200, 220),
+					ImageColor3 = Color3.fromRGB(110, 150, 255),
 					Parent = TglBg
 				})
 			end
@@ -1142,8 +1135,8 @@ local CloseNotification
 			local TitleLabel = Create("TextLabel", {
 				Text = text,
 				Font = Enum.Font.GothamMedium,
-				TextSize = 14,
-				TextColor3 = locked and Color3.fromRGB(100, 100, 110) or Color3.fromRGB(200, 200, 220),
+				TextSize = 13,
+				TextColor3 = locked and Color3.fromRGB(100, 100, 110) or Color3.fromRGB(235, 235, 230),
 				BackgroundTransparency = 1,
 				Position = UDim2.fromOffset(textOffsetX, desc and 10 or 0),
 				Size = UDim2.new(1, -100, desc and 0 or 1, desc and 16 or 0),
@@ -1156,7 +1149,7 @@ local CloseNotification
 					Text = desc,
 					Font = Enum.Font.Gotham,
 					TextSize = 11,
-					TextColor3 = Color3.fromRGB(120, 120, 140),
+					TextColor3 = Color3.fromRGB(150, 150, 160),
 					BackgroundTransparency = 1,
 					Position = UDim2.fromOffset(textOffsetX, 28),
 					Size = UDim2.new(1, -100, 0, 14),
@@ -1169,13 +1162,13 @@ local CloseNotification
 			local SwitchBg = Create("Frame", {
 				Size = UDim2.fromOffset(42, 22),
 				Position = UDim2.new(1, -55, 0.5, -11),
-				BackgroundColor3 = state and Color3.fromRGB(80, 150, 255) or Color3.fromRGB(40, 40, 55),
+				BackgroundColor3 = state and Color3.fromRGB(110, 150, 255) or Color3.fromRGB(15, 15, 20),
 				Parent = TglBg
 			}, {
 				Create("UICorner", {CornerRadius = UDim.new(1, 0)}),
 				Create("UIStroke", {
 					Name = "Glow",
-					Color = Color3.fromRGB(80, 150, 255),
+					Color = Color3.fromRGB(110, 150, 255),
 					Thickness = 2,
 					Transparency = state and 0.6 or 1 
 				})
@@ -1352,18 +1345,18 @@ local CloseNotification
 
 			local SliderBg = Create("Frame", {
 				Size = UDim2.new(1, 0, 0, 55), 
-				BackgroundColor3 = Color3.fromRGB(22, 22, 30),
+				BackgroundColor3 = Color3.fromRGB(28, 28, 34),
 				Parent = Page
 			}, {
-				Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
-				Create("UIStroke", {Color = Color3.fromRGB(45, 45, 60), Thickness = 1})
+				Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
+				Create("UIStroke", {Color = Color3.fromRGB(45, 45, 55), Thickness = 1})
 			})
 
 			local Label = Create("TextLabel", {
 				Text = text,
 				Font = Enum.Font.GothamMedium,
-				TextSize = 14,
-				TextColor3 = Color3.fromRGB(200, 200, 220),
+				TextSize = 13,
+				TextColor3 = Color3.fromRGB(235, 235, 230),
 				BackgroundTransparency = 1,
 				Position = UDim2.fromOffset(15, 10),
 				Size = UDim2.new(1, -100, 0, 16),
@@ -1379,14 +1372,14 @@ local CloseNotification
 				Parent = SliderBg
 			}, {
 				Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
-				Create("UIStroke", {Name = "Stroke", Color = Color3.fromRGB(45, 45, 60), Thickness = 1})
+				Create("UIStroke", {Name = "Stroke", Color = Color3.fromRGB(45, 45, 55), Thickness = 1})
 			})
 
 			local ValueInput = Create("TextBox", {
 				Text = startText,
 				Font = Enum.Font.GothamBold,
 				TextSize = 12,
-				TextColor3 = Color3.fromRGB(80, 150, 255),
+				TextColor3 = Color3.fromRGB(110, 150, 255),
 				BackgroundTransparency = 1,
 				Size = UDim2.fromScale(1, 1),
 				TextXAlignment = "Center",
@@ -1406,13 +1399,13 @@ local CloseNotification
 				Size = UDim2.new(1, 0, 0, 4),
 				AnchorPoint = Vector2.new(0, 0.5),
 				Position = UDim2.new(0, 0, 0.5, 0),
-				BackgroundColor3 = Color3.fromRGB(40, 40, 55),
+				BackgroundColor3 = Color3.fromRGB(15, 15, 20),
 				Parent = TrackArea
 			}, { Create("UICorner", {CornerRadius = UDim.new(1, 0)}) })
 
 			local Fill = Create("Frame", {
 				Size = UDim2.fromScale((default - min) / (max - min), 1),
-				BackgroundColor3 = Color3.fromRGB(80, 150, 255),
+				BackgroundColor3 = Color3.fromRGB(110, 150, 255),
 				Parent = Track
 			}, { Create("UICorner", {CornerRadius = UDim.new(1, 0)}) })
 
@@ -1428,7 +1421,7 @@ local CloseNotification
 				Size = UDim2.fromOffset(0, 0), 
 				AnchorPoint = Vector2.new(0.5, 0.5),
 				Position = UDim2.fromScale(0.5, 0.5),
-				BackgroundColor3 = Color3.fromRGB(80, 150, 255),
+				BackgroundColor3 = Color3.fromRGB(110, 150, 255),
 				BackgroundTransparency = 0.8,
 				ZIndex = 0,
 				Parent = Knob
@@ -1551,12 +1544,12 @@ local CloseNotification
 
 			local DropdownBg = Create("Frame", {
 				Size = UDim2.new(1, 0, 0, 45),
-				BackgroundColor3 = Color3.fromRGB(22, 22, 30),
+				BackgroundColor3 = Color3.fromRGB(28, 28, 34),
 				ClipsDescendants = true,
 				Parent = Page
 			}, {
-				Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
-				Create("UIStroke", {Color = Color3.fromRGB(45, 45, 60), Thickness = 1})
+				Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
+				Create("UIStroke", {Color = Color3.fromRGB(45, 45, 55), Thickness = 1})
 			})
 
 			local Header = Create("TextButton", {
@@ -1569,8 +1562,8 @@ local CloseNotification
 			local TitleLabel = Create("TextLabel", {
 				Text = text,
 				Font = Enum.Font.GothamMedium,
-				TextSize = 14,
-				TextColor3 = Color3.fromRGB(200, 200, 220),
+				TextSize = 13,
+				TextColor3 = Color3.fromRGB(235, 235, 230),
 				BackgroundTransparency = 1,
 				Position = UDim2.fromOffset(15, 0),
 				Size = UDim2.new(0.5, -15, 1, 0),
@@ -1582,7 +1575,7 @@ local CloseNotification
 				Text = "...",
 				Font = Enum.Font.GothamMedium,
 				TextSize = 12,
-				TextColor3 = Color3.fromRGB(80, 150, 255),
+				TextColor3 = Color3.fromRGB(110, 150, 255),
 				BackgroundTransparency = 1,
 				Position = UDim2.new(0.5, 0, 0, 0),
 				Size = UDim2.new(0.5, -35, 1, 0),
@@ -2316,18 +2309,18 @@ local CloseNotification
 
 			local BindBg = Create("Frame", {
 				Size = UDim2.new(1, 0, 0, 45),
-				BackgroundColor3 = Color3.fromRGB(22, 22, 30),
+				BackgroundColor3 = Color3.fromRGB(28, 28, 34),
 				Parent = Page
 			}, {
-				Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
-				Create("UIStroke", {Color = Color3.fromRGB(45, 45, 60), Thickness = 1})
+				Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
+				Create("UIStroke", {Color = Color3.fromRGB(45, 45, 55), Thickness = 1})
 			})
 
 			local Label = Create("TextLabel", {
 				Text = text,
 				Font = Enum.Font.GothamMedium,
-				TextSize = 14,
-				TextColor3 = Color3.fromRGB(200, 200, 220),
+				TextSize = 13,
+				TextColor3 = Color3.fromRGB(235, 235, 230),
 				BackgroundTransparency = 1,
 				Position = UDim2.fromOffset(15, 0),
 				Size = UDim2.new(1, -120, 1, 0),
@@ -2338,25 +2331,26 @@ local CloseNotification
 			local ModeBtn = Create("TextButton", {
 				Size = UDim2.fromOffset(40, 20),
 				Position = UDim2.new(1, -115, 0.5, -10),
-				BackgroundColor3 = Color3.fromRGB(30, 30, 40),
+				BackgroundColor3 = Color3.fromRGB(38, 38, 46),
 				Text = currentMode,
 				Font = Enum.Font.GothamBold,
 				TextSize = 10,
-				TextColor3 = Color3.fromRGB(150, 150, 170),
+				TextColor3 = Color3.fromRGB(150, 150, 160),
 				Parent = BindBg
 			}, {
 				Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
-				Create("UIStroke", {Color = Color3.fromRGB(60, 60, 80), Thickness = 1})
+				Create("UIStroke", {Color = Color3.fromRGB(45, 45, 55), Thickness = 1})
 			})
 
 			local BindDisplay = Create("Frame", {
 				Size = UDim2.fromOffset(60, 26),
 				Position = UDim2.new(1, -70, 0.5, -13),
-				BackgroundColor3 = Color3.fromRGB(25, 25, 35),
+				BackgroundColor3 = Color3.fromRGB(15, 15, 20),
 				Parent = BindBg
 			}, {
-				Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
-				Create("UIStroke", {Name = "Stroke", Color = Color3.fromRGB(60, 60, 80), Thickness = 1}),
+				Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
+				Create("UIStroke", {Name = "Stroke", Color = Color3.fromRGB(45, 45, 55), Thickness = 1})
+			})
 			
 				Create("Frame", {
 					Size = UDim2.new(1, 0, 0, 2),
@@ -2526,18 +2520,18 @@ local CloseNotification
 
 			local BoxBg = Create("Frame", {
 				Size = UDim2.new(1, 0, 0, 45),
-				BackgroundColor3 = Color3.fromRGB(22, 22, 30),
+				BackgroundColor3 = Color3.fromRGB(28, 28, 34),
 				Parent = Page
 			}, {
-				Create("UICorner", {CornerRadius = UDim.new(0, 8)}),
-				Create("UIStroke", {Color = Color3.fromRGB(45, 45, 60), Thickness = 1})
+				Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
+				Create("UIStroke", {Color = Color3.fromRGB(45, 45, 55), Thickness = 1})
 			})
 
 			local Label = Create("TextLabel", {
 				Text = text,
 				Font = Enum.Font.GothamMedium,
-				TextSize = 14,
-				TextColor3 = Color3.fromRGB(200, 200, 220),
+				TextSize = 13,
+				TextColor3 = Color3.fromRGB(235, 235, 230),
 				BackgroundTransparency = 1,
 				Position = UDim2.fromOffset(15, 0),
 				Size = UDim2.new(1, -100, 1, 0), 
@@ -2552,8 +2546,8 @@ local CloseNotification
 				ClipsDescendants = true,
 				Parent = BoxBg
 			}, {
-				Create("UICorner", {CornerRadius = UDim.new(0, 6)}),
-				Create("UIStroke", {Color = Color3.fromRGB(50, 50, 70), Thickness = 1})
+				Create("UICorner", {CornerRadius = UDim.new(0, 4)}),
+				Create("UIStroke", {Color = Color3.fromRGB(45, 45, 55), Thickness = 1})
 			})
 
 			local Input = Create("TextBox", {
