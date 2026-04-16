@@ -401,6 +401,72 @@ self.Container = Create("Frame", {
 			Rotation = -360
 		}):Play()
 	end)
+	
+	ClearBtn.MouseButton1Click:Connect(function()
+		self.SearchInput.Text = ""
+		self.SearchInput:ReleaseFocus()
+	end)
+
+	self.SearchInput:GetPropertyChangedSignal("Text"):Connect(function()
+		local rawQuery = self.SearchInput.Text
+		local query = string.lower(string.gsub(rawQuery, " ", "")) 
+		
+		if #query > 0 then
+			ClearBtn.Visible = true
+			TweenService:Create(ClearBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {ImageTransparency = 0, Rotation = 0}):Play()
+		else
+			TweenService:Create(ClearBtn, TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {ImageTransparency = 1, Rotation = -90}):Play()
+			task.delay(0.3, function() if self.SearchInput.Text == "" then ClearBtn.Visible = false end end)
+		end
+
+		local totalMatches = 0
+		local tabBgs = {}
+		local pagesList = {}
+
+		for _, v in ipairs(self.TabHolder:GetChildren()) do if v:IsA("Frame") then table.insert(tabBgs, v) end end
+		for _, v in ipairs(self.Pages:GetChildren()) do if v:IsA("ScrollingFrame") then table.insert(pagesList, v) end end
+
+		for i = 1, #pagesList do
+			local page = pagesList[i]
+			local tabBg = tabBgs[i]
+			local tabBtn = tabBg and tabBg:FindFirstChildOfClass("TextButton")
+			local tabName = tabBtn and string.lower(string.gsub(tabBtn.Text, " ", "")) or ""
+			
+			local pageHasMatch = false
+
+			for _, comp in ipairs(page:GetChildren()) do
+				if comp:IsA("Frame") then
+					local compMatch = false
+					for _, child in ipairs(comp:GetChildren()) do
+						if (child:IsA("TextLabel") or child:IsA("TextButton")) and child.Text ~= "" and child.Text ~= "▼" then
+							local cleanText = string.lower(string.gsub(child.Text, " ", ""))
+							if string.find(cleanText, query) then
+								compMatch = true
+								break
+							end
+						end
+					end
+					
+					comp.Visible = (query == "" or compMatch)
+					if compMatch then pageHasMatch = true end
+				end
+			end
+
+			if query == "" or string.find(tabName, query) or pageHasMatch then
+				if tabBg then tabBg.Visible = true end
+				totalMatches = totalMatches + 1
+			else
+				if tabBg then tabBg.Visible = false end
+			end
+		end
+
+		if query ~= "" and totalMatches == 0 then
+			NoResultLabel.Visible = true
+			NoResultLabel.Text = 'No results for "' .. rawQuery .. '"'
+		else
+			NoResultLabel.Visible = false
+		end
+	end)
 
 	do
 		local dragging, dragInput, dragStart, startPos
