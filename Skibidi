@@ -830,7 +830,7 @@ function Library:_CreateContentArea()
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 26, 0, 0),
         Size = UDim2.new(1, -26, 1, 0),
-        Font = f.Regular,
+        FontFace = f.Regular,
         PlaceholderColor3 = Color3.fromRGB(100, 105, 110),
         PlaceholderText = "Search module..",
         Text = "",
