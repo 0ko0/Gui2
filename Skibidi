@@ -599,226 +599,130 @@ function Library:_CreateMainv0rtexd()
     })
 
     self.baseAnchor = CreateInstance("Frame", {
-        Name      = "BaseAnchor",
+        Name = "BaseAnchor",
         BackgroundTransparency = 1,
-        Position  = UDim2.new(0.5, -s.v0rtexd.Width / 2, 0.5, -s.v0rtexd.Height / 2),
-        Size      = UDim2.new(0, s.v0rtexd.Width, 0, s.v0rtexd.Height),
-        Parent    = self.screenGui
+        Position = UDim2.new(0.5, -s.v0rtexd.Width / 2, 0.5, -s.v0rtexd.Height / 2),
+        Size = UDim2.new(0, s.v0rtexd.Width, 0, s.v0rtexd.Height),
+        Parent = self.screenGui
     })
 
     CreateInstance("ImageLabel", {
-        Name              = "OuterGlow",
-        AnchorPoint       = Vector2.new(0.5, 0.5),
+        Name = "SupremeShadow",
         BackgroundTransparency = 1,
-        Position          = UDim2.new(0.5, 0, 0.5, 0),
-        Size              = UDim2.new(1, 80, 1, 80),
-        Image             = "rbxassetid://5028857084",
-        ScaleType         = Enum.ScaleType.Slice,
-        SliceCenter       = Rect.new(24, 24, 276, 276),
-        ImageColor3       = c.Accent,
-        ImageTransparency = 0.72,
-        ZIndex            = 0,
-        Parent            = self.baseAnchor
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        Size = UDim2.new(1, 40, 1, 40),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Image = "rbxassetid://5028857084",
+        ScaleType = Enum.ScaleType.Slice,
+        SliceCenter = Rect.new(24, 24, 276, 276),
+        ImageTransparency = 0.35,
+        ImageColor3 = Color3.fromRGB(0, 0, 0),
+        ZIndex = 0,
+        Parent = self.baseAnchor
     })
 
     CreateInstance("ImageLabel", {
-        Name              = "DropShadow",
-        AnchorPoint       = Vector2.new(0.5, 0.5),
+        Name = "GlowAura",
+        AnchorPoint = Vector2.new(0.5, 0.5),
         BackgroundTransparency = 1,
-        Position          = UDim2.new(0.5, 0, 0.5, 6),
-        Size              = UDim2.new(1, 40, 1, 40),
-        Image             = "rbxassetid://5028857084",
-        ScaleType         = Enum.ScaleType.Slice,
-        SliceCenter       = Rect.new(24, 24, 276, 276),
-        ImageColor3       = Color3.fromRGB(0, 0, 0),
-        ImageTransparency = 0.45,
-        ZIndex            = 0,
-        Parent            = self.baseAnchor
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        Size = UDim2.new(1, 22, 1, 22),
+        Image = "rbxassetid://8068653048",
+        ScaleType = Enum.ScaleType.Slice,
+        SliceCenter = Rect.new(15, 15, 175, 175),
+        SliceScale = 1.35,
+        ImageColor3 = c.Accent,
+        ImageTransparency = 0.5,
+        ZIndex = 1,
+        Parent = self.baseAnchor
     })
-
-    local borderRing = CreateInstance("Frame", {
-        Name              = "BorderRing",
-        BackgroundTransparency = 1,
-        AnchorPoint       = Vector2.new(0.5, 0.5),
-        Position          = UDim2.new(0.5, 0, 0.5, 0),
-        Size              = UDim2.new(1, 2, 1, 2),
-        ZIndex            = 1,
-        Parent            = self.baseAnchor
-    })
-    CreateCorner(borderRing, 8)
-    local animStroke = CreateInstance("UIStroke", {
-        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-        Thickness        = 1.5,
-        Color            = c.Accent,
-        Parent           = borderRing
-    })
-    
-    local strokeGrad = CreateInstance("UIGradient", {
-        Color = ColorSequence.new{
-            ColorSequenceKeypoint.new(0,   Color3.fromRGB(110, 150, 255)),
-            ColorSequenceKeypoint.new(0.4, Color3.fromRGB(160, 100, 255)),
-            ColorSequenceKeypoint.new(0.7, Color3.fromRGB(80,  180, 255)),
-            ColorSequenceKeypoint.new(1,   Color3.fromRGB(110, 150, 255)),
-        },
-        Rotation = 0,
-        Parent   = animStroke
-    })
-    
-    task.spawn(function()
-        local angle = 0
-        while self.container and self.container.Parent do
-            angle = (angle + 0.8) % 360
-            strokeGrad.Rotation = angle
-            task.wait(0.016)
-        end
-    end)
 
     self.container = CreateInstance("Frame", {
-        Name              = "skibidiContainer",
-        BackgroundColor3  = c.Background,
-        BackgroundTransparency = 0.08,
-        BorderSizePixel   = 0,
-        Position          = UDim2.new(0, 0, 0, 0),
-        Size              = UDim2.new(1, 0, 1, 0),
-        ZIndex            = 2,
-        ClipsDescendants  = true,
-        Parent            = self.baseAnchor
+        Name = "skibidiContainer",
+        BackgroundColor3 = c.Background,
+        BackgroundTransparency = 0.15,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 0, 0),
+        Size = UDim2.new(1, 0, 1, 0),
+        ZIndex = 2,
+        ClipsDescendants = true,
+        Parent = self.baseAnchor
     })
-    CreateCorner(self.container, 8)
-    
-    CreateInstance("Frame", {
-        Name              = "TopShimmer",
-        BackgroundColor3  = Color3.fromRGB(255, 255, 255),
-        BackgroundTransparency = 0.88,
-        BorderSizePixel   = 0,
-        Position          = UDim2.new(0, 0, 0, 0),
-        Size              = UDim2.new(1, 0, 0, 1),
-        ZIndex            = 10,
-        Parent            = self.container
-    })
+    CreateCorner(self.container, 6)
+
+    local windowStroke = CreateStroke(self.container, c.Border, 0.5)
+    windowStroke.Thickness = 1
 
     CreateInstance("UIGradient", {
-        Name = "SurfaceTint",
+        Name = "SurfaceGlassReflect",
         Color = ColorSequence.new{
-            ColorSequenceKeypoint.new(0,   Color3.fromRGB(30,  36,  55)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(12,  13,  17)),
-            ColorSequenceKeypoint.new(1,   Color3.fromRGB(10,  11,  15)),
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200))
         },
-        Rotation    = 90,
+        Rotation = -60,
         Transparency = NumberSequence.new{
-            NumberSequenceKeypoint.new(0, 0.0),
-            NumberSequenceKeypoint.new(1, 0.0),
+            NumberSequenceKeypoint.new(0, 0.94),
+            NumberSequenceKeypoint.new(1, 0.98)
         },
         Parent = self.container
     })
 
     self.topBar = CreateInstance("Frame", {
-        Name              = "TopHeaderBar",
+        Name = "TopHeaderBar",
         BackgroundTransparency = 1,
-        Size              = UDim2.new(1, 0, 0, 46),
-        ZIndex            = 5,
-        Parent            = self.container
-    })
-
-    local headerBg = CreateInstance("Frame", {
-        Name              = "HeaderBg",
-        BackgroundColor3  = Color3.fromRGB(18, 20, 28),
-        BackgroundTransparency = 0.35,
-        BorderSizePixel   = 0,
-        Size              = UDim2.new(1, 0, 1, 0),
-        ZIndex            = 4,
-        Parent            = self.topBar
-    })
-    CreateInstance("UIGradient", {
-        Color = ColorSequence.new{
-            ColorSequenceKeypoint.new(0,   Color3.fromRGB(25, 30, 50)),
-            ColorSequenceKeypoint.new(1,   Color3.fromRGB(12, 13, 17)),
-        },
-        Rotation    = 90,
-        Transparency = NumberSequence.new{
-            NumberSequenceKeypoint.new(0, 0.25),
-            NumberSequenceKeypoint.new(1, 0.55),
-        },
-        Parent = headerBg
-    })
-
-    local iconWrapper = CreateInstance("Frame", {
-        Name              = "IconWrapper",
-        BackgroundColor3  = c.Accent,
-        BackgroundTransparency = 0.82,
-        AnchorPoint       = Vector2.new(0, 0.5),
-        Position          = UDim2.new(0, 12, 0.5, 0),
-        Size              = UDim2.new(0, 26, 0, 26),
-        ZIndex            = 6,
-        Parent            = self.topBar
-    })
-    CreateCorner(iconWrapper, 6)
-    CreateInstance("UIStroke", {
-        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-        Color       = c.Accent,
-        Transparency= 0.6,
-        Thickness   = 1,
-        Parent      = iconWrapper
-    })
-    CreateInstance("ImageLabel", {
-        BackgroundTransparency = 1,
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position    = UDim2.new(0.5, 0, 0.5, 0),
-        Size        = UDim2.new(0, 15, 0, 15),
-        Image       = self.logoImage or "rbxassetid://112235310154264",
-        ImageColor3 = c.Accent,
-        ZIndex      = 7,
-        Parent      = iconWrapper
+        Size = UDim2.new(1, 0, 0, 48),
+        ZIndex = 5,
+        Parent = self.container
     })
 
     self.titleLabel = CreateInstance("TextLabel", {
-        Name              = "Title",
-        FontFace          = f.Bold,
-        Text              = self.title .. "<font color=\"#6e96ff\"> " .. self.subtitle .. "</font>",
-        RichText          = true,
+        Name = "TitleMain",
+        FontFace = f.Bold,
+        Text = self.title or "GUI",
+        RichText = false,
         BackgroundTransparency = 1,
-        Position          = UDim2.new(0, 48, 0, 0),
-        TextXAlignment    = Enum.TextXAlignment.Left,
-        TextSize          = 13,
-        Size              = UDim2.new(0.5, 0, 1, 0),
-        TextColor3        = Color3.fromRGB(235, 238, 248),
-        ZIndex            = 6,
-        Parent            = self.topBar
+        Position = UDim2.new(0, 14, 0, 6),
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextSize = 14,
+        Size = UDim2.new(0.6, 0, 0, 17),
+        TextColor3 = Color3.fromRGB(240, 240, 248),
+        ZIndex = 6,
+        Parent = self.topBar
     })
 
-    local divider = CreateInstance("Frame", {
-        Name              = "LineDivision",
-        BackgroundColor3  = c.Accent,
-        BackgroundTransparency = 0.72,
-        BorderSizePixel   = 0,
-        Position          = UDim2.new(0, 0, 1, -1),
-        Size              = UDim2.new(1, 0, 0, 1),
-        ZIndex            = 5,
-        Parent            = self.topBar
+    self.subtitleLabel = CreateInstance("TextLabel", {
+        Name = "TitleSub",
+        FontFace = f.Regular,
+        Text = self.subtitle or "",
+        RichText = false,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 14, 0, 25),
+        TextXAlignment = Enum.TextXAlignment.Left,
+        TextSize = 11,
+        Size = UDim2.new(0.6, 0, 0, 14),
+        TextColor3 = c.Accent,
+        ZIndex = 6,
+        Parent = self.topBar
     })
-    CreateInstance("UIGradient", {
-        Color = ColorSequence.new{
-            ColorSequenceKeypoint.new(0,   Color3.fromRGB(0, 0, 0)),
-            ColorSequenceKeypoint.new(0.15, c.Accent),
-            ColorSequenceKeypoint.new(0.85, c.Accent),
-            ColorSequenceKeypoint.new(1,   Color3.fromRGB(0, 0, 0)),
-        },
-        Transparency = NumberSequence.new{
-            NumberSequenceKeypoint.new(0, 1),
-            NumberSequenceKeypoint.new(0.15, 0),
-            NumberSequenceKeypoint.new(0.85, 0),
-            NumberSequenceKeypoint.new(1, 1),
-        },
-        Parent = divider
+
+    CreateInstance("Frame", {
+        Name = "LineDivision",
+        BackgroundColor3 = c.Border,
+        BackgroundTransparency = 0.5,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 1, -1),
+        Size = UDim2.new(1, 0, 0, 1),
+        ZIndex = 5,
+        Parent = self.topBar
     })
 
     self.mainContent = CreateInstance("Frame", {
-        Name              = "BodyStructure",
+        Name = "BodyStructure",
         BackgroundTransparency = 1,
-        Position          = UDim2.new(0, 0, 0, 46),
-        Size              = UDim2.new(1, 0, 1, -46),
-        ClipsDescendants  = true,
-        Parent            = self.container
+        Position = UDim2.new(0, 0, 0, 48),
+        Size = UDim2.new(1, 0, 1, -48),
+        ClipsDescendants = true,
+        Parent = self.container
     })
 
     self:_Createv0rtexdControls()
@@ -831,224 +735,266 @@ function Library:_CreateMainv0rtexd()
 end
 
 function Library:_Createv0rtexdControls()
-    
-    local CtrlHolder = CreateInstance("Frame", {
-        Name              = "ControlHolder",
+    local LayoutCtrls = CreateInstance("Frame", {
+        Name = "ControlLayout",
         BackgroundTransparency = 1,
-        AnchorPoint       = Vector2.new(1, 0.5),
-        Position          = UDim2.new(1, -10, 0.5, 0),
-        Size              = UDim2.new(0, 58, 0, 20),
-        ZIndex            = 6,
-        Parent            = self.topBar
+        AnchorPoint = Vector2.new(1, 0.5),
+        Position = UDim2.new(1, -10, 0.5, 0),
+        Size = UDim2.new(0, 60, 0, 18),
+        ZIndex = 5,
+        Parent = self.topBar
     })
-    CreateListLayout(CtrlHolder, 10, Enum.SortOrder.LayoutOrder, Enum.FillDirection.Horizontal)
+    CreateListLayout(LayoutCtrls, 12, Enum.SortOrder.LayoutOrder, Enum.FillDirection.Horizontal)
 
-    local function MakeCtrlBtn(icon, order, hoverColor)
-        local btn = CreateInstance("ImageButton", {
-            Name             = "Btn_" .. order,
-            Image            = icon,
-            ImageColor3      = Color3.fromRGB(120, 125, 140),
-            BackgroundTransparency = 1,
-            Size             = UDim2.new(0, 14, 0, 14),
-            AnchorPoint      = Vector2.new(0, 0.5),
-            LayoutOrder      = order,
-            ZIndex           = 7,
-            Parent           = CtrlHolder
-        })
-        btn.MouseEnter:Connect(function()
-            CreateTween(btn, {ImageColor3 = hoverColor, Size = UDim2.new(0, 15, 0, 15)}, animationspeed.Fast)
-        end)
-        btn.MouseLeave:Connect(function()
-            CreateTween(btn, {ImageColor3 = Color3.fromRGB(120, 125, 140), Size = UDim2.new(0, 14, 0, 14)}, animationspeed.Fast)
-        end)
-        return btn
-    end
-
-    local minimizeBtn = MakeCtrlBtn("rbxassetid://82603981310445", 1, c.Accent)
+    local minimizeBtn = CreateInstance("ImageButton", {
+        ImageColor3 = c.TextDark,
+        Image = "rbxassetid://82603981310445",
+        BackgroundTransparency = 1,
+        Size = UDim2.new(0, 15, 0, 15),
+        LayoutOrder = 1,
+        Parent = LayoutCtrls
+    })
     minimizeBtn.MouseButton1Click:Connect(function() self:_ToggleMinimize() end)
+    minimizeBtn.MouseEnter:Connect(function() CreateTween(minimizeBtn, {ImageColor3 = c.Accent}, animationspeed.Fast) end)
+    minimizeBtn.MouseLeave:Connect(function() CreateTween(minimizeBtn, {ImageColor3 = c.TextDark}, animationspeed.Fast) end)
 
-    local closeBtn = MakeCtrlBtn("rbxassetid://119943770201674", 2, Color3.fromRGB(240, 75, 95))
+    local closeBtn = CreateInstance("ImageButton", {
+        ImageColor3 = c.TextDark,
+        Image = "rbxassetid://119943770201674",
+        BackgroundTransparency = 1,
+        Size = UDim2.new(0, 13, 0, 13),
+        LayoutOrder = 2,
+        Parent = LayoutCtrls
+    })
     closeBtn.MouseButton1Click:Connect(function() self:Destroy() end)
+    closeBtn.MouseEnter:Connect(function() CreateTween(closeBtn, {ImageColor3 = Color3.fromRGB(240, 75, 95)}, animationspeed.Fast) end)
+    closeBtn.MouseLeave:Connect(function() CreateTween(closeBtn, {ImageColor3 = c.TextDark}, animationspeed.Fast) end)
 
     local resizeBtn = CreateInstance("ImageButton", {
-        Name             = "SmartHandleSize",
-        Image            = "rbxassetid://120997033468887",
-        ImageColor3      = Color3.fromRGB(60, 65, 80),
-        ImageTransparency = 0.3,
+        Name = "SmartHandleSize",
+        ImageColor3 = c.Border,
+        ImageTransparency = 0.5,
+        Image = "rbxassetid://120997033468887",
         BackgroundTransparency = 1,
-        AnchorPoint      = Vector2.new(1, 1),
-        Position         = UDim2.new(1, -4, 1, -4),
-        Size             = UDim2.new(0, 14, 0, 14),
-        ZIndex           = 50,
-        Parent           = self.baseAnchor
+        AnchorPoint = Vector2.new(1, 1),
+        Position = UDim2.new(1, -3, 1, -3),
+        Size = UDim2.new(0, 16, 0, 16),
+        ZIndex = 50,
+        Parent = self.baseAnchor
     })
-    resizeBtn.MouseEnter:Connect(function()
-        CreateTween(resizeBtn, {ImageColor3 = c.Accent, ImageTransparency = 0}, animationspeed.Fast)
-    end)
-    resizeBtn.MouseLeave:Connect(function()
-        CreateTween(resizeBtn, {ImageColor3 = Color3.fromRGB(60, 65, 80), ImageTransparency = 0.3}, animationspeed.Fast)
-    end)
-
     self.resizeBtn = resizeBtn
     self:_SetupSmartResize(resizeBtn)
 end
 
 function Library:_CreateContentArea()
 
-    -- ── Sidebar ───────────────────────────────────────────
-    local Sidebar = CreateInstance("Frame", {
-        Name             = "SidebarModule",
-        BackgroundColor3 = Color3.fromRGB(15, 17, 24),
-        BackgroundTransparency = 0.35,
-        Position         = UDim2.new(0, 8, 0, 8),
-        Size             = UDim2.new(0, 156, 1, -16),
-        ZIndex           = 2,
-        ClipsDescendants = true,
-        Parent           = self.mainContent
-    })
-    CreateCorner(Sidebar, 7)
-    CreateInstance("UIStroke", {
-        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-        Color       = Color3.fromRGB(45, 50, 70),
-        Transparency= 0,
-        Thickness   = 1,
-        Parent      = Sidebar
-    })
-    -- Sidebar top accent line
-    CreateInstance("Frame", {
-        Name             = "SidebarAccentTop",
-        BackgroundColor3 = c.Accent,
+    -- ── Sidebar ──────────────────────────────────────────────
+    local SidebarEngine = CreateInstance("Frame", {
+        Name = "SidebarModule",
+        BackgroundColor3 = c.Secondary,
         BackgroundTransparency = 0.6,
-        BorderSizePixel  = 0,
-        Position         = UDim2.new(0, 0, 0, 0),
-        Size             = UDim2.new(1, 0, 0, 1),
-        ZIndex           = 3,
-        Parent           = Sidebar
+        Position = UDim2.new(0, 8, 0, 8),
+        Size = UDim2.new(0, 160, 1, -16),
+        ZIndex = 2,
+        ClipsDescendants = false,
+        Parent = self.mainContent
     })
+    CreateCorner(SidebarEngine, 5)
+    CreateStroke(SidebarEngine, Color3.fromRGB(60, 60, 66), 0)
 
-    -- Tabs scroll area
-    self.sectionsContainer = CreateInstance("ScrollingFrame", {
-        Name                = "ScrollOfTabs",
-        ScrollBarThickness  = 0,
-        BackgroundTransparency = 1,
-        Position            = UDim2.new(0, 0, 0, 5),
-        Size                = UDim2.new(1, 0, 1, -46),
-        CanvasSize          = UDim2.new(0, 0, 0, 0),
-        AutomaticCanvasSize = Enum.AutomaticSize.Y,
-        ScrollingDirection  = Enum.ScrollingDirection.Y,
-        Parent              = Sidebar
-    })
-    CreateListLayout(self.sectionsContainer, 2, Enum.SortOrder.LayoutOrder)
-    CreatePadding(self.sectionsContainer, 3, 4, 6, 6)
-
-    -- ── Search bar (bottom of sidebar) ───────────────────
+    -- ── Search bar: đặt TRÊN CÙNG sidebar ───────────────────
     local SearchWrapper = CreateInstance("Frame", {
-        Name             = "BottomSearchBar",
-        BackgroundColor3 = Color3.fromRGB(10, 11, 16),
-        BackgroundTransparency = 0.1,
-        AnchorPoint      = Vector2.new(0.5, 1),
-        Position         = UDim2.new(0.5, 0, 1, -6),
-        Size             = UDim2.new(1, -12, 0, 28),
-        ZIndex           = 3,
-        Parent           = Sidebar
+        Name = "TopSearchBar",
+        BackgroundColor3 = c.Background,
+        BackgroundTransparency = 0.25,
+        Position = UDim2.new(0, 6, 0, 6),
+        Size = UDim2.new(1, -12, 0, 28),
+        ZIndex = 4,
+        ClipsDescendants = true,
+        Parent = SidebarEngine
     })
-    CreateCorner(SearchWrapper, 6)
-    local searchStroke = CreateInstance("UIStroke", {
-        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-        Color       = Color3.fromRGB(50, 55, 75),
-        Transparency= 0,
-        Thickness   = 1,
-        Parent      = SearchWrapper
-    })
+    CreateCorner(SearchWrapper, 5)
+    local sStroke = CreateStroke(SearchWrapper, Color3.fromRGB(70, 72, 85), 0)
 
-    CreateInstance("ImageLabel", {
-        Image              = "rbxassetid://8154282545",
-        ImageColor3        = Color3.fromRGB(90, 95, 115),
+    -- Search icon
+    local searchIcon = CreateInstance("ImageLabel", {
+        Name = "SearchIcon",
+        Image = "rbxassetid://8154282545",
+        ImageColor3 = c.TextDark,
         BackgroundTransparency = 1,
-        AnchorPoint        = Vector2.new(0, 0.5),
-        Position           = UDim2.new(0, 7, 0.5, 0),
-        Size               = UDim2.new(0, 12, 0, 12),
-        ZIndex             = 4,
-        Parent             = SearchWrapper
+        AnchorPoint = Vector2.new(0, 0.5),
+        Position = UDim2.new(0, 7, 0.5, 0),
+        Size = UDim2.new(0, 13, 0, 13),
+        ZIndex = 5,
+        Parent = SearchWrapper
     })
 
-    local sInputbox = CreateInstance("TextBox", {
+    -- Search input
+    local sInput = CreateInstance("TextBox", {
+        Name = "SearchInput",
         BackgroundTransparency = 1,
-        Position           = UDim2.new(0, 24, 0, 0),
-        Size               = UDim2.new(1, -28, 1, 0),
-        FontFace           = f.Regular,
-        PlaceholderColor3  = Color3.fromRGB(80, 85, 105),
-        PlaceholderText    = "Search...",
-        Text               = "",
-        TextColor3         = c.Text,
-        TextSize           = 11,
-        ZIndex             = 4,
-        TextXAlignment     = Enum.TextXAlignment.Left,
-        Parent             = SearchWrapper
+        Position = UDim2.new(0, 25, 0, 0),
+        Size = UDim2.new(1, -48, 1, 0),
+        FontFace = f.Regular,
+        PlaceholderColor3 = Color3.fromRGB(90, 93, 108),
+        PlaceholderText = "Search tabs...",
+        Text = "",
+        TextColor3 = c.Text,
+        TextSize = 11,
+        ZIndex = 5,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        ClearTextOnFocus = false,
+        Parent = SearchWrapper
     })
 
-    sInputbox.Focused:Connect(function()
-        CreateTween(searchStroke, {Color = c.Accent}, animationspeed.Fast)
-        CreateTween(SearchWrapper, {BackgroundColor3 = Color3.fromRGB(14, 16, 24)}, animationspeed.Fast)
-    end)
-    sInputbox.FocusLost:Connect(function()
-        CreateTween(searchStroke, {Color = Color3.fromRGB(50, 55, 75)}, animationspeed.Fast)
-        CreateTween(SearchWrapper, {BackgroundColor3 = Color3.fromRGB(10, 11, 16)}, animationspeed.Fast)
+    -- Clear (×) button — ẩn khi trống
+    local clearBtn = CreateInstance("TextButton", {
+        Name = "ClearBtn",
+        Text = "×",
+        FontFace = f.Bold,
+        TextSize = 14,
+        TextColor3 = c.TextDark,
+        BackgroundTransparency = 1,
+        AnchorPoint = Vector2.new(1, 0.5),
+        Position = UDim2.new(1, -4, 0.5, 0),
+        Size = UDim2.new(0, 18, 0, 18),
+        Visible = false,
+        ZIndex = 5,
+        Parent = SearchWrapper
+    })
+    clearBtn.MouseButton1Click:Connect(function()
+        sInput.Text = ""
+        sInput:CaptureFocus()
     end)
 
-    sInputbox:GetPropertyChangedSignal("Text"):Connect(function()
-        local wordSearch = string.lower(sInputbox.Text)
+    -- Result count badge
+    local resultBadge = CreateInstance("TextLabel", {
+        Name = "ResultBadge",
+        FontFace = f.Regular,
+        Text = "",
+        TextSize = 9,
+        TextColor3 = c.Accent,
+        BackgroundColor3 = c.Accent,
+        BackgroundTransparency = 0.82,
+        AnchorPoint = Vector2.new(1, 0.5),
+        Position = UDim2.new(1, -22, 0.5, 0),
+        Size = UDim2.new(0, 18, 0, 13),
+        Visible = false,
+        ZIndex = 5,
+        Parent = SearchWrapper
+    })
+    CreateCorner(resultBadge, 3)
+
+    -- Focus / blur effects
+    sInput.Focused:Connect(function()
+        CreateTween(sStroke, {Color = c.Accent, Transparency = 0}, animationspeed.Fast)
+        CreateTween(searchIcon, {ImageColor3 = c.Accent}, animationspeed.Fast)
+        CreateTween(SearchWrapper, {BackgroundTransparency = 0.1}, animationspeed.Fast)
+    end)
+    sInput.FocusLost:Connect(function()
+        CreateTween(sStroke, {Color = Color3.fromRGB(70, 72, 85), Transparency = 0}, animationspeed.Fast)
+        CreateTween(searchIcon, {ImageColor3 = c.TextDark}, animationspeed.Fast)
+        CreateTween(SearchWrapper, {BackgroundTransparency = 0.25}, animationspeed.Fast)
+    end)
+
+    -- Debounce search với timer
+    local searchDebounce = nil
+    local function RunSearch(rawText)
+        local wordSearch = string.lower(rawText)
+        local matchCount = 0
+
+        -- Hiện/ẩn clear button
+        clearBtn.Visible = rawText ~= ""
+
         for _, secChild in pairs(self.sectionsContainer:GetChildren()) do
             if secChild:IsA("Frame") and secChild.Name:find("Section_") then
-                local matched = false
-                local internalListFrame = secChild:FindFirstChild("TabsContainer")
-                if internalListFrame then
-                    for _, realTebs in pairs(internalListFrame:GetChildren()) do
-                        if realTebs:IsA("Frame") then
-                            local hit = realTebs.Name:lower():match(wordSearch)
-                            realTebs.Visible = (hit ~= nil) or (wordSearch == "")
-                            if hit then matched = true end
+                local sectionHasMatch = false
+                local tabsFrame = secChild:FindFirstChild("TabsContainer")
+                if tabsFrame then
+                    for _, tabItem in pairs(tabsFrame:GetChildren()) do
+                        if tabItem:IsA("Frame") then
+                            if wordSearch == "" then
+                                tabItem.Visible = true
+                                sectionHasMatch = true
+                                -- Reset highlight nếu có label
+                                local lbl = tabItem:FindFirstChildWhichIsA("TextLabel")
+                                if lbl then
+                                    CreateTween(lbl, {TextColor3 = c.Text}, animationspeed.Fast)
+                                end
+                            else
+                                local name = tabItem.Name:lower()
+                                local hit = name:find(wordSearch) ~= nil
+                                tabItem.Visible = hit
+                                if hit then
+                                    sectionHasMatch = true
+                                    matchCount = matchCount + 1
+                                    -- Highlight label tab khớp
+                                    local lbl = tabItem:FindFirstChildWhichIsA("TextLabel")
+                                    if lbl then
+                                        CreateTween(lbl, {TextColor3 = c.Accent}, animationspeed.Fast)
+                                    end
+                                end
+                            end
                         end
                     end
                 end
-                secChild.Visible = matched or (wordSearch == "")
+                secChild.Visible = sectionHasMatch or (wordSearch == "")
             end
         end
+
+        -- Cập nhật result badge
+        if wordSearch == "" then
+            resultBadge.Visible = false
+        else
+            resultBadge.Visible = true
+            resultBadge.Text = tostring(matchCount)
+            -- Badge đỏ nếu 0 kết quả
+            local badgeColor = matchCount == 0 and Color3.fromRGB(220, 60, 80) or c.Accent
+            CreateTween(resultBadge, {TextColor3 = badgeColor, BackgroundColor3 = badgeColor}, animationspeed.Fast)
+        end
+    end
+
+    sInput:GetPropertyChangedSignal("Text"):Connect(function()
+        -- Debounce 120ms để không gọi quá nhiều lần khi type nhanh
+        if searchDebounce then
+            task.cancel(searchDebounce)
+        end
+        searchDebounce = task.delay(0.12, function()
+            RunSearch(sInput.Text)
+        end)
     end)
 
-    -- ── Content panel (right side) ────────────────────────
-    local contentBg = CreateInstance("Frame", {
-        Name             = "ContentBg",
-        BackgroundColor3 = Color3.fromRGB(14, 15, 20),
-        BackgroundTransparency = 0.45,
-        Position         = UDim2.new(0, 172, 0, 8),
-        Size             = UDim2.new(1, -180, 1, -16),
-        ZIndex           = 1,
-        Parent           = self.mainContent
-    })
-    CreateCorner(contentBg, 7)
-    CreateInstance("UIStroke", {
-        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
-        Color       = Color3.fromRGB(40, 44, 62),
-        Transparency= 0,
-        Thickness   = 1,
-        Parent      = contentBg
-    })
-
-    self.contentContainer = CreateInstance("ScrollingFrame", {
-        Name                = "ActionElementsContainer",
-        ScrollBarThickness  = 2,
-        ScrollBarImageColor3 = Color3.fromRGB(80, 90, 130),
+    -- Tabs scroll (bắt đầu dưới search bar: offset 40px)
+    self.sectionsContainer = CreateInstance("ScrollingFrame", {
+        Name = "ScrollOfTabs",
+        ScrollBarThickness = 1,
+        ScrollBarImageColor3 = c.Border,
         BackgroundTransparency = 1,
-        Position            = UDim2.new(0, 172, 0, 8),
-        Size                = UDim2.new(1, -180, 1, -16),
-        CanvasSize          = UDim2.new(0, 0, 0, 0),
+        Position = UDim2.new(0, 0, 0, 40),
+        Size = UDim2.new(1, 0, 1, -40),
+        CanvasSize = UDim2.new(0, 0, 0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
-        ScrollingDirection  = Enum.ScrollingDirection.Y,
-        Parent              = self.mainContent
+        ScrollingDirection = Enum.ScrollingDirection.Y,
+        Parent = SidebarEngine
     })
-    CreateListLayout(self.contentContainer, 6, Enum.SortOrder.LayoutOrder)
-    CreatePadding(self.contentContainer, 6, 6, 7, 7)
+    CreateListLayout(self.sectionsContainer, 3, Enum.SortOrder.LayoutOrder)
+    CreatePadding(self.sectionsContainer, 2, 5, 5, 5)
+
+    -- ── Content area (phải) ──────────────────────────────────
+    self.contentContainer = CreateInstance("ScrollingFrame", {
+        Name = "ActionElementsContainer",
+        ScrollBarThickness = 3,
+        ScrollBarImageColor3 = Color3.fromRGB(60, 60, 70),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 175, 0, 6),
+        Size = UDim2.new(1, -183, 1, -12),
+        CanvasSize = UDim2.new(0, 0, 0, 0),
+        AutomaticCanvasSize = Enum.AutomaticSize.Y,
+        ScrollingDirection = Enum.ScrollingDirection.Y,
+        Parent = self.mainContent
+    })
+    CreateListLayout(self.contentContainer, 8, Enum.SortOrder.LayoutOrder)
+    CreatePadding(self.contentContainer, 5, 5, 5, 5)
 end
 
 function Library:_SetupSmartResize(handle)
@@ -1099,26 +1045,166 @@ end
 
 function Library:_ToggleMinimize()
     self.minimized = not self.minimized
+
     if self.minimized then
+        -- Lưu vị trí hiện tại trước khi ẩn
+        self._preMinimizePos = self.baseAnchor.Position
+
+        -- Blur tắt
         if self._skibidiBlur then
             self._skibidiBlur:SetEnabled(false)
         end
-        CreateTween(self.mainContent, {Size = UDim2.new(1, 0, 0, 0)}, animationspeed.Slow)
-        CreateTween(self.container, {Size = UDim2.new(0, self.container.AbsoluteSize.X, 0, 45)}, animationspeed.Slow)
         if self.resizeBtn then
             self.resizeBtn.Visible = false
         end
+
+        -- Thu nhỏ container về 0
+        CreateTween(self.container, {
+            Size = UDim2.new(0, 0, 0, 0),
+            BackgroundTransparency = 1
+        }, animationspeed.Normal, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+
+        task.wait(animationspeed.Normal + 0.05)
+        self.baseAnchor.Visible = false
+
+        -- ── Nút tròn nổi ─────────────────────────────────
+        if not self._floatBtn then
+            local btn = CreateInstance("ImageButton", {
+                Name = "FloatMinimizeBtn",
+                Image = self.logoImage or "rbxassetid://112235310154264",
+                ImageColor3 = c.Accent,
+                BackgroundColor3 = c.Background,
+                BackgroundTransparency = 0,
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                Position = UDim2.new(0.5, 0, 0.5, 0),
+                Size = UDim2.new(0, 0, 0, 0),  -- bắt đầu từ 0 để tween vào
+                ZIndex = 999,
+                Parent = self.screenGui
+            })
+            CreateCorner(btn, 100)
+            CreateStroke(btn, c.Border, 0)
+
+            -- Pulse ring (hiệu ứng vòng sóng xung quanh nút)
+            local ring = CreateInstance("Frame", {
+                Name = "PulseRing",
+                BackgroundTransparency = 1,
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                Position = UDim2.new(0.5, 0, 0.5, 0),
+                Size = UDim2.new(0, 45, 0, 45),
+                ZIndex = 998,
+                Parent = self.screenGui
+            })
+            CreateCorner(ring, 100)
+            CreateInstance("UIStroke", {
+                ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+                Color = c.Accent,
+                Transparency = 0.3,
+                Thickness = 1.5,
+                Parent = ring
+            })
+
+            -- Pulse animation loop
+            local pulseRunning = true
+            task.spawn(function()
+                while pulseRunning and ring.Parent do
+                    CreateTween(ring, {Size = UDim2.new(0, 62, 0, 62)}, 0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+                    CreateTween(ring, {BackgroundTransparency = 1}, 0.8)
+                    -- tìm UIStroke trong ring
+                    local rs2 = ring:FindFirstChildWhichIsA("UIStroke")
+                    if rs2 then
+                        CreateTween(rs2, {Transparency = 1}, 0.8)
+                    end
+                    task.wait(0.85)
+                    ring.Size = UDim2.new(0, 45, 0, 45)
+                    ring.BackgroundTransparency = 1
+                    if rs2 then rs2.Transparency = 0.3 end
+                    task.wait(0.3)
+                end
+            end)
+
+            -- Hover effect
+            btn.MouseEnter:Connect(function()
+                CreateTween(btn, {BackgroundColor3 = c.Secondary, Size = UDim2.new(0, 50, 0, 50)}, animationspeed.Fast)
+            end)
+            btn.MouseLeave:Connect(function()
+                CreateTween(btn, {BackgroundColor3 = c.Background, Size = UDim2.new(0, 45, 0, 45)}, animationspeed.Fast)
+            end)
+
+            -- Draggable float button
+            local fDragging = false
+            local fDragStart, fStartPos
+            btn.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1
+                    or input.UserInputType == Enum.UserInputType.Touch then
+                    fDragging = true
+                    fDragStart = input.Position
+                    fStartPos = btn.Position
+                    local conn
+                    conn = input.Changed:Connect(function()
+                        if input.UserInputState == Enum.UserInputState.End then
+                            fDragging = false
+                            conn:Disconnect()
+                        end
+                    end)
+                end
+            end)
+            ui.InputChanged:Connect(function(input)
+                if fDragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+                    or input.UserInputType == Enum.UserInputType.Touch) then
+                    local delta = input.Position - fDragStart
+                    btn.Position = UDim2.new(
+                        fStartPos.X.Scale, fStartPos.X.Offset + delta.X,
+                        fStartPos.Y.Scale, fStartPos.Y.Offset + delta.Y
+                    )
+                    ring.Position = btn.Position
+                end
+            end)
+
+            -- Click restore
+            btn.MouseButton1Click:Connect(function()
+                if not fDragging then
+                    pulseRunning = false
+                    ring:Destroy()
+                    btn:Destroy()
+                    self._floatBtn = nil
+                    self:_ToggleMinimize()
+                end
+            end)
+
+            self._floatBtn = btn
+            self._floatRing = ring
+        end
+
+        -- Tween nút tròn bung ra từ trung tâm
+        CreateTween(self._floatBtn, {Size = UDim2.new(0, 45, 0, 45)}, animationspeed.Normal, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+
     else
+        -- ── RESTORE ──────────────────────────────────────────
+        self.baseAnchor.Visible = true
+
+        -- Restore vị trí cũ
+        if self._preMinimizePos then
+            self.baseAnchor.Position = self._preMinimizePos
+        end
+
+        -- Blur bật lại
         if self._skibidiBlur then
             self._skibidiBlur:SetEnabled(true)
         end
-        CreateTween(self.container, {Size = UDim2.new(0, self.container.AbsoluteSize.X, 0, self._originalHeight)}, animationspeed.Slow)
-        task.delay(0.1, function()
-            CreateTween(self.mainContent, {Size = UDim2.new(1, 0, 1, -46)}, animationspeed.Normal)
-        end)
         if self.resizeBtn then
             self.resizeBtn.Visible = true
         end
+
+        -- Container bung ra
+        self.container.Size = UDim2.new(0, 0, 0, 0)
+        self.container.BackgroundTransparency = 0.15
+        CreateTween(self.container, {
+            Size = UDim2.new(0, self.baseAnchor.AbsoluteSize.X, 0, self._originalHeight or s.v0rtexd.Height)
+        }, animationspeed.Normal, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+
+        task.delay(0.05, function()
+            CreateTween(self.mainContent, {Size = UDim2.new(1, 0, 1, -48)}, animationspeed.Normal)
+        end)
     end
 end
 
