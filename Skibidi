@@ -9,37 +9,39 @@ local hs = game:GetService("HttpService")
 local n = "skibidi"
 
 local c = {
-    Background = Color3.fromRGB(18, 18, 22), 
-    Secondary = Color3.fromRGB(28, 28, 34),  
+    Background = Color3.fromRGB(16, 16, 20), 
+    Secondary = Color3.fromRGB(24, 24, 28),  
     Border = Color3.fromRGB(110, 150, 255),  
-    Text = Color3.fromRGB(240, 240, 245),
-    TextDark = Color3.fromRGB(150, 150, 160),
-    TextFade = Color3.fromRGB(18, 18, 22),
-    Accent = Color3.fromRGB(110, 150, 255), 
+    Text = Color3.fromRGB(240, 240, 240),
+    TextDark = Color3.fromRGB(130, 130, 140),
+    TextFade = Color3.fromRGB(16, 16, 20),
+    Accent = Color3.fromRGB(110, 150, 255),  
     Toggle = {
         Enabled = Color3.fromRGB(110, 150, 255),
-        Disabled = Color3.fromRGB(38, 38, 46),
-        Circle = Color3.fromRGB(240, 240, 245)
+        Disabled = Color3.fromRGB(35, 35, 40),
+        Circle = Color3.fromRGB(255, 255, 255)
     },
     Notification = {
-        Background = Color3.fromRGB(22, 22, 28),
+        Background = Color3.fromRGB(18, 18, 22),
         Border = Color3.fromRGB(110, 150, 255),
         Timer = Color3.fromRGB(110, 150, 255)
     }
 }
 
 local s = {
-    v0rtexd = {Width = 690, Height = 446},
-    Minv0rtexd = {Width = 500, Height = 300},
-    Maxv0rtexd = {Width = 1200, Height = 800},
+    
+    v0rtexd = {Width = 580, Height = 360},
+    Minv0rtexd = {Width = 480, Height = 300},
+    Maxv0rtexd = {Width = 850, Height = 600},
+    
     Toggle = {Width = 38, Height = 21, Circle = 13},
-    Button = {Height = 39},
-    Slider = {Height = 46},
-    Dropdown = {Height = 39, OptionHeight = 30},
-    Tab = {Width = 135, Height = 35},
+    Button = {Height = 35},
+    Slider = {Height = 44},
+    Dropdown = {Height = 35, OptionHeight = 28},
+    Tab = {Width = 135, Height = 32},
     ColorPicker = {Width = 180, Height = 160},
     Notification = {Width = 220, Height = 70},
-    TextBox = {Height = 39, InputWidth = 150}
+    TextBox = {Height = 35, InputWidth = 140}
 }
 
 local f = {
@@ -591,182 +593,264 @@ end
 
 function Library:_CreateMainv0rtexd()
     self.screenGui = CreateInstance("ScreenGui", {
-        Name = n,
+        Name = n .. "Masterpiece_X",
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         ResetOnSpawn = false
     })
 
     self.container = CreateInstance("Frame", {
-        Name = "Container",
+        Name = "MainContainer",
         BackgroundColor3 = c.Background,
-        BackgroundTransparency = 0.05,
+        BackgroundTransparency = 0.12, 
         Position = UDim2.new(0.5, -s.v0rtexd.Width / 2, 0.5, -s.v0rtexd.Height / 2),
         BorderSizePixel = 0,
         Size = UDim2.new(0, s.v0rtexd.Width, 0, s.v0rtexd.Height),
         ClipsDescendants = false,
         Parent = self.screenGui
     })
-    CreateCorner(self.container, 5)
-    CreateStroke(self.container)
+    CreateCorner(self.container, 8)
+
+    CreateInstance("UIGradient", {
+        Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200))
+        },
+        Rotation = 120,
+        Transparency = NumberSequence.new{
+            NumberSequenceKeypoint.new(0, 0.90), 
+            NumberSequenceKeypoint.new(1, 0.96)
+        },
+        Parent = self.container
+    })
+
+    local outlineStr = CreateStroke(self.container, c.Border, 0.2)
+    outlineStr.Thickness = 1.2 
+
+    local glowGradients = CreateInstance("ImageLabel", {
+        Name = "GlowFX",
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        Size = UDim2.new(1, 26, 1, 26),
+        Image = "rbxassetid://8068653048", 
+        ScaleType = Enum.ScaleType.Slice,
+        SliceCenter = Rect.new(15, 15, 175, 175),
+        SliceScale = 1.15,
+        ImageColor3 = c.Accent, 
+        ImageTransparency = 0.45,
+        ZIndex = -1,
+        Parent = self.container
+    })
+
+    local heavyShadow = CreateInstance("ImageLabel", {
+        Name = "DropShadow",
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0.5, 0, 0.5, 4),
+        Size = UDim2.new(1, 35, 1, 35),
+        Image = "rbxassetid://5028857084",
+        ScaleType = Enum.ScaleType.Slice,
+        SliceCenter = Rect.new(24, 24, 276, 276),
+        ImageTransparency = 0.35,
+        ZIndex = -2,
+        Parent = self.container
+    })
 
     self.topBar = CreateInstance("Frame", {
         Name = "TopBar",
         BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 0, 45),
+        Size = UDim2.new(1, 0, 0, 40),
         Parent = self.container
     })
 
+    local colorR, colorG, colorB = math.floor(c.Accent.R*255), math.floor(c.Accent.G*255), math.floor(c.Accent.B*255)
     self.titleLabel = CreateInstance("TextLabel", {
         Name = "Title",
-        FontFace = f.Regular,
-        TextColor3 = c.Text,
-        Text = self.title,
+        FontFace = f.Bold,
+        Text = "<font color=\"rgb("..colorR..","..colorG..","..colorB..")\">X_Master </font> Project",
+        RichText = true,
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 10, 0, 10),
+        Position = UDim2.new(0, 12, 0, 0),
         TextXAlignment = Enum.TextXAlignment.Left,
-        TextSize = textsize.Title,
-        Size = UDim2.new(0, 150, 0, 25),
+        TextSize = 14,
+        Size = UDim2.new(0, 300, 1, 0),
+        TextColor3 = c.Text,
         Parent = self.topBar
     })
 
-    self:_Createv0rtexdControls()
-
-    CreateInstance("Frame", {
-        Name = "Header",
+    local separator = CreateInstance("Frame", {
         BackgroundColor3 = c.Border,
-        Position = UDim2.new(0, 0, 0, 45),
+        BackgroundTransparency = 0.6,
         BorderSizePixel = 0,
-        Size = UDim2.new(1, 0, 0, 1),
+        Position = UDim2.new(0, 12, 1, -1),
+        Size = UDim2.new(1, -24, 0, 1),
+        Parent = self.topBar
+    })
+
+    self.mainContent = CreateInstance("Frame", {
+        Name = "MainContent",
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 0, 0, 40),
+        Size = UDim2.new(1, 0, 1, -40),
+        ClipsDescendants = true,
         Parent = self.container
     })
 
+    self:_Createv0rtexdControls()
     self:_CreateContentArea()
     MakeDraggable(self.container, self.topBar)
 
     local player = plr.LocalPlayer
     self.screenGui.Parent = player:WaitForChild("PlayerGui")
-    self._skibidiBlur = skibidiBlur.new(self.container)
+    self._acrylicBlur = AcrylicBlur.new(self.container)
 end
 
 function Library:_Createv0rtexdControls()
-    local minimizeBtn = CreateInstance("ImageLabel", {
-        Name = "Minimize",
+    local btnContainer = CreateInstance("Frame", {
+        BackgroundTransparency = 1,
+        Position = UDim2.new(1, -65, 0, 12),
+        Size = UDim2.new(0, 50, 0, 16),
+        Parent = self.topBar
+    })
+    CreateListLayout(btnContainer, 10, Enum.SortOrder.LayoutOrder, Enum.FillDirection.Horizontal)
+
+    local minimizeBtn = CreateInstance("ImageButton", {
         ImageColor3 = c.TextDark,
         Image = "rbxassetid://82603981310445",
         BackgroundTransparency = 1,
-        AnchorPoint = Vector2.new(1, 0),
-        Position = UDim2.new(1, -35, 0, 15),
-        Size = UDim2.new(0, 15, 0, 15),
-        Parent = self.topBar
+        Size = UDim2.new(0, 16, 0, 16),
+        LayoutOrder = 1,
+        Parent = btnContainer
     })
-
-    local minimizeClickArea = CreateInstance("TextButton", {
-        Name = "TextButton",
-        Text = "",
-        Rotation = 0.01,
-        BackgroundTransparency = 1,
-        Size = UDim2.new(0, 21, 0, 15),
-        Parent = minimizeBtn
-    })
-
-    minimizeClickArea.MouseButton1Click:Connect(function()
-        self:_ToggleMinimize()
-    end)
-
-    minimizeBtn.MouseEnter:Connect(function()
-        CreateTween(minimizeBtn, {ImageColor3 = c.Text}, animationspeed.Fast)
-    end)
-
-    minimizeBtn.MouseLeave:Connect(function()
-        CreateTween(minimizeBtn, {ImageColor3 = c.TextDark}, animationspeed.Fast)
-    end)
+    minimizeBtn.MouseButton1Click:Connect(function() self:_ToggleMinimize() end)
+    minimizeBtn.MouseEnter:Connect(function() CreateTween(minimizeBtn, {ImageColor3 = c.Accent}, animationspeed.Fast) end)
+    minimizeBtn.MouseLeave:Connect(function() CreateTween(minimizeBtn, {ImageColor3 = c.TextDark}, animationspeed.Fast) end)
 
     local closeBtn = CreateInstance("ImageButton", {
-        Name = "Close",
         ImageColor3 = c.TextDark,
         Image = "rbxassetid://119943770201674",
         BackgroundTransparency = 1,
-        AnchorPoint = Vector2.new(1, 0),
-        Position = UDim2.new(1, -10, 0, 15),
-        Size = UDim2.new(0, 15, 0, 15),
-        Parent = self.topBar
+        Size = UDim2.new(0, 14, 0, 14),
+        LayoutOrder = 2,
+        Parent = btnContainer
     })
-
-    closeBtn.MouseButton1Click:Connect(function()
-        self:Destroy()
-    end)
-
-    closeBtn.MouseEnter:Connect(function()
-        CreateTween(closeBtn, {ImageColor3 = Color3.fromRGB(255, 100, 100)}, animationspeed.Fast)
-    end)
-
-    closeBtn.MouseLeave:Connect(function()
-        CreateTween(closeBtn, {ImageColor3 = c.TextDark}, animationspeed.Fast)
-    end)
+    closeBtn.MouseButton1Click:Connect(function() self:Destroy() end)
+    closeBtn.MouseEnter:Connect(function() CreateTween(closeBtn, {ImageColor3 = Color3.fromRGB(240, 70, 70)}, animationspeed.Fast) end)
+    closeBtn.MouseLeave:Connect(function() CreateTween(closeBtn, {ImageColor3 = c.TextDark}, animationspeed.Fast) end)
 
     local resizeBtn = CreateInstance("ImageButton", {
-        Name = "Resize",
-        ImageColor3 = Color3.fromRGB(110, 110, 110),
+        Name = "ResizerArea",
+        ImageColor3 = c.Accent,
+        ImageTransparency = 0.5,
         Image = "rbxassetid://120997033468887",
         BackgroundTransparency = 1,
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(1, -5, 1, -5),
-        Size = UDim2.new(0, 62, 0, 60),
-        BorderSizePixel = 0,
+        AnchorPoint = Vector2.new(1, 1),
+        Position = UDim2.new(1, -2, 1, -2),
+        Size = UDim2.new(0, 16, 0, 16),
+        ZIndex = 50,
         Parent = self.container
     })
-
     self.resizeBtn = resizeBtn
     self:_SetupSmartResize(resizeBtn)
 end
 
 function Library:_CreateContentArea()
-    self.mainContent = CreateInstance("Frame", {
-        Name = "MainContent",
+    
+    local leftSidebar = CreateInstance("Frame", {
+        Name = "SidebarArea",
+        BackgroundColor3 = c.Secondary,
+        BackgroundTransparency = 0.4,
+        Position = UDim2.new(0, 12, 0, 8),
+        Size = UDim2.new(0, 150, 1, -16),
+        Parent = self.mainContent
+    })
+    CreateCorner(leftSidebar, 6)
+    CreateStroke(leftSidebar, Color3.fromRGB(50, 50, 55), 0)
+
+    local searchBar = CreateInstance("Frame", {
+        Name = "BottomSearch",
+        BackgroundColor3 = Color3.fromRGB(20, 20, 24),
+        AnchorPoint = Vector2.new(0, 1),
+        Position = UDim2.new(0, 6, 1, -6),
+        Size = UDim2.new(1, -12, 0, 30),
+        Parent = leftSidebar
+    })
+    CreateCorner(searchBar, 4)
+    CreateStroke(searchBar, c.Border, 0.5)
+    
+    local iconSearch = CreateInstance("ImageLabel", {
+        Image = "rbxassetid://8154282545",
+        ImageColor3 = c.TextDark,
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 0, 0, 46),
-        Size = UDim2.new(1, 0, 1, -46),
-        ClipsDescendants = true,
-        Parent = self.container
+        Position = UDim2.new(0, 8, 0.5, -7),
+        Size = UDim2.new(0, 14, 0, 14),
+        Parent = searchBar
+    })
+
+    local inputSearch = CreateInstance("TextBox", {
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 28, 0, 0),
+        Size = UDim2.new(1, -30, 1, 0),
+        Font = f.Regular,
+        PlaceholderColor3 = c.TextDark,
+        PlaceholderText = "Search...",
+        Text = "",
+        TextColor3 = c.Text,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        Parent = searchBar
     })
 
     self.sectionsContainer = CreateInstance("ScrollingFrame", {
-        Name = "SectionsContainer",
-        ScrollBarThickness = 0,
+        Name = "TabScroller",
+        ScrollBarThickness = 2,
+        ScrollBarImageColor3 = c.Border,
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 0, 0, 0),
-        Size = UDim2.new(0, 165, 1, 0),
+        Position = UDim2.new(0, 0, 0, 5),
+        Size = UDim2.new(1, 0, 1, -45),
         CanvasSize = UDim2.new(0, 0, 0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
         ScrollingDirection = Enum.ScrollingDirection.Y,
-        Parent = self.mainContent
+        Parent = leftSidebar
     })
-    CreateListLayout(self.sectionsContainer, 0, Enum.SortOrder.LayoutOrder)
-    CreatePadding(self.sectionsContainer, 5, 5, 5, 5)
+    CreateListLayout(self.sectionsContainer, 4, Enum.SortOrder.LayoutOrder)
+    CreatePadding(self.sectionsContainer, 2, 4, 8, 8)
 
-    CreateInstance("Frame", {
-        Name = "Separator",
-        BackgroundColor3 = c.Border,
-        Position = UDim2.new(0, 165, 0, 0),
-        BorderSizePixel = 0,
-        Size = UDim2.new(0, 1, 1, 0),
-        Parent = self.mainContent
-    })
+    inputSearch:GetPropertyChangedSignal("Text"):Connect(function()
+        local txt = string.lower(inputSearch.Text)
+        for _, t in pairs(self.sectionsContainer:GetChildren()) do
+            if t.ClassName == "Frame" and t.Name:match("Section_") then
+                local foundTab = false
+                local internalList = t:FindFirstChild("TabsContainer")
+                if internalList then
+                    for _, childTab in ipairs(internalList:GetChildren()) do
+                        if childTab.ClassName == "Frame" then
+                            local tabMatch = childTab.Name:lower():match(txt)
+                            childTab.Visible = tabMatch or (txt == "")
+                            if tabMatch then foundTab = true end
+                        end
+                    end
+                end
+                
+                t.Visible = foundTab or (txt == "") or t.Name:lower():match(txt) 
+            end
+        end
+    end)
 
     self.contentContainer = CreateInstance("ScrollingFrame", {
-        Name = "ContentContainer",
+        Name = "SectionsRender",
         ScrollBarThickness = 3,
-        ScrollBarImageColor3 = Color3.fromRGB(60, 60, 60),
+        ScrollBarImageColor3 = Color3.fromRGB(45, 45, 55),
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 166, 0, 0),
-        Size = UDim2.new(1, -166, 1, 0),
+        Position = UDim2.new(0, 172, 0, 6),
+        Size = UDim2.new(1, -182, 1, -12),
         CanvasSize = UDim2.new(0, 0, 0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
         ScrollingDirection = Enum.ScrollingDirection.Y,
         Parent = self.mainContent
     })
     CreateListLayout(self.contentContainer, 8, Enum.SortOrder.LayoutOrder)
-    CreatePadding(self.contentContainer, 10, 10, 15, 15)
+    CreatePadding(self.contentContainer, 2, 8, 2, 8)
 end
 
 function Library:_SetupSmartResize(handle)
