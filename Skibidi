@@ -1126,9 +1126,7 @@ function Library:_SetupSmartResize(handle)
             connection = input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     resizing = false
-                    if not handle.MouseHoverEnter then
-                        CreateTween(handle, {ImageColor3 = c.Border, ImageTransparency = 0.5}, animationspeed.Fast)
-                    end
+                    CreateTween(handle, {ImageColor3 = c.Border, ImageTransparency = 0.5}, animationspeed.Fast)
                     if connection then
                         connection:Disconnect()
                     end
