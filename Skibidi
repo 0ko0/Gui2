@@ -403,7 +403,7 @@ function Library.new(title, subtitle, logoImage, configFolder)
     local self = setmetatable({}, Library)
     self.title = title or "text"
     self.subtitle = subtitle or " | text"
-    self.logoImage = logoImage or "rbxassetid://128185233852701"
+    self.logoImage = logoImage or "rbxassetid://105048918205765"
     self.configFolder = configFolder or title or "skibidi"
     self.sections = {}
     self.currentTab = nil
@@ -598,7 +598,6 @@ function Library:_CreateMainv0rtexd()
         ResetOnSpawn = false
     })
 
-    -- Base anchor (draggable root)
     self.baseAnchor = CreateInstance("Frame", {
         Name = "BaseAnchor",
         BackgroundTransparency = 1,
@@ -607,11 +606,10 @@ function Library:_CreateMainv0rtexd()
         Parent = self.screenGui
     })
 
-    -- Drop shadow
     CreateInstance("ImageLabel", {
         Name = "SupremeShadow",
         BackgroundTransparency = 1,
-        Position = UDim2.new(0.5, 0, 0.5, 6),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
         Size = UDim2.new(1, 46, 1, 46),
         AnchorPoint = Vector2.new(0.5, 0.5),
         Image = "rbxassetid://5028857084",
@@ -623,7 +621,6 @@ function Library:_CreateMainv0rtexd()
         Parent = self.baseAnchor
     })
 
-    -- Accent glow aura
     CreateInstance("ImageLabel", {
         Name = "GlowAura",
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -640,7 +637,6 @@ function Library:_CreateMainv0rtexd()
         Parent = self.baseAnchor
     })
 
-    -- Animated gradient border ring
     local borderRing = CreateInstance("Frame", {
         Name = "BorderRing",
         BackgroundTransparency = 1,
@@ -676,7 +672,6 @@ function Library:_CreateMainv0rtexd()
         end
     end)
 
-    -- Main container (glassmorphism)
     self.container = CreateInstance("Frame", {
         Name = "skibidiContainer",
         BackgroundColor3 = c.Background,
@@ -690,7 +685,6 @@ function Library:_CreateMainv0rtexd()
     })
     CreateCorner(self.container, 8)
 
-    -- Glass surface gradient
     CreateInstance("UIGradient", {
         Name = "SurfaceTint",
         Color = ColorSequence.new{
@@ -706,7 +700,6 @@ function Library:_CreateMainv0rtexd()
         Parent = self.container
     })
 
-    -- Top shimmer highlight
     CreateInstance("Frame", {
         Name = "TopShimmer",
         BackgroundColor3 = Color3.fromRGB(255, 255, 255),
@@ -718,7 +711,6 @@ function Library:_CreateMainv0rtexd()
         Parent = self.container
     })
 
-    -- ── TopBar (48px, chứa 2 dòng title) ──────────────────────
     self.topBar = CreateInstance("Frame", {
         Name = "TopHeaderBar",
         BackgroundTransparency = 1,
@@ -727,7 +719,6 @@ function Library:_CreateMainv0rtexd()
         Parent = self.container
     })
 
-    -- Header frosted background
     local headerBg = CreateInstance("Frame", {
         Name = "HeaderBg",
         BackgroundColor3 = Color3.fromRGB(18, 20, 28),
@@ -750,7 +741,6 @@ function Library:_CreateMainv0rtexd()
         Parent = headerBg
     })
 
-    -- Title dòng 1: MÀU TRẮNG (tên chính) — position trên
     self.titleLabel = CreateInstance("TextLabel", {
         Name = "TitleMain",
         FontFace = f.Bold,
@@ -766,7 +756,6 @@ function Library:_CreateMainv0rtexd()
         Parent = self.topBar
     })
 
-    -- Title dòng 2: MÀU XANH ACCENT (subtitle) — position dưới
     self.subtitleLabel = CreateInstance("TextLabel", {
         Name = "TitleSub",
         FontFace = f.Regular,
@@ -782,7 +771,6 @@ function Library:_CreateMainv0rtexd()
         Parent = self.topBar
     })
 
-    -- Divider line với gradient fade 2 đầu
     local divider = CreateInstance("Frame", {
         Name = "LineDivision",
         BackgroundColor3 = c.Accent,
@@ -809,7 +797,6 @@ function Library:_CreateMainv0rtexd()
         Parent = divider
     })
 
-    -- Main body (bắt đầu sau topBar 48px)
     self.mainContent = CreateInstance("Frame", {
         Name = "BodyStructure",
         BackgroundTransparency = 1,
@@ -840,7 +827,6 @@ function Library:_Createv0rtexdControls()
     })
     CreateListLayout(LayoutCtrls, 12, Enum.SortOrder.LayoutOrder, Enum.FillDirection.Horizontal)
 
-    -- Minimize button
     local minimizeBtn = CreateInstance("ImageButton", {
         ImageColor3 = c.TextDark,
         Image = "rbxassetid://82603981310445",
@@ -858,7 +844,6 @@ function Library:_Createv0rtexdControls()
         CreateTween(minimizeBtn, {ImageColor3 = c.TextDark, Size = UDim2.new(0, 15, 0, 15)}, animationspeed.Fast)
     end)
 
-    -- Close button
     local closeBtn = CreateInstance("ImageButton", {
         ImageColor3 = c.TextDark,
         Image = "rbxassetid://119943770201674",
@@ -876,7 +861,6 @@ function Library:_Createv0rtexdControls()
         CreateTween(closeBtn, {ImageColor3 = c.TextDark, Size = UDim2.new(0, 13, 0, 13)}, animationspeed.Fast)
     end)
 
-    -- Resize handle (góc dưới phải)
     local resizeBtn = CreateInstance("ImageButton", {
         Name = "SmartHandleSize",
         ImageColor3 = c.Border,
@@ -902,7 +886,6 @@ end
 
 function Library:_CreateContentArea()
 
-    -- ── Sidebar ──────────────────────────────────────────────────
     local SidebarEngine = CreateInstance("Frame", {
         Name = "SidebarModule",
         BackgroundColor3 = Color3.fromRGB(15, 17, 24),
@@ -916,7 +899,6 @@ function Library:_CreateContentArea()
     CreateCorner(SidebarEngine, 6)
     CreateStroke(SidebarEngine, Color3.fromRGB(45, 50, 70), 0)
 
-    -- Sidebar accent top line
     CreateInstance("Frame", {
         Name = "SidebarAccentLine",
         BackgroundColor3 = c.Accent,
@@ -928,7 +910,6 @@ function Library:_CreateContentArea()
         Parent = SidebarEngine
     })
 
-    -- ── Search bar: ĐẦU SIDEBAR (trên tabs) ─────────────────────
     local SearchWrapper = CreateInstance("Frame", {
         Name = "TopSearchBar",
         BackgroundColor3 = Color3.fromRGB(10, 11, 16),
@@ -942,7 +923,6 @@ function Library:_CreateContentArea()
     CreateCorner(SearchWrapper, 5)
     local sStroke = CreateStroke(SearchWrapper, Color3.fromRGB(50, 55, 75), 0)
 
-    -- Search icon
     local searchIcon = CreateInstance("ImageLabel", {
         Name = "SearchIcon",
         Image = "rbxassetid://8154282545",
@@ -955,7 +935,6 @@ function Library:_CreateContentArea()
         Parent = SearchWrapper
     })
 
-    -- Search input
     local sInput = CreateInstance("TextBox", {
         Name = "SearchInput",
         BackgroundTransparency = 1,
@@ -973,7 +952,6 @@ function Library:_CreateContentArea()
         Parent = SearchWrapper
     })
 
-    -- Clear (×) button
     local clearBtn = CreateInstance("TextButton", {
         Name = "ClearBtn",
         Text = "×",
@@ -999,7 +977,6 @@ function Library:_CreateContentArea()
         CreateTween(clearBtn, {TextColor3 = c.TextDark}, animationspeed.Fast)
     end)
 
-    -- Result count badge
     local resultBadge = CreateInstance("TextLabel", {
         Name = "ResultBadge",
         FontFace = f.Regular,
@@ -1017,7 +994,6 @@ function Library:_CreateContentArea()
     })
     CreateCorner(resultBadge, 3)
 
-    -- Focus / blur effects
     sInput.Focused:Connect(function()
         CreateTween(sStroke, {Color = c.Accent, Transparency = 0}, animationspeed.Fast)
         CreateTween(searchIcon, {ImageColor3 = c.Accent}, animationspeed.Fast)
@@ -1031,7 +1007,6 @@ function Library:_CreateContentArea()
         end
     end)
 
-    -- Debounce search 120ms + highlight match + badge
     local searchDebounce = nil
     local function RunSearch(rawText)
         local wordSearch = rawText:lower()
@@ -1049,7 +1024,7 @@ function Library:_CreateContentArea()
                             if wordSearch == "" then
                                 tabItem.Visible = true
                                 sectionHasMatch = true
-                                -- reset highlight
+                                
                                 local lbl = tabItem:FindFirstChild("TabText")
                                 if lbl then CreateTween(lbl, {TextColor3 = c.TextDark}, animationspeed.Fast) end
                             else
@@ -1086,7 +1061,6 @@ function Library:_CreateContentArea()
         end)
     end)
 
-    -- ── Tabs scroll (bắt đầu dưới search bar) ───────────────────
     self.sectionsContainer = CreateInstance("ScrollingFrame", {
         Name = "ScrollOfTabs",
         ScrollBarThickness = 1,
@@ -1102,8 +1076,6 @@ function Library:_CreateContentArea()
     CreateListLayout(self.sectionsContainer, 3, Enum.SortOrder.LayoutOrder)
     CreatePadding(self.sectionsContainer, 2, 5, 5, 5)
 
-    -- ── Content panel (bên phải) ─────────────────────────────────
-    -- Background depth layer
     local contentBg = CreateInstance("Frame", {
         Name = "ContentBg",
         BackgroundColor3 = Color3.fromRGB(14, 15, 20),
@@ -1182,10 +1154,9 @@ function Library:_ToggleMinimize()
     self.minimized = not self.minimized
 
     if self.minimized then
-        -- Lưu vị trí hiện tại trước khi ẩn
+        
         self._preMinimizePos = self.baseAnchor.Position
 
-        -- Blur tắt
         if self._skibidiBlur then
             self._skibidiBlur:SetEnabled(false)
         end
@@ -1193,7 +1164,6 @@ function Library:_ToggleMinimize()
             self.resizeBtn.Visible = false
         end
 
-        -- Thu nhỏ container về 0
         CreateTween(self.container, {
             Size = UDim2.new(0, 0, 0, 0),
             BackgroundTransparency = 1
@@ -1202,7 +1172,6 @@ function Library:_ToggleMinimize()
         task.wait(animationspeed.Normal + 0.05)
         self.baseAnchor.Visible = false
 
-        -- ── Nút tròn nổi ─────────────────────────────────
         if not self._floatBtn then
             local btn = CreateInstance("ImageButton", {
                 Name = "FloatMinimizeBtn",
@@ -1212,14 +1181,13 @@ function Library:_ToggleMinimize()
                 BackgroundTransparency = 0,
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 Position = UDim2.new(0.5, 0, 0.5, 0),
-                Size = UDim2.new(0, 0, 0, 0),  -- bắt đầu từ 0 để tween vào
+                Size = UDim2.new(0, 0, 0, 0),  
                 ZIndex = 999,
                 Parent = self.screenGui
             })
             CreateCorner(btn, 100)
             CreateStroke(btn, c.Border, 0)
-
-            -- Pulse ring (hiệu ứng vòng sóng xung quanh nút)
+          
             local ring = CreateInstance("Frame", {
                 Name = "PulseRing",
                 BackgroundTransparency = 1,
@@ -1238,13 +1206,12 @@ function Library:_ToggleMinimize()
                 Parent = ring
             })
 
-            -- Pulse animation loop
             local pulseRunning = true
             task.spawn(function()
                 while pulseRunning and ring.Parent do
                     CreateTween(ring, {Size = UDim2.new(0, 62, 0, 62)}, 0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
                     CreateTween(ring, {BackgroundTransparency = 1}, 0.8)
-                    -- tìm UIStroke trong ring
+                    
                     local rs2 = ring:FindFirstChildWhichIsA("UIStroke")
                     if rs2 then
                         CreateTween(rs2, {Transparency = 1}, 0.8)
@@ -1257,7 +1224,6 @@ function Library:_ToggleMinimize()
                 end
             end)
 
-            -- Hover effect
             btn.MouseEnter:Connect(function()
                 CreateTween(btn, {BackgroundColor3 = c.Secondary, Size = UDim2.new(0, 50, 0, 50)}, animationspeed.Fast)
             end)
@@ -1265,7 +1231,6 @@ function Library:_ToggleMinimize()
                 CreateTween(btn, {BackgroundColor3 = c.Background, Size = UDim2.new(0, 45, 0, 45)}, animationspeed.Fast)
             end)
 
-            -- Draggable float button
             local fDragging = false
             local fDragStart, fStartPos
             btn.InputBegan:Connect(function(input)
@@ -1295,7 +1260,6 @@ function Library:_ToggleMinimize()
                 end
             end)
 
-            -- Click restore
             btn.MouseButton1Click:Connect(function()
                 if not fDragging then
                     pulseRunning = false
@@ -1310,27 +1274,23 @@ function Library:_ToggleMinimize()
             self._floatRing = ring
         end
 
-        -- Tween nút tròn bung ra từ trung tâm
         CreateTween(self._floatBtn, {Size = UDim2.new(0, 45, 0, 45)}, animationspeed.Normal, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
     else
-        -- ── RESTORE ──────────────────────────────────────────
+        
         self.baseAnchor.Visible = true
-
-        -- Restore vị trí cũ
+        
         if self._preMinimizePos then
             self.baseAnchor.Position = self._preMinimizePos
         end
-
-        -- Blur bật lại
+        
         if self._skibidiBlur then
             self._skibidiBlur:SetEnabled(true)
         end
         if self.resizeBtn then
             self.resizeBtn.Visible = true
         end
-
-        -- Container bung ra
+       
         self.container.Size = UDim2.new(0, 0, 0, 0)
         self.container.BackgroundTransparency = 0.15
         CreateTween(self.container, {
