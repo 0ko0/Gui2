@@ -168,7 +168,7 @@ local function MakeDraggable(frame, handle)
     handle.InputBegan:Connect(OnInputBegan)
     handle.InputChanged:Connect(OnInputChanged)
 
-    ui.InputChanged:Connect(function(input)
+    local dragConn = ui.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - dragStart
             frame.Position = UDim2.new(
@@ -179,6 +179,7 @@ local function MakeDraggable(frame, handle)
             )
         end
     end)
+    table.insert(Connections, dragConn)
 end
 
 local function DisconnectAll()
@@ -495,9 +496,13 @@ function Library:Notify(config)
     CreateTween(notification, {Position = UDim2.new(0, 0, 0, 0)}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
     CreateTween(timerBar, {Size = UDim2.new(0, 0, 0, 3)}, duration, Enum.EasingStyle.Linear)
     task.delay(duration, function()
+        if not notification.Parent then return end
         CreateTween(notification, {Position = UDim2.new(1, 20, 0, 0)}, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
-        task.wait(0.3)
-        notification:Destroy()
+        task.delay(0.32, function()
+            if notification.Parent then
+                notification:Destroy()
+            end
+        end)
     end)
     return notification
 end
@@ -573,7 +578,7 @@ function Library:_SetupMobileSupport()
         end
     end)
     
-    ui.InputChanged:Connect(function(input)
+    local mobileConn = ui.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
             local delta = input.Position - dragStart
             mobileButton.Position = UDim2.new(
@@ -584,6 +589,7 @@ function Library:_SetupMobileSupport()
             )
         end
     end)
+    table.insert(Connections, mobileConn)
     
     self._mobileToggle = mobileButton
     
@@ -664,14 +670,13 @@ function Library:_CreateMainv0rtexd()
         Rotation = 0,
         Parent = animStroke
     })
-    task.spawn(function()
-        local angle = 0
-        while self.baseAnchor and self.baseAnchor.Parent do
-            angle = (angle + 0.8) % 360
-            strokeGrad.Rotation = angle
-            task.wait(0.016)
-        end
+    local angle = 0
+    local gradConn = rs.RenderStepped:Connect(function()
+        if not self.baseAnchor or not self.baseAnchor.Parent then return end
+        angle = (angle + 0.8) % 360
+        strokeGrad.Rotation = angle
     end)
+    table.insert(Connections, gradConn)
 
     self.container = CreateInstance("Frame", {
         Name = "skibidiContainer",
@@ -722,7 +727,7 @@ function Library:_CreateMainv0rtexd()
 
     local headerBg = CreateInstance("Frame", {
         Name = "HeaderBg",
-        BackgroundColor3 = Color3.fromRGB(18, 20, 28),
+        BackgroundColor3 = c.Secondary,
         BackgroundTransparency = 0.35,
         BorderSizePixel = 0,
         Size = UDim2.new(1, 0, 1, 0),
@@ -889,7 +894,7 @@ function Library:_CreateContentArea()
 
     local SidebarEngine = CreateInstance("Frame", {
         Name = "SidebarModule",
-        BackgroundColor3 = Color3.fromRGB(15, 17, 24),
+        BackgroundColor3 = c.Secondary,
         BackgroundTransparency = 0.35,
         Position = UDim2.new(0, 8, 0, 8),
         Size = UDim2.new(0, 160, 1, -16),
@@ -898,7 +903,7 @@ function Library:_CreateContentArea()
         Parent = self.mainContent
     })
     CreateCorner(SidebarEngine, 6)
-    CreateStroke(SidebarEngine, Color3.fromRGB(45, 50, 70), 0)
+    CreateStroke(SidebarEngine, c.Border, 0.7)
 
     CreateInstance("Frame", {
         Name = "SidebarAccentLine",
@@ -913,7 +918,7 @@ function Library:_CreateContentArea()
 
     local SearchWrapper = CreateInstance("Frame", {
         Name = "TopSearchBar",
-        BackgroundColor3 = Color3.fromRGB(10, 11, 16),
+        BackgroundColor3 = c.Background,
         BackgroundTransparency = 0.15,
         Position = UDim2.new(0, 6, 0, 7),
         Size = UDim2.new(1, -12, 0, 27),
@@ -922,7 +927,7 @@ function Library:_CreateContentArea()
         Parent = SidebarEngine
     })
     CreateCorner(SearchWrapper, 5)
-    local sStroke = CreateStroke(SearchWrapper, Color3.fromRGB(50, 55, 75), 0)
+    local sStroke = CreateStroke(SearchWrapper, c.Border, 0.7)
 
     local searchIcon = CreateInstance("ImageLabel", {
         Name = "SearchIcon",
@@ -1002,7 +1007,7 @@ function Library:_CreateContentArea()
     end)
     sInput.FocusLost:Connect(function()
         if sInput.Text == "" then
-            CreateTween(sStroke, {Color = Color3.fromRGB(50, 55, 75), Transparency = 0}, animationspeed.Fast)
+            CreateTween(sStroke, {Color = c.Border, Transparency = 0.7}, animationspeed.Fast)
             CreateTween(searchIcon, {ImageColor3 = c.TextDark}, animationspeed.Fast)
             CreateTween(SearchWrapper, {BackgroundTransparency = 0.15}, animationspeed.Fast)
         end
@@ -1079,7 +1084,7 @@ function Library:_CreateContentArea()
 
     local contentBg = CreateInstance("Frame", {
         Name = "ContentBg",
-        BackgroundColor3 = Color3.fromRGB(14, 15, 20),
+        BackgroundColor3 = c.Secondary,
         BackgroundTransparency = 0.45,
         Position = UDim2.new(0, 175, 0, 8),
         Size = UDim2.new(1, -183, 1, -16),
@@ -1087,12 +1092,12 @@ function Library:_CreateContentArea()
         Parent = self.mainContent
     })
     CreateCorner(contentBg, 6)
-    CreateStroke(contentBg, Color3.fromRGB(38, 42, 58), 0)
+    CreateStroke(contentBg, c.Border, 0.7)
 
     self.contentContainer = CreateInstance("ScrollingFrame", {
         Name = "ActionElementsContainer",
         ScrollBarThickness = 2,
-        ScrollBarImageColor3 = Color3.fromRGB(70, 80, 120),
+        ScrollBarImageColor3 = c.Border,
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 175, 0, 8),
         Size = UDim2.new(1, -183, 1, -16),
@@ -1113,7 +1118,7 @@ function Library:_SetupSmartResize(handle)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             resizing = true
             resizeStart = input.Position
-            -- Resize baseAnchor (container luôn là 1,0,1,0 so với baseAnchor)
+            
             startSize = self.baseAnchor.AbsoluteSize
             self._originalHeight = startSize.Y
 
@@ -1132,18 +1137,18 @@ function Library:_SetupSmartResize(handle)
         end
     end)
 
-    ui.InputChanged:Connect(function(input)
+    local resizeConn = ui.InputChanged:Connect(function(input)
         if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - resizeStart
             local newWidth  = math.clamp(startSize.X + delta.X, self._minSize.X, self._maxSize.X)
             local newHeight = math.clamp(startSize.Y + delta.Y, self._minSize.Y, self._maxSize.Y)
 
-            -- Resize đúng vào baseAnchor; container tự fill theo UDim2(1,0,1,0)
             self.baseAnchor.Size = UDim2.new(0, newWidth, 0, newHeight)
             self._originalWidth  = newWidth
             self._originalHeight = newHeight
         end
     end)
+    table.insert(Connections, resizeConn)
 end
 
 function Library:_ToggleMinimize()
@@ -1167,7 +1172,7 @@ function Library:_ToggleMinimize()
             BackgroundTransparency = 1
         }, animationspeed.Normal, Enum.EasingStyle.Back, Enum.EasingDirection.In)
 
-        task.wait(animationspeed.Normal + 0.05)
+        task.delay(animationspeed.Normal + 0.05, function()
         self.baseAnchor.Visible = false
 
         if not self._floatBtn then
@@ -1275,9 +1280,9 @@ function Library:_ToggleMinimize()
         end
 
         CreateTween(self._floatBtn, {Size = UDim2.new(0, 45, 0, 45)}, animationspeed.Normal, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        end) 
 
     else
-        
         self.baseAnchor.Visible = true
         
         if self._preMinimizePos then
@@ -1291,12 +1296,10 @@ function Library:_ToggleMinimize()
             self.resizeBtn.Visible = true
         end
        
-        -- Restore kích thước baseAnchor về giá trị trước minimize
         local restoreW = self._originalWidth or s.v0rtexd.Width
         local restoreH = self._originalHeight or s.v0rtexd.Height
         self.baseAnchor.Size = UDim2.new(0, restoreW, 0, restoreH)
 
-        -- Container luôn fill 100% baseAnchor
         self.container.Size = UDim2.new(0, 0, 0, 0)
         self.container.BackgroundTransparency = 0.15
         CreateTween(self.container, {
@@ -1647,13 +1650,13 @@ function Library._CreateTab(section, name, icon)
 
     clickBtn.MouseEnter:Connect(function()
         if section._library.currentTab ~= tab then
-            CreateTween(tabBtn, {BackgroundTransparency = 0.7}, animationspeed.Fast)
+            CreateTween(tabBtn, {BackgroundTransparency = 0.85, BackgroundColor3 = c.Accent}, animationspeed.Fast)
         end
     end)
 
     clickBtn.MouseLeave:Connect(function()
         if section._library.currentTab ~= tab then
-            CreateTween(tabBtn, {BackgroundTransparency = 1}, animationspeed.Fast)
+            CreateTween(tabBtn, {BackgroundTransparency = 1, BackgroundColor3 = c.Secondary}, animationspeed.Fast)
         end
     end)
 
@@ -1719,22 +1722,25 @@ function Library._SelectTab(lib, tab, btn, stroke, icon, textLabel, textGradient
     
     if lib.currentTab then
         lib.currentTab.content.Visible = false
-        CreateTween(lib.currentTab.button, {BackgroundTransparency = 1}, animationspeed.Fast)
-        CreateTween(lib.currentTab.icon, {ImageColor3 = c.TextDark}, animationspeed.Fast)
+        CreateTween(lib.currentTab.button, {BackgroundTransparency = 1, BackgroundColor3 = c.Secondary}, animationspeed.Fast)
+        CreateTween(lib.currentTab.icon,   {ImageColor3 = c.TextDark}, animationspeed.Fast)
         lib.currentTab.stroke.Transparency = 1
-        
+        lib.currentTab.stroke.Color = c.Border
+
         if lib.currentTab.textGradient then
             lib.currentTab.textGradient.Enabled = true
         end
+        lib.currentTab.textLabel.TextColor3 = c.TextDark
     end
     
     lib.currentTab = tab
     tab.content.Visible = true
-    
-    CreateTween(btn, {BackgroundTransparency = 1}, animationspeed.Fast)
-    CreateTween(icon, {ImageColor3 = c.Text}, animationspeed.Fast)
-    stroke.Transparency = 1  
-    
+
+    CreateTween(btn,  {BackgroundTransparency = 0.55, BackgroundColor3 = c.Accent}, animationspeed.Fast)
+    CreateTween(icon, {ImageColor3 = c.Accent}, animationspeed.Fast)
+    stroke.Transparency = 0.6
+    stroke.Color = c.Accent
+
     if textGradient then
         textGradient.Enabled = false
     end
@@ -1742,18 +1748,38 @@ function Library._SelectTab(lib, tab, btn, stroke, icon, textLabel, textGradient
 end
 
 function Library._CreateContentSection(tab, name)
-    local section = CreateInstance("TextLabel", {
+    local wrapper = CreateInstance("Frame", {
         Name = "Section_" .. name,
-        FontFace = f.Regular,
-        TextColor3 = c.TextDark,
-        Text = name,
-        TextXAlignment = Enum.TextXAlignment.Left,
         BackgroundTransparency = 1,
-        TextSize = 15,
-        Size = UDim2.new(1, 0, 0, 25),
+        Size = UDim2.new(1, 0, 0, 28),
         Parent = tab.content
     })
-    return section
+
+    CreateInstance("Frame", {
+        Name = "SectionLine",
+        BackgroundColor3 = c.Accent,
+        BackgroundTransparency = 0.75,
+        BorderSizePixel = 0,
+        AnchorPoint = Vector2.new(0, 1),
+        Position = UDim2.new(0, 0, 1, -1),
+        Size = UDim2.new(1, 0, 0, 1),
+        Parent = wrapper
+    })
+
+    CreateInstance("TextLabel", {
+        Name = "SectionLabel",
+        FontFace = f.Regular,
+        TextColor3 = c.TextDark,
+        Text = name:upper(),
+        TextXAlignment = Enum.TextXAlignment.Left,
+        BackgroundTransparency = 1,
+        Position = UDim2.new(0, 4, 0, 0),
+        TextSize = textsize.Tiny,
+        Size = UDim2.new(1, -4, 1, 0),
+        Parent = wrapper
+    })
+
+    return wrapper
 end
 
 function Library._CreateParagraph(tab, config)
@@ -1839,7 +1865,8 @@ function Library._CreateSlider(tab, config)
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 10, 0, 5),
         TextSize = textsize.Normal,
-        Size = UDim2.new(0, 200, 0, 20),
+        Size = UDim2.new(1, -80, 0, 20),
+        TextTruncate = Enum.TextTruncate.AtEnd,
         Parent = frame
     })
 
@@ -1875,6 +1902,18 @@ function Library._CreateSlider(tab, config)
     })
     CreateCorner(sliderFill, 100)
 
+    local thumb = CreateInstance("Frame", {
+        Name = "Thumb",
+        BackgroundColor3 = Color3.new(1, 1, 1),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(1, 0, 0.5, 0),
+        Size = UDim2.new(0, 11, 0, 11),
+        ZIndex = 2,
+        Parent = sliderFill
+    })
+    CreateCorner(thumb, 100)
+    CreateStroke(thumb, c.Accent, 0.3)
+
     local dragging = false
 
     local function UpdateSlider(input)
@@ -1901,11 +1940,25 @@ function Library._CreateSlider(tab, config)
         end
     end)
 
-    ui.InputChanged:Connect(function(input)
+    local sliderHitbox = CreateInstance("TextButton", {
+        Text = "", BackgroundTransparency = 1,
+        Size = UDim2.new(1, 0, 1, 0), Parent = frame
+    })
+    sliderHitbox.MouseEnter:Connect(function()
+        CreateTween(frame, {BackgroundTransparency = 0.25}, animationspeed.Fast)
+    end)
+    sliderHitbox.MouseLeave:Connect(function()
+        if not dragging then
+            CreateTween(frame, {BackgroundTransparency = 0.4}, animationspeed.Fast)
+        end
+    end)
+
+    local sliderInputConn = ui.InputChanged:Connect(function(input)
         if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             UpdateSlider(input)
         end
     end)
+    table.insert(Connections, sliderInputConn)
 
     local methods = {
         SetValue = function(_, value)
@@ -1954,7 +2007,7 @@ function Library._CreateButton(tab, config)
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 10, 0.5, -10),
         TextSize = textsize.Normal,
-        Size = UDim2.new(0, 200, 0, 20),
+        Size = UDim2.new(1, -50, 0, 20),
         Parent = frame
     })
 
@@ -1979,10 +2032,19 @@ function Library._CreateButton(tab, config)
         Parent = frame
     })
 
-    button.MouseButton1Click:Connect(function()
-        CreateTween(frame, {BackgroundTransparency = 0.2}, animationspeed.Fast)
-        task.wait(0.1)
+    button.MouseEnter:Connect(function()
+        CreateTween(frame, {BackgroundTransparency = 0.25}, animationspeed.Fast)
+    end)
+
+    button.MouseLeave:Connect(function()
         CreateTween(frame, {BackgroundTransparency = 0.4}, animationspeed.Fast)
+    end)
+
+    button.MouseButton1Click:Connect(function()
+        CreateTween(frame, {BackgroundTransparency = 0.05}, animationspeed.Fast)
+        task.delay(0.12, function()
+            CreateTween(frame, {BackgroundTransparency = 0.4}, animationspeed.Fast)
+        end)
         callback()
     end)
 
@@ -2020,14 +2082,16 @@ function Library._CreateToggle(tab, config)
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 10, 0.5, -10),
         TextSize = textsize.Normal,
-        Size = UDim2.new(0, 200, 0, 20),
+        Size = UDim2.new(1, -65, 0, 20),
+        TextTruncate = Enum.TextTruncate.AtEnd,
         Parent = frame
     })
 
     local switchBg = CreateInstance("Frame", {
         Name = "SwitchBackground",
         BackgroundColor3 = enabled and c.Toggle.Enabled or c.Toggle.Disabled,
-        Position = UDim2.new(1, -48, 0.5, -10),
+        AnchorPoint = Vector2.new(1, 0.5),
+        Position = UDim2.new(1, -10, 0.5, 0),
         BorderSizePixel = 0,
         Size = UDim2.new(0, s.Toggle.Width, 0, s.Toggle.Height),
         Parent = frame
@@ -2050,14 +2114,6 @@ function Library._CreateToggle(tab, config)
         Text = "",
         BackgroundTransparency = 1,
         Size = UDim2.new(1, 0, 1, 0),
-        Parent = switchCircle
-    })
-
-    local button = CreateInstance("TextButton", {
-        Name = "Button",
-        Text = "",
-        BackgroundTransparency = 1,
-        Size = UDim2.new(1, 0, 1, 0),
         Parent = frame
     })
 
@@ -2071,7 +2127,15 @@ function Library._CreateToggle(tab, config)
         end
     end
 
-    button.MouseButton1Click:Connect(function()
+    toggleBtn.MouseEnter:Connect(function()
+        CreateTween(frame, {BackgroundTransparency = 0.25}, animationspeed.Fast)
+    end)
+
+    toggleBtn.MouseLeave:Connect(function()
+        CreateTween(frame, {BackgroundTransparency = 0.4}, animationspeed.Fast)
+    end)
+
+    toggleBtn.MouseButton1Click:Connect(function()
         enabled = not enabled
         UpdateToggle()
         callback(enabled)
@@ -2134,9 +2198,10 @@ function Library._CreateDropdown(tab, config)
         Text = name,
         TextXAlignment = Enum.TextXAlignment.Left,
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 10, 0, 10),
+        Position = UDim2.new(0, 10, 0.5, -10),
         TextSize = textsize.Normal,
-        Size = UDim2.new(0, 200, 0, 20),
+        Size = UDim2.new(1, -160, 0, 20),
+        TextTruncate = Enum.TextTruncate.AtEnd,
         ZIndex = 1,
         Parent = frame
     })
@@ -2145,7 +2210,8 @@ function Library._CreateDropdown(tab, config)
         Name = "SelectedDisplay",
         BackgroundColor3 = c.Secondary,
         BackgroundTransparency = 0.04,
-        Position = UDim2.new(1, -145, 0, 6),
+        AnchorPoint = Vector2.new(1, 0.5),
+        Position = UDim2.new(1, -10, 0.5, 0),
         BorderSizePixel = 0,
         Size = UDim2.new(0, 135, 0, 26),
         ZIndex = 2,
@@ -2184,20 +2250,21 @@ function Library._CreateDropdown(tab, config)
     local maxVisibleOptions = 5
     local totalOptionsHeight = math.min(#options * s.Dropdown.OptionHeight, maxVisibleOptions * s.Dropdown.OptionHeight)
 
+    local screenGui = tab.content:FindFirstAncestorOfClass("ScreenGui") or tab.content
+
     local optionsContainer = CreateInstance("Frame", {
         Name = "OptionsContainer",
-        BackgroundColor3 = c.Secondary,
-        BackgroundTransparency = 0.04,
-        Position = UDim2.new(1, -145, 0, 38),
+        BackgroundColor3 = Color3.fromRGB(18, 20, 28),
+        BackgroundTransparency = 0,
         BorderSizePixel = 0,
         Size = UDim2.new(0, 135, 0, totalOptionsHeight),
         Visible = false,
-        ZIndex = 100,
+        ZIndex = 500,
         ClipsDescendants = true,
-        Parent = frame
+        Parent = screenGui
     })
     CreateCorner(optionsContainer, 5)
-    CreateStroke(optionsContainer)
+    CreateStroke(optionsContainer, c.Border, 0.6)
 
     local optionsScroll = CreateInstance("ScrollingFrame", {
         Name = "OptionsScroll",
@@ -2206,8 +2273,8 @@ function Library._CreateDropdown(tab, config)
         Size = UDim2.new(1, 0, 1, 0),
         CanvasSize = UDim2.new(0, 0, 0, #options * s.Dropdown.OptionHeight),
         ScrollBarThickness = 3,
-        ScrollBarImageColor3 = Color3.fromRGB(60, 60, 60),
-        ZIndex = 100,
+        ScrollBarImageColor3 = c.Border,
+        ZIndex = 500,
         Parent = optionsContainer
     })
     CreateListLayout(optionsScroll, 0, Enum.SortOrder.LayoutOrder)
@@ -2226,17 +2293,17 @@ function Library._CreateDropdown(tab, config)
             FontFace = f.Regular,
             TextColor3 = c.Text,
             Text = option,
-            BackgroundColor3 = Color3.fromRGB(30, 30, 30),
+            BackgroundColor3 = c.Accent,
             BackgroundTransparency = 1,
             BorderSizePixel = 0,
             TextSize = textsize.Small,
             Size = UDim2.new(1, 0, 0, s.Dropdown.OptionHeight),
-            ZIndex = 100,
+            ZIndex = 501,
             Parent = optionsScroll
         })
 
         optionBtn.MouseEnter:Connect(function()
-            CreateTween(optionBtn, {BackgroundTransparency = 0.5}, animationspeed.Fast)
+            CreateTween(optionBtn, {BackgroundTransparency = 0.85}, animationspeed.Fast)
         end)
 
         optionBtn.MouseLeave:Connect(function()
@@ -2260,7 +2327,6 @@ function Library._CreateDropdown(tab, config)
                 expanded = false
                 optionsContainer.Visible = false
                 CreateTween(arrow, {Rotation = 0}, animationspeed.Normal)
-                frame.ZIndex = 1
             end
         end)
 
@@ -2282,9 +2348,21 @@ function Library._CreateDropdown(tab, config)
 
     toggleBtn.MouseButton1Click:Connect(function()
         expanded = not expanded
+        if expanded then
+            
+            local absPos  = selectedDisplay.AbsolutePosition
+            local absSize = selectedDisplay.AbsoluteSize
+            local viewport = workspace.CurrentCamera.ViewportSize
+            local dropY = absPos.Y + absSize.Y + 2
+            
+            if dropY + totalOptionsHeight > viewport.Y then
+                dropY = absPos.Y - totalOptionsHeight - 2
+            end
+            optionsContainer.Position = UDim2.new(0, absPos.X, 0, dropY)
+            optionsContainer.Size = UDim2.new(0, absSize.X, 0, totalOptionsHeight)
+        end
         optionsContainer.Visible = expanded
         CreateTween(arrow, {Rotation = expanded and 180 or 0}, animationspeed.Normal)
-        frame.ZIndex = expanded and 10 or 1
     end)
 
     local methods = {
@@ -2311,8 +2389,14 @@ function Library._CreateDropdown(tab, config)
                 CreateOptionButton(option)
             end
             optionsScroll.CanvasSize = UDim2.new(0, 0, 0, #options * s.Dropdown.OptionHeight)
-            local newTotalHeight = math.min(#options * s.Dropdown.OptionHeight, maxVisibleOptions * s.Dropdown.OptionHeight)
-            optionsContainer.Size = UDim2.new(0, 135, 0, newTotalHeight)
+            totalOptionsHeight = math.min(#options * s.Dropdown.OptionHeight, maxVisibleOptions * s.Dropdown.OptionHeight)
+            optionsContainer.Size = UDim2.new(0, 135, 0, totalOptionsHeight)
+            
+            if expanded then
+                expanded = false
+                optionsContainer.Visible = false
+                CreateTween(arrow, {Rotation = 0}, animationspeed.Fast)
+            end
         end
     }
 
@@ -2354,7 +2438,8 @@ function Library._CreateKeybind(tab, config, lib)
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 10, 0.5, -10),
         TextSize = textsize.Normal,
-        Size = UDim2.new(0, 200, 0, 20),
+        Size = UDim2.new(1, -65, 0, 20),
+        TextTruncate = Enum.TextTruncate.AtEnd,
         Parent = frame
     })
 
@@ -2397,15 +2482,25 @@ function Library._CreateKeybind(tab, config, lib)
         callback = callback
     }
 
+    local keybindStroke = keybindBox:FindFirstChildWhichIsA("UIStroke")
+
     local function UpdateKeyDisplay()
         if listening then
             keyLabel.Text = "..."
+            keyLabel.TextSize = textsize.Small
             keybindBox.Size = UDim2.new(0, 43, 0, 26)
+            if keybindStroke then
+                CreateTween(keybindStroke, {Color = c.Accent}, animationspeed.Fast)
+            end
         else
             local keyName = currentKey.Name
-            local textWidth = math.max(#keyName * 9 + 10, 24)
+            local textWidth = math.max(#keyName * 7 + 14, 30)
             keybindBox.Size = UDim2.new(0, textWidth, 0, 26)
             keyLabel.Text = keyName
+            keyLabel.TextSize = textsize.Tiny
+            if keybindStroke then
+                CreateTween(keybindStroke, {Color = c.Border}, animationspeed.Fast)
+            end
         end
     end
 
@@ -2416,11 +2511,18 @@ function Library._CreateKeybind(tab, config, lib)
 
     local inputConnection
     inputConnection = ui.InputBegan:Connect(function(input, gameProcessed)
-        if listening and input.UserInputType == Enum.UserInputType.Keyboard then
-            currentKey = input.KeyCode
-            listening = false
-            lib._keybinds[keybindId].key = currentKey
-            UpdateKeyDisplay()
+        if not listening then return end
+        if input.UserInputType == Enum.UserInputType.Keyboard then
+            if input.KeyCode == Enum.KeyCode.Escape then
+                
+                listening = false
+                UpdateKeyDisplay()
+            else
+                currentKey = input.KeyCode
+                listening = false
+                lib._keybinds[keybindId].key = currentKey
+                UpdateKeyDisplay()
+            end
         end
     end)
 
@@ -2477,14 +2579,16 @@ function Library._CreateColorPicker(tab, config)
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 10, 0, 0),
         TextSize = textsize.Normal,
-        Size = UDim2.new(1, -50, 1, 0),
+        Size = UDim2.new(1, -60, 1, 0),
+        TextTruncate = Enum.TextTruncate.AtEnd,
         Parent = frame
     })
 
     local colorPreview = CreateInstance("Frame", {
         Name = "ColorPreview",
         BackgroundColor3 = currentColor,
-        Position = UDim2.new(1, -45, 0.5, -8),
+        AnchorPoint = Vector2.new(1, 0.5),
+        Position = UDim2.new(1, -10, 0.5, 0),
         Size = UDim2.new(0, 35, 0, 16),
         ZIndex = 2,
         Parent = frame
@@ -2502,7 +2606,7 @@ function Library._CreateColorPicker(tab, config)
 
     local pickerContainer = CreateInstance("Frame", {
         Name = "PickerContainer",
-        BackgroundColor3 = Color3.fromRGB(20, 20, 20),
+        BackgroundColor3 = c.Background,
         BorderSizePixel = 0,
         Size = UDim2.new(0, 160, 0, 115),
         Visible = false,
@@ -2510,12 +2614,7 @@ function Library._CreateColorPicker(tab, config)
         Parent = tab.content:FindFirstAncestorOfClass("ScreenGui") or tab.content
     })
     CreateCorner(pickerContainer, 6)
-
-    local containerStroke = CreateInstance("UIStroke", {
-        Color = Color3.fromRGB(40, 40, 40),
-        Thickness = 1,
-        Parent = pickerContainer
-    })
+    CreateStroke(pickerContainer, c.Border, 0.5)
 
     local svPicker = CreateInstance("Frame", {
         Name = "SVPicker",
@@ -2565,10 +2664,10 @@ function Library._CreateColorPicker(tab, config)
     local svCursor = CreateInstance("Frame", {
         Name = "Cursor",
         BackgroundColor3 = Color3.new(1, 1, 1),
-        BackgroundTransparency = 1,
+        BackgroundTransparency = 0,
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.new(sat, 0, 1 - val, 0),
-        Size = UDim2.new(0, 10, 0, 10),
+        Size = UDim2.new(0, 8, 0, 8),
         ZIndex = 3005,
         Parent = svPicker
     })
@@ -2613,11 +2712,7 @@ function Library._CreateColorPicker(tab, config)
         Parent = hueSlider
     })
     CreateCorner(hueCursor, 100)
-    CreateInstance("UIStroke", {
-        Thickness = 1,
-        Color = Color3.fromRGB(20, 20, 20),
-        Parent = hueCursor
-    })
+    CreateStroke(hueCursor, c.Background, 0)
 
     local function UpdateColor()
         currentColor = Color3.fromHSV(hue, sat, val)
@@ -2661,18 +2756,20 @@ function Library._CreateColorPicker(tab, config)
         end
     end)
 
-    ui.InputChanged:Connect(function(input)
+    local cpInputConn = ui.InputChanged:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseMovement then
             ProcessInput(input)
         end
     end)
+    table.insert(Connections, cpInputConn)
 
-    ui.InputEnded:Connect(function(input)
+    local cpEndConn = ui.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             svDragging = false
             hueDragging = false
         end
     end)
+    table.insert(Connections, cpEndConn)
 
     local function ClosePicker()
         pickerContainer.Visible = false
@@ -2764,7 +2861,8 @@ function Library._CreateTextBox(tab, config)
         BackgroundTransparency = 1,
         Position = UDim2.new(0, 10, 0.5, -10),
         TextSize = textsize.Normal,
-        Size = UDim2.new(0, 150, 0, 20),
+        Size = UDim2.new(1, -(s.TextBox.InputWidth + 42), 0, 20),
+        TextTruncate = Enum.TextTruncate.AtEnd,
         Parent = frame
     })
 
@@ -2774,7 +2872,7 @@ function Library._CreateTextBox(tab, config)
         Image = "rbxassetid://93828793199781",
         ImageColor3 = c.TextDark,
         AnchorPoint = Vector2.new(1, 0.5),
-        Position = UDim2.new(1, -165, 0.5, 0),
+        Position = UDim2.new(1, -(s.TextBox.InputWidth + 18), 0.5, 0),
         Size = UDim2.new(0, 18, 0, 18),
         Parent = frame
     })
