@@ -1180,7 +1180,7 @@ function Library:_ToggleMinimize()
                 BackgroundColor3 = c.Background,
                 BackgroundTransparency = 0,
                 AnchorPoint = Vector2.new(0.5, 0.5),
-                Position = UDim2.new(0.2, 0, 0.3, 0),
+                Position = UDim2.new(0, 20, 0.5, -25),
                 Size = UDim2.new(0, 0, 0, 0),  
                 ZIndex = 999,
                 Parent = self.screenGui
@@ -1193,7 +1193,7 @@ function Library:_ToggleMinimize()
                 Name = "PulseRing",
                 BackgroundTransparency = 1,
                 AnchorPoint = Vector2.new(0.5, 0.5),
-                Position = UDim2.new(0.5, 0, 0.5, 0),
+                Position = UDim2.new(0, 20, 0.5, -25),
                 Size = UDim2.new(0, 45, 0, 45),
                 ZIndex = 998,
                 Parent = self.screenGui
