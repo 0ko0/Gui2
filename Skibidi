@@ -403,7 +403,7 @@ function Library.new(title, subtitle, logoImage, configFolder)
     local self = setmetatable({}, Library)
     self.title = title or "text"
     self.subtitle = subtitle or " | text"
-    self.logoImage = logoImage or "rbxassetid://105048918205765"
+    self.logoImage = logoImage or "rbxassetid://131643399566347"
     self.configFolder = configFolder or title or "skibidi"
     self.sections = {}
     self.currentTab = nil
@@ -1175,8 +1175,7 @@ function Library:_ToggleMinimize()
         if not self._floatBtn then
             local btn = CreateInstance("ImageButton", {
                 Name = "FloatMinimizeBtn",
-                Image = self.logoImage or "rbxassetid://105048918205765",
-                ImageColor3 = c.Accent,
+                Image = self.logoImage or "rbxassetid://131643399566347",              
                 BackgroundColor3 = c.Background,
                 BackgroundTransparency = 0,
                 AnchorPoint = Vector2.new(0.5, 0.5),
