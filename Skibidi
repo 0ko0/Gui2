@@ -1176,7 +1176,7 @@ function Library:_ToggleMinimize()
         if not self._floatBtn then
             local btn = CreateInstance("ImageButton", {
                 Name = "FloatMinimizeBtn",
-                Image = self.logoImage or "rbxassetid://105048918205765",              
+                Image = "",
                 BackgroundColor3 = c.Background,
                 BackgroundTransparency = 0,
                 AnchorPoint = Vector2.new(0.5, 0.5),
@@ -1188,11 +1188,14 @@ function Library:_ToggleMinimize()
             
             CreateCorner(btn, 100)
             CreateStroke(btn, c.Border, 0)
-            CreateInstance("UIPadding", {
-                PaddingTop = UDim.new(0, 10),
-                PaddingBottom = UDim.new(0, 10),
-                PaddingLeft = UDim.new(0, 10),
-                PaddingRight = UDim.new(0, 10),
+            CreateInstance("ImageLabel", {
+                Name = "LogoImg",
+                BackgroundTransparency = 1,
+                Image = self.logoImage or "rbxassetid://105048918205765",
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                Position = UDim2.new(0.5, 0, 0.5, 0),
+                Size = UDim2.new(0, 22, 0, 22),
+                ZIndex = 1000,
                 Parent = btn
             })
           
@@ -1635,8 +1638,8 @@ function Library._CreateTab(section, name, icon)
         BackgroundColor3 = c.Accent,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
-        AnchorPoint = Vector2.new(0.5, 1),
-        Position = UDim2.new(0.5, 0, 1, -2),
+        AnchorPoint = Vector2.new(0, 1),
+        Position = UDim2.new(0, 8, 1, -2),
         Size = UDim2.new(0, 0, 0, 2),
         ZIndex = 5,
         Parent = tabBtn
@@ -1773,7 +1776,7 @@ function Library._SelectTab(lib, tab, btn, stroke, icon, textLabel, textGradient
     if activeBar then
         activeBar.Size = UDim2.new(0, 0, 0, 2)
         activeBar.BackgroundTransparency = 0
-        CreateTween(activeBar, {Size = UDim2.new(0, s.Tab.Width - 20, 0, 2)}, animationspeed.Normal, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        CreateTween(activeBar, {Size = UDim2.new(1, -16, 0, 2)}, animationspeed.Normal, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
     end
 end
 function Library._CreateContentSection(tab, name)
