@@ -1716,33 +1716,36 @@ function Library._CreateTab(section, name, icon)
     return tabMethods
 end
 
-function Library._SelectTab(lib, tab, btn, stroke, icon, textLabel, textGradient)
-    
+function Library._SelectTab(lib, tab, btn, stroke, icon, textLabel, textGradient, glow, activeBar, shimmer)
     if lib.currentTab then
         lib.currentTab.content.Visible = false
-        CreateTween(lib.currentTab.button, {BackgroundTransparency = 1, BackgroundColor3 = c.Secondary}, animationspeed.Fast)
-        CreateTween(lib.currentTab.icon,   {ImageColor3 = c.TextDark}, animationspeed.Fast)
+        CreateTween(lib.currentTab.button, {BackgroundTransparency = 1, BackgroundColor3 = c.Secondary}, animationspeed.Normal, Enum.EasingStyle.Quint)
+        CreateTween(lib.currentTab.icon, {ImageColor3 = c.TextDark}, animationspeed.Normal)
         lib.currentTab.stroke.Transparency = 1
         lib.currentTab.stroke.Color = c.Border
-
-        if lib.currentTab.textGradient then
-            lib.currentTab.textGradient.Enabled = true
-        end
+        if lib.currentTab.textGradient then lib.currentTab.textGradient.Enabled = true end
         lib.currentTab.textLabel.TextColor3 = c.TextDark
+        
+        if lib.currentTab.glow then CreateTween(lib.currentTab.glow, {ImageTransparency = 1}, animationspeed.Normal) end
+        if lib.currentTab.activeBar then CreateTween(lib.currentTab.activeBar, {BackgroundTransparency = 1, Size = UDim2.new(0, 3, 0, 0)}, animationspeed.Normal, Enum.EasingStyle.Back, Enum.EasingDirection.In) end
+        if lib.currentTab.shimmer then CreateTween(lib.currentTab.shimmer, {BackgroundTransparency = 1}, animationspeed.Normal) end
     end
-    
     lib.currentTab = tab
     tab.content.Visible = true
-
-    CreateTween(btn,  {BackgroundTransparency = 0.55, BackgroundColor3 = c.Accent}, animationspeed.Fast)
-    CreateTween(icon, {ImageColor3 = c.Accent}, animationspeed.Fast)
-    stroke.Transparency = 0.6
+    
+    CreateTween(btn, {BackgroundTransparency = 0.5, BackgroundColor3 = c.Accent}, animationspeed.Normal, Enum.EasingStyle.Quint)
+    CreateTween(icon, {ImageColor3 = c.Accent}, animationspeed.Normal)
+    stroke.Transparency = 0.55
     stroke.Color = c.Accent
-
-    if textGradient then
-        textGradient.Enabled = false
-    end
+    if textGradient then textGradient.Enabled = false end
     textLabel.TextColor3 = c.Text
+    
+    if glow then CreateTween(glow, {ImageTransparency = 0.82}, animationspeed.Normal) end
+    if activeBar then
+        activeBar.BackgroundTransparency = 0
+        CreateTween(activeBar, {Size = UDim2.new(0, 3, 0, 18)}, animationspeed.Normal, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    end
+    if shimmer then CreateTween(shimmer, {BackgroundTransparency = 0.7}, animationspeed.Normal) end
 end
 
 function Library._CreateContentSection(tab, name)
