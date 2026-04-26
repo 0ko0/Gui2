@@ -413,6 +413,7 @@ function Library.new(title, subtitle, logoImage, configFolder)
     self._toggleKey = Enum.KeyCode.RightControl
     self._visible = true
     self._originalHeight = s.v0rtexd.Height
+    self._originalWidth  = s.v0rtexd.Width
     self._minSize = Vector2.new(s.Minv0rtexd.Width, s.Minv0rtexd.Height)
     self._maxSize = Vector2.new(s.Maxv0rtexd.Width, s.Maxv0rtexd.Height)
     self._mobileToggle = nil
@@ -1106,31 +1107,23 @@ end
 
 function Library:_SetupSmartResize(handle)
     local resizing = false
-    local resizeStart, startSize, startPos
-
-    handle.MouseEnter:Connect(function()
-        CreateTween(handle, {ImageColor3 = c.Text}, animationspeed.Fast)
-    end)
-
-    handle.MouseLeave:Connect(function()
-        if not resizing then
-            CreateTween(handle, {ImageColor3 = Color3.fromRGB(110, 110, 110)}, animationspeed.Fast)
-        end
-    end)
+    local resizeStart, startSize
 
     handle.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             resizing = true
             resizeStart = input.Position
-            startSize = self.container.AbsoluteSize
-            startPos = self.container.AbsolutePosition
+            -- Resize baseAnchor (container luôn là 1,0,1,0 so với baseAnchor)
+            startSize = self.baseAnchor.AbsoluteSize
             self._originalHeight = startSize.Y
 
             local connection
             connection = input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then
                     resizing = false
-                    CreateTween(handle, {ImageColor3 = Color3.fromRGB(110, 110, 110)}, animationspeed.Fast)
+                    if not handle.MouseHoverEnter then
+                        CreateTween(handle, {ImageColor3 = c.Border, ImageTransparency = 0.5}, animationspeed.Fast)
+                    end
                     if connection then
                         connection:Disconnect()
                     end
@@ -1142,9 +1135,12 @@ function Library:_SetupSmartResize(handle)
     ui.InputChanged:Connect(function(input)
         if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local delta = input.Position - resizeStart
-            local newWidth = math.clamp(startSize.X + delta.X, self._minSize.X, self._maxSize.X)
+            local newWidth  = math.clamp(startSize.X + delta.X, self._minSize.X, self._maxSize.X)
             local newHeight = math.clamp(startSize.Y + delta.Y, self._minSize.Y, self._maxSize.Y)
-            self.container.Size = UDim2.new(0, newWidth, 0, newHeight)
+
+            -- Resize đúng vào baseAnchor; container tự fill theo UDim2(1,0,1,0)
+            self.baseAnchor.Size = UDim2.new(0, newWidth, 0, newHeight)
+            self._originalWidth  = newWidth
             self._originalHeight = newHeight
         end
     end)
@@ -1156,6 +1152,8 @@ function Library:_ToggleMinimize()
     if self.minimized then
         
         self._preMinimizePos = self.baseAnchor.Position
+        self._originalWidth  = self.baseAnchor.AbsoluteSize.X
+        self._originalHeight = self.baseAnchor.AbsoluteSize.Y
 
         if self._skibidiBlur then
             self._skibidiBlur:SetEnabled(false)
@@ -1184,6 +1182,9 @@ function Library:_ToggleMinimize()
                 ZIndex = 999,
                 Parent = self.screenGui
             })
+            
+            btn.ScaleType = Enum.ScaleType.Fit
+            
             CreateCorner(btn, 100)
             CreateStroke(btn, c.Border, 0)
           
@@ -1290,10 +1291,16 @@ function Library:_ToggleMinimize()
             self.resizeBtn.Visible = true
         end
        
+        -- Restore kích thước baseAnchor về giá trị trước minimize
+        local restoreW = self._originalWidth or s.v0rtexd.Width
+        local restoreH = self._originalHeight or s.v0rtexd.Height
+        self.baseAnchor.Size = UDim2.new(0, restoreW, 0, restoreH)
+
+        -- Container luôn fill 100% baseAnchor
         self.container.Size = UDim2.new(0, 0, 0, 0)
         self.container.BackgroundTransparency = 0.15
         CreateTween(self.container, {
-            Size = UDim2.new(0, self.baseAnchor.AbsoluteSize.X, 0, self._originalHeight or s.v0rtexd.Height)
+            Size = UDim2.new(1, 0, 1, 0)
         }, animationspeed.Normal, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 
         task.delay(0.05, function()
