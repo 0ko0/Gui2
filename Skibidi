@@ -1188,13 +1188,20 @@ function Library:_ToggleMinimize()
             
             CreateCorner(btn, 100)
             CreateStroke(btn, c.Border, 0)
+            CreateInstance("UIPadding", {
+                PaddingTop = UDim.new(0, 10),
+                PaddingBottom = UDim.new(0, 10),
+                PaddingLeft = UDim.new(0, 10),
+                PaddingRight = UDim.new(0, 10),
+                Parent = btn
+            })
           
             local ring = CreateInstance("Frame", {
                 Name = "PulseRing",
                 BackgroundTransparency = 1,
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 Position = UDim2.new(0, 20, 0.5, -25),
-                Size = UDim2.new(0, 38, 0, 38),
+                Size = UDim2.new(0, 45, 0, 45),
                 ZIndex = 998,
                 Parent = self.screenGui
             })
@@ -1210,7 +1217,7 @@ function Library:_ToggleMinimize()
             local pulseRunning = true
             task.spawn(function()
                 while pulseRunning and ring.Parent do
-                    CreateTween(ring, {Size = UDim2.new(0, 52, 0, 52)}, 0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
+                    CreateTween(ring, {Size = UDim2.new(0, 62, 0, 62)}, 0.8, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
                     CreateTween(ring, {BackgroundTransparency = 1}, 0.8)
                     
                     local rs2 = ring:FindFirstChildWhichIsA("UIStroke")
@@ -1218,7 +1225,7 @@ function Library:_ToggleMinimize()
                         CreateTween(rs2, {Transparency = 1}, 0.8)
                     end
                     task.wait(0.85)
-                    ring.Size = UDim2.new(0, 38, 0, 38)
+                    ring.Size = UDim2.new(0, 45, 0, 45)
                     ring.BackgroundTransparency = 1
                     if rs2 then rs2.Transparency = 0.3 end
                     task.wait(0.3)
@@ -1226,10 +1233,10 @@ function Library:_ToggleMinimize()
             end)
 
             btn.MouseEnter:Connect(function()
-                CreateTween(btn, {BackgroundColor3 = c.Secondary, Size = UDim2.new(0, 36, 0, 36)}, animationspeed.Fast)
+                CreateTween(btn, {BackgroundColor3 = c.Secondary, Size = UDim2.new(0, 50, 0, 50)}, animationspeed.Fast)
             end)
             btn.MouseLeave:Connect(function()
-                CreateTween(btn, {BackgroundColor3 = c.Background, Size = UDim2.new(0, 32, 0, 32)}, animationspeed.Fast)
+                CreateTween(btn, {BackgroundColor3 = c.Background, Size = UDim2.new(0, 45, 0, 45)}, animationspeed.Fast)
             end)
 
             local fDragging = false
@@ -1275,7 +1282,7 @@ function Library:_ToggleMinimize()
             self._floatRing = ring
         end
 
-        CreateTween(self._floatBtn, {Size = UDim2.new(0, 32, 0, 32)}, animationspeed.Normal, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        CreateTween(self._floatBtn, {Size = UDim2.new(0, 45, 0, 45)}, animationspeed.Normal, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
         end) 
 
     else
@@ -1622,69 +1629,19 @@ function Library._CreateTab(section, name, icon)
         Parent = tabText
     })
 
+    -- Underline indicator at bottom (modern pill style)
     local activeBar = CreateInstance("Frame", {
         Name = "ActiveBar",
         BackgroundColor3 = c.Accent,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
-        AnchorPoint = Vector2.new(0, 0.5),
-        Position = UDim2.new(0, 0, 0.5, 0),
-        Size = UDim2.new(0, 3, 0, 0),
+        AnchorPoint = Vector2.new(0.5, 1),
+        Position = UDim2.new(0.5, 0, 1, -2),
+        Size = UDim2.new(0, 0, 0, 2),
         ZIndex = 5,
         Parent = tabBtn
     })
-    CreateCorner(activeBar, 4)
-
-    local glow = CreateInstance("ImageLabel", {
-        Name = "TabGlow",
-        BackgroundTransparency = 1,
-        Image = "rbxassetid://8068653048",
-        ScaleType = Enum.ScaleType.Slice,
-        SliceCenter = Rect.new(15, 15, 175, 175),
-        SliceScale = 0.8,
-        ImageColor3 = c.Accent,
-        ImageTransparency = 1,
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        Size = UDim2.new(1, 18, 1, 14),
-        ZIndex = 0,
-        Parent = tabBtn
-    })
-
-    local shimmer = CreateInstance("Frame", {
-        Name = "TabShimmer",
-        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        Position = UDim2.new(0, 0, 0, 0),
-        Size = UDim2.new(1, 0, 0, 1),
-        ZIndex = 6,
-        Parent = tabBtn
-    })
-
-    local activeFill = CreateInstance("Frame", {
-        Name = "ActiveFill",
-        BackgroundColor3 = c.Accent,
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        Size = UDim2.new(0, 0, 1, 0),
-        ZIndex = 1,
-        ClipsDescendants = false,
-        Parent = tabBtn
-    })
-    CreateCorner(activeFill, 5)
-    CreateInstance("UIGradient", {
-        Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, c.Accent),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(80, 120, 255))
-        }),
-        Transparency = NumberSequence.new({
-            NumberSequenceKeypoint.new(0, 0.55),
-            NumberSequenceKeypoint.new(1, 0.85)
-        }),
-        Rotation = 90,
-        Parent = activeFill
-    })
+    CreateCorner(activeBar, 100)
 
     local clickBtn = CreateInstance("TextButton", {
         Name = "ClickButton",
@@ -1706,14 +1663,13 @@ function Library._CreateTab(section, name, icon)
     CreateListLayout(tab.content, 8, Enum.SortOrder.LayoutOrder)
 
     clickBtn.MouseButton1Click:Connect(function()
-        Library._SelectTab(section._library, tab, tabBtn, tabStroke, iconLabel, tabText, textGradient, glow, activeBar, shimmer, activeFill)
+        Library._SelectTab(section._library, tab, tabBtn, tabStroke, iconLabel, tabText, textGradient, activeBar)
     end)
 
     clickBtn.MouseEnter:Connect(function()
         if section._library.currentTab ~= tab then
-            CreateTween(tabBtn, {BackgroundTransparency = 0.92, BackgroundColor3 = c.Accent}, animationspeed.Fast)
-            CreateTween(iconLabel, {ImageColor3 = Color3.fromRGB(170, 190, 255)}, animationspeed.Fast)
-            CreateTween(glow, {ImageTransparency = 0.94}, animationspeed.Fast)
+            CreateTween(tabBtn, {BackgroundTransparency = 0.88, BackgroundColor3 = c.Accent}, animationspeed.Fast)
+            CreateTween(iconLabel, {ImageColor3 = Color3.fromRGB(180, 200, 255)}, animationspeed.Fast)
         end
     end)
 
@@ -1721,7 +1677,6 @@ function Library._CreateTab(section, name, icon)
         if section._library.currentTab ~= tab then
             CreateTween(tabBtn, {BackgroundTransparency = 1, BackgroundColor3 = c.Secondary}, animationspeed.Fast)
             CreateTween(iconLabel, {ImageColor3 = c.TextDark}, animationspeed.Fast)
-            CreateTween(glow, {ImageTransparency = 1}, animationspeed.Fast)
         end
     end)
 
@@ -1730,16 +1685,13 @@ function Library._CreateTab(section, name, icon)
     tab.icon = iconLabel
     tab.textLabel = tabText
     tab.textGradient = textGradient
-    tab.glow = glow
     tab.activeBar = activeBar
-    tab.shimmer = shimmer
-    tab.activeFill = activeFill
     tab._library = section._library
 
     table.insert(section.tabs, tab)
 
     if not section._library.currentTab then
-        Library._SelectTab(section._library, tab, tabBtn, tabStroke, iconLabel, tabText, textGradient, glow, activeBar, shimmer, activeFill)
+        Library._SelectTab(section._library, tab, tabBtn, tabStroke, iconLabel, tabText, textGradient, activeBar)
     end
 
     local tabMethods = setmetatable({}, {__index = tab})
@@ -1787,58 +1739,43 @@ function Library._CreateTab(section, name, icon)
     return tabMethods
 end
 
-function Library._SelectTab(lib, tab, btn, stroke, icon, textLabel, textGradient, glow, activeBar, shimmer, activeFill)
-   
+function Library._SelectTab(lib, tab, btn, stroke, icon, textLabel, textGradient, activeBar)
+    -- Deselect previous tab
     if lib.currentTab then
         local prev = lib.currentTab
         prev.content.Visible = false
         CreateTween(prev.button, {BackgroundTransparency = 1, BackgroundColor3 = c.Secondary}, animationspeed.Normal, Enum.EasingStyle.Quint)
         CreateTween(prev.icon, {ImageColor3 = c.TextDark}, animationspeed.Normal)
-        CreateTween(prev.stroke, {Transparency = 1, Color = c.Border}, animationspeed.Normal)
+        prev.stroke.Transparency = 1
+        prev.stroke.Color = c.Border
         if prev.textGradient then prev.textGradient.Enabled = true end
         CreateTween(prev.textLabel, {TextColor3 = c.TextDark}, animationspeed.Normal)
-        if prev.glow then CreateTween(prev.glow, {ImageTransparency = 1}, animationspeed.Normal, Enum.EasingStyle.Quint) end
-        if prev.activeBar then CreateTween(prev.activeBar, {Size = UDim2.new(0, 3, 0, 0), BackgroundTransparency = 1}, animationspeed.Normal, Enum.EasingStyle.Back, Enum.EasingDirection.In) end
-        if prev.shimmer then CreateTween(prev.shimmer, {BackgroundTransparency = 1}, animationspeed.Normal) end
-        if prev.activeFill then CreateTween(prev.activeFill, {Size = UDim2.new(0, 0, 1, 0), BackgroundTransparency = 1}, animationspeed.Normal, Enum.EasingStyle.Quint, Enum.EasingDirection.In) end
+        -- Collapse underline
+        if prev.activeBar then
+            CreateTween(prev.activeBar, {Size = UDim2.new(0, 0, 0, 2), BackgroundTransparency = 1}, animationspeed.Fast, Enum.EasingStyle.Quint, Enum.EasingDirection.In)
+        end
     end
 
     lib.currentTab = tab
     tab.content.Visible = true
 
-    if activeFill then
-        activeFill.Size = UDim2.new(0, 0, 1, 0)
-        activeFill.BackgroundTransparency = 1
-        CreateTween(activeFill, {Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 0}, animationspeed.Slow, Enum.EasingStyle.Quint, Enum.EasingDirection.Out)
-    end
-
-    if activeBar then
-        activeBar.Size = UDim2.new(0, 3, 0, 0)
-        activeBar.BackgroundTransparency = 0
-        CreateTween(activeBar, {Size = UDim2.new(0, 3, 0, 20)}, animationspeed.Normal, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-    end
-
-    if glow then
-        glow.ImageTransparency = 0.55
-        CreateTween(glow, {ImageTransparency = 0.76}, animationspeed.Slow, Enum.EasingStyle.Quint)
-    end
-
-    if shimmer then
-        shimmer.BackgroundTransparency = 1
-        CreateTween(shimmer, {BackgroundTransparency = 0.6}, animationspeed.Slow, Enum.EasingStyle.Quint)
-    end
-
-    stroke.Color = c.Accent
-    CreateTween(stroke, {Transparency = 0.4}, animationspeed.Normal, Enum.EasingStyle.Quint)
-
+    -- Animate in: background tint
+    CreateTween(btn, {BackgroundTransparency = 0.78, BackgroundColor3 = c.Accent}, animationspeed.Normal, Enum.EasingStyle.Quint)
+    -- Icon accent color
     CreateTween(icon, {ImageColor3 = c.Accent}, animationspeed.Fast)
-
+    -- Stroke subtle accent
+    stroke.Color = c.Accent
+    CreateTween(stroke, {Transparency = 0.5}, animationspeed.Normal, Enum.EasingStyle.Quint)
+    -- Text white + disable fade gradient
     if textGradient then textGradient.Enabled = false end
     CreateTween(textLabel, {TextColor3 = c.Text}, animationspeed.Fast)
-
-    CreateTween(btn, {BackgroundTransparency = 1, BackgroundColor3 = c.Accent}, animationspeed.Normal, Enum.EasingStyle.Quint)
+    -- Underline pill slides in from center
+    if activeBar then
+        activeBar.Size = UDim2.new(0, 0, 0, 2)
+        activeBar.BackgroundTransparency = 0
+        CreateTween(activeBar, {Size = UDim2.new(0, s.Tab.Width - 20, 0, 2)}, animationspeed.Normal, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+    end
 end
-
 function Library._CreateContentSection(tab, name)
     local wrapper = CreateInstance("Frame", {
         Name = "Section_" .. name,
