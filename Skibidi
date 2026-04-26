@@ -598,6 +598,7 @@ function Library:_CreateMainv0rtexd()
         ResetOnSpawn = false
     })
 
+    -- Base anchor (draggable root)
     self.baseAnchor = CreateInstance("Frame", {
         Name = "BaseAnchor",
         BackgroundTransparency = 1,
@@ -606,21 +607,23 @@ function Library:_CreateMainv0rtexd()
         Parent = self.screenGui
     })
 
+    -- Drop shadow
     CreateInstance("ImageLabel", {
         Name = "SupremeShadow",
         BackgroundTransparency = 1,
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        Size = UDim2.new(1, 40, 1, 40),
+        Position = UDim2.new(0.5, 0, 0.5, 6),
+        Size = UDim2.new(1, 46, 1, 46),
         AnchorPoint = Vector2.new(0.5, 0.5),
         Image = "rbxassetid://5028857084",
         ScaleType = Enum.ScaleType.Slice,
         SliceCenter = Rect.new(24, 24, 276, 276),
-        ImageTransparency = 0.35,
+        ImageTransparency = 0.42,
         ImageColor3 = Color3.fromRGB(0, 0, 0),
         ZIndex = 0,
         Parent = self.baseAnchor
     })
 
+    -- Accent glow aura
     CreateInstance("ImageLabel", {
         Name = "GlowAura",
         AnchorPoint = Vector2.new(0.5, 0.5),
@@ -637,10 +640,47 @@ function Library:_CreateMainv0rtexd()
         Parent = self.baseAnchor
     })
 
+    -- Animated gradient border ring
+    local borderRing = CreateInstance("Frame", {
+        Name = "BorderRing",
+        BackgroundTransparency = 1,
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        Size = UDim2.new(1, 2, 1, 2),
+        ZIndex = 1,
+        Parent = self.baseAnchor
+    })
+    CreateCorner(borderRing, 8)
+    local animStroke = CreateInstance("UIStroke", {
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border,
+        Thickness = 1.5,
+        Color = c.Accent,
+        Parent = borderRing
+    })
+    local strokeGrad = CreateInstance("UIGradient", {
+        Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0,   Color3.fromRGB(110, 150, 255)),
+            ColorSequenceKeypoint.new(0.4, Color3.fromRGB(160, 100, 255)),
+            ColorSequenceKeypoint.new(0.7, Color3.fromRGB(80,  180, 255)),
+            ColorSequenceKeypoint.new(1,   Color3.fromRGB(110, 150, 255)),
+        },
+        Rotation = 0,
+        Parent = animStroke
+    })
+    task.spawn(function()
+        local angle = 0
+        while self.baseAnchor and self.baseAnchor.Parent do
+            angle = (angle + 0.8) % 360
+            strokeGrad.Rotation = angle
+            task.wait(0.016)
+        end
+    end)
+
+    -- Main container (glassmorphism)
     self.container = CreateInstance("Frame", {
         Name = "skibidiContainer",
         BackgroundColor3 = c.Background,
-        BackgroundTransparency = 0.15,
+        BackgroundTransparency = 0.08,
         BorderSizePixel = 0,
         Position = UDim2.new(0, 0, 0, 0),
         Size = UDim2.new(1, 0, 1, 0),
@@ -648,25 +688,37 @@ function Library:_CreateMainv0rtexd()
         ClipsDescendants = true,
         Parent = self.baseAnchor
     })
-    CreateCorner(self.container, 6)
+    CreateCorner(self.container, 8)
 
-    local windowStroke = CreateStroke(self.container, c.Border, 0.5)
-    windowStroke.Thickness = 1
-
+    -- Glass surface gradient
     CreateInstance("UIGradient", {
-        Name = "SurfaceGlassReflect",
+        Name = "SurfaceTint",
         Color = ColorSequence.new{
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 200, 200))
+            ColorSequenceKeypoint.new(0,   Color3.fromRGB(30,  36,  55)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(12,  13,  17)),
+            ColorSequenceKeypoint.new(1,   Color3.fromRGB(10,  11,  15)),
         },
-        Rotation = -60,
+        Rotation = 90,
         Transparency = NumberSequence.new{
-            NumberSequenceKeypoint.new(0, 0.94),
-            NumberSequenceKeypoint.new(1, 0.98)
+            NumberSequenceKeypoint.new(0, 0.0),
+            NumberSequenceKeypoint.new(1, 0.0),
         },
         Parent = self.container
     })
 
+    -- Top shimmer highlight
+    CreateInstance("Frame", {
+        Name = "TopShimmer",
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        BackgroundTransparency = 0.88,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 0, 0),
+        Size = UDim2.new(1, 0, 0, 1),
+        ZIndex = 10,
+        Parent = self.container
+    })
+
+    -- ── TopBar (48px, chứa 2 dòng title) ──────────────────────
     self.topBar = CreateInstance("Frame", {
         Name = "TopHeaderBar",
         BackgroundTransparency = 1,
@@ -675,6 +727,30 @@ function Library:_CreateMainv0rtexd()
         Parent = self.container
     })
 
+    -- Header frosted background
+    local headerBg = CreateInstance("Frame", {
+        Name = "HeaderBg",
+        BackgroundColor3 = Color3.fromRGB(18, 20, 28),
+        BackgroundTransparency = 0.35,
+        BorderSizePixel = 0,
+        Size = UDim2.new(1, 0, 1, 0),
+        ZIndex = 4,
+        Parent = self.topBar
+    })
+    CreateInstance("UIGradient", {
+        Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(25, 30, 50)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(12, 13, 17)),
+        },
+        Rotation = 90,
+        Transparency = NumberSequence.new{
+            NumberSequenceKeypoint.new(0, 0.25),
+            NumberSequenceKeypoint.new(1, 0.55),
+        },
+        Parent = headerBg
+    })
+
+    -- Title dòng 1: MÀU TRẮNG (tên chính) — position trên
     self.titleLabel = CreateInstance("TextLabel", {
         Name = "TitleMain",
         FontFace = f.Bold,
@@ -684,38 +760,56 @@ function Library:_CreateMainv0rtexd()
         Position = UDim2.new(0, 14, 0, 6),
         TextXAlignment = Enum.TextXAlignment.Left,
         TextSize = 14,
-        Size = UDim2.new(0.6, 0, 0, 17),
+        Size = UDim2.new(0.65, 0, 0, 18),
         TextColor3 = Color3.fromRGB(240, 240, 248),
         ZIndex = 6,
         Parent = self.topBar
     })
 
+    -- Title dòng 2: MÀU XANH ACCENT (subtitle) — position dưới
     self.subtitleLabel = CreateInstance("TextLabel", {
         Name = "TitleSub",
         FontFace = f.Regular,
         Text = self.subtitle or "",
         RichText = false,
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 14, 0, 25),
+        Position = UDim2.new(0, 14, 0, 27),
         TextXAlignment = Enum.TextXAlignment.Left,
         TextSize = 11,
-        Size = UDim2.new(0.6, 0, 0, 14),
+        Size = UDim2.new(0.65, 0, 0, 14),
         TextColor3 = c.Accent,
         ZIndex = 6,
         Parent = self.topBar
     })
 
-    CreateInstance("Frame", {
+    -- Divider line với gradient fade 2 đầu
+    local divider = CreateInstance("Frame", {
         Name = "LineDivision",
-        BackgroundColor3 = c.Border,
-        BackgroundTransparency = 0.5,
+        BackgroundColor3 = c.Accent,
+        BackgroundTransparency = 0.6,
         BorderSizePixel = 0,
         Position = UDim2.new(0, 0, 1, -1),
         Size = UDim2.new(1, 0, 0, 1),
         ZIndex = 5,
         Parent = self.topBar
     })
+    CreateInstance("UIGradient", {
+        Color = ColorSequence.new{
+            ColorSequenceKeypoint.new(0,    Color3.fromRGB(0, 0, 0)),
+            ColorSequenceKeypoint.new(0.12, c.Accent),
+            ColorSequenceKeypoint.new(0.88, c.Accent),
+            ColorSequenceKeypoint.new(1,    Color3.fromRGB(0, 0, 0)),
+        },
+        Transparency = NumberSequence.new{
+            NumberSequenceKeypoint.new(0,    1),
+            NumberSequenceKeypoint.new(0.12, 0),
+            NumberSequenceKeypoint.new(0.88, 0),
+            NumberSequenceKeypoint.new(1,    1),
+        },
+        Parent = divider
+    })
 
+    -- Main body (bắt đầu sau topBar 48px)
     self.mainContent = CreateInstance("Frame", {
         Name = "BodyStructure",
         BackgroundTransparency = 1,
@@ -741,35 +835,48 @@ function Library:_Createv0rtexdControls()
         AnchorPoint = Vector2.new(1, 0.5),
         Position = UDim2.new(1, -10, 0.5, 0),
         Size = UDim2.new(0, 60, 0, 18),
-        ZIndex = 5,
+        ZIndex = 6,
         Parent = self.topBar
     })
     CreateListLayout(LayoutCtrls, 12, Enum.SortOrder.LayoutOrder, Enum.FillDirection.Horizontal)
 
+    -- Minimize button
     local minimizeBtn = CreateInstance("ImageButton", {
         ImageColor3 = c.TextDark,
         Image = "rbxassetid://82603981310445",
         BackgroundTransparency = 1,
         Size = UDim2.new(0, 15, 0, 15),
         LayoutOrder = 1,
+        ZIndex = 7,
         Parent = LayoutCtrls
     })
     minimizeBtn.MouseButton1Click:Connect(function() self:_ToggleMinimize() end)
-    minimizeBtn.MouseEnter:Connect(function() CreateTween(minimizeBtn, {ImageColor3 = c.Accent}, animationspeed.Fast) end)
-    minimizeBtn.MouseLeave:Connect(function() CreateTween(minimizeBtn, {ImageColor3 = c.TextDark}, animationspeed.Fast) end)
+    minimizeBtn.MouseEnter:Connect(function()
+        CreateTween(minimizeBtn, {ImageColor3 = c.Accent, Size = UDim2.new(0, 16, 0, 16)}, animationspeed.Fast)
+    end)
+    minimizeBtn.MouseLeave:Connect(function()
+        CreateTween(minimizeBtn, {ImageColor3 = c.TextDark, Size = UDim2.new(0, 15, 0, 15)}, animationspeed.Fast)
+    end)
 
+    -- Close button
     local closeBtn = CreateInstance("ImageButton", {
         ImageColor3 = c.TextDark,
         Image = "rbxassetid://119943770201674",
         BackgroundTransparency = 1,
         Size = UDim2.new(0, 13, 0, 13),
         LayoutOrder = 2,
+        ZIndex = 7,
         Parent = LayoutCtrls
     })
     closeBtn.MouseButton1Click:Connect(function() self:Destroy() end)
-    closeBtn.MouseEnter:Connect(function() CreateTween(closeBtn, {ImageColor3 = Color3.fromRGB(240, 75, 95)}, animationspeed.Fast) end)
-    closeBtn.MouseLeave:Connect(function() CreateTween(closeBtn, {ImageColor3 = c.TextDark}, animationspeed.Fast) end)
+    closeBtn.MouseEnter:Connect(function()
+        CreateTween(closeBtn, {ImageColor3 = Color3.fromRGB(240, 75, 95), Size = UDim2.new(0, 14, 0, 14)}, animationspeed.Fast)
+    end)
+    closeBtn.MouseLeave:Connect(function()
+        CreateTween(closeBtn, {ImageColor3 = c.TextDark, Size = UDim2.new(0, 13, 0, 13)}, animationspeed.Fast)
+    end)
 
+    -- Resize handle (góc dưới phải)
     local resizeBtn = CreateInstance("ImageButton", {
         Name = "SmartHandleSize",
         ImageColor3 = c.Border,
@@ -782,39 +889,58 @@ function Library:_Createv0rtexdControls()
         ZIndex = 50,
         Parent = self.baseAnchor
     })
+    resizeBtn.MouseEnter:Connect(function()
+        CreateTween(resizeBtn, {ImageColor3 = c.Accent, ImageTransparency = 0}, animationspeed.Fast)
+    end)
+    resizeBtn.MouseLeave:Connect(function()
+        CreateTween(resizeBtn, {ImageColor3 = c.Border, ImageTransparency = 0.5}, animationspeed.Fast)
+    end)
+
     self.resizeBtn = resizeBtn
     self:_SetupSmartResize(resizeBtn)
 end
 
 function Library:_CreateContentArea()
 
-    -- ── Sidebar ──────────────────────────────────────────────
+    -- ── Sidebar ──────────────────────────────────────────────────
     local SidebarEngine = CreateInstance("Frame", {
         Name = "SidebarModule",
-        BackgroundColor3 = c.Secondary,
-        BackgroundTransparency = 0.6,
+        BackgroundColor3 = Color3.fromRGB(15, 17, 24),
+        BackgroundTransparency = 0.35,
         Position = UDim2.new(0, 8, 0, 8),
         Size = UDim2.new(0, 160, 1, -16),
         ZIndex = 2,
-        ClipsDescendants = false,
+        ClipsDescendants = true,
         Parent = self.mainContent
     })
-    CreateCorner(SidebarEngine, 5)
-    CreateStroke(SidebarEngine, Color3.fromRGB(60, 60, 66), 0)
+    CreateCorner(SidebarEngine, 6)
+    CreateStroke(SidebarEngine, Color3.fromRGB(45, 50, 70), 0)
 
-    -- ── Search bar: đặt TRÊN CÙNG sidebar ───────────────────
+    -- Sidebar accent top line
+    CreateInstance("Frame", {
+        Name = "SidebarAccentLine",
+        BackgroundColor3 = c.Accent,
+        BackgroundTransparency = 0.6,
+        BorderSizePixel = 0,
+        Position = UDim2.new(0, 0, 0, 0),
+        Size = UDim2.new(1, 0, 0, 1),
+        ZIndex = 3,
+        Parent = SidebarEngine
+    })
+
+    -- ── Search bar: ĐẦU SIDEBAR (trên tabs) ─────────────────────
     local SearchWrapper = CreateInstance("Frame", {
         Name = "TopSearchBar",
-        BackgroundColor3 = c.Background,
-        BackgroundTransparency = 0.25,
-        Position = UDim2.new(0, 6, 0, 6),
-        Size = UDim2.new(1, -12, 0, 28),
+        BackgroundColor3 = Color3.fromRGB(10, 11, 16),
+        BackgroundTransparency = 0.15,
+        Position = UDim2.new(0, 6, 0, 7),
+        Size = UDim2.new(1, -12, 0, 27),
         ZIndex = 4,
         ClipsDescendants = true,
         Parent = SidebarEngine
     })
     CreateCorner(SearchWrapper, 5)
-    local sStroke = CreateStroke(SearchWrapper, Color3.fromRGB(70, 72, 85), 0)
+    local sStroke = CreateStroke(SearchWrapper, Color3.fromRGB(50, 55, 75), 0)
 
     -- Search icon
     local searchIcon = CreateInstance("ImageLabel", {
@@ -824,7 +950,7 @@ function Library:_CreateContentArea()
         BackgroundTransparency = 1,
         AnchorPoint = Vector2.new(0, 0.5),
         Position = UDim2.new(0, 7, 0.5, 0),
-        Size = UDim2.new(0, 13, 0, 13),
+        Size = UDim2.new(0, 12, 0, 12),
         ZIndex = 5,
         Parent = SearchWrapper
     })
@@ -833,10 +959,10 @@ function Library:_CreateContentArea()
     local sInput = CreateInstance("TextBox", {
         Name = "SearchInput",
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 25, 0, 0),
-        Size = UDim2.new(1, -48, 1, 0),
+        Position = UDim2.new(0, 24, 0, 0),
+        Size = UDim2.new(1, -46, 1, 0),
         FontFace = f.Regular,
-        PlaceholderColor3 = Color3.fromRGB(90, 93, 108),
+        PlaceholderColor3 = Color3.fromRGB(80, 85, 105),
         PlaceholderText = "Search tabs...",
         Text = "",
         TextColor3 = c.Text,
@@ -847,16 +973,16 @@ function Library:_CreateContentArea()
         Parent = SearchWrapper
     })
 
-    -- Clear (×) button — ẩn khi trống
+    -- Clear (×) button
     local clearBtn = CreateInstance("TextButton", {
         Name = "ClearBtn",
         Text = "×",
         FontFace = f.Bold,
-        TextSize = 14,
+        TextSize = 15,
         TextColor3 = c.TextDark,
         BackgroundTransparency = 1,
         AnchorPoint = Vector2.new(1, 0.5),
-        Position = UDim2.new(1, -4, 0.5, 0),
+        Position = UDim2.new(1, -3, 0.5, 0),
         Size = UDim2.new(0, 18, 0, 18),
         Visible = false,
         ZIndex = 5,
@@ -865,6 +991,12 @@ function Library:_CreateContentArea()
     clearBtn.MouseButton1Click:Connect(function()
         sInput.Text = ""
         sInput:CaptureFocus()
+    end)
+    clearBtn.MouseEnter:Connect(function()
+        CreateTween(clearBtn, {TextColor3 = Color3.fromRGB(220, 80, 80)}, animationspeed.Fast)
+    end)
+    clearBtn.MouseLeave:Connect(function()
+        CreateTween(clearBtn, {TextColor3 = c.TextDark}, animationspeed.Fast)
     end)
 
     -- Result count badge
@@ -889,21 +1021,22 @@ function Library:_CreateContentArea()
     sInput.Focused:Connect(function()
         CreateTween(sStroke, {Color = c.Accent, Transparency = 0}, animationspeed.Fast)
         CreateTween(searchIcon, {ImageColor3 = c.Accent}, animationspeed.Fast)
-        CreateTween(SearchWrapper, {BackgroundTransparency = 0.1}, animationspeed.Fast)
+        CreateTween(SearchWrapper, {BackgroundTransparency = 0.05}, animationspeed.Fast)
     end)
     sInput.FocusLost:Connect(function()
-        CreateTween(sStroke, {Color = Color3.fromRGB(70, 72, 85), Transparency = 0}, animationspeed.Fast)
-        CreateTween(searchIcon, {ImageColor3 = c.TextDark}, animationspeed.Fast)
-        CreateTween(SearchWrapper, {BackgroundTransparency = 0.25}, animationspeed.Fast)
+        if sInput.Text == "" then
+            CreateTween(sStroke, {Color = Color3.fromRGB(50, 55, 75), Transparency = 0}, animationspeed.Fast)
+            CreateTween(searchIcon, {ImageColor3 = c.TextDark}, animationspeed.Fast)
+            CreateTween(SearchWrapper, {BackgroundTransparency = 0.15}, animationspeed.Fast)
+        end
     end)
 
-    -- Debounce search với timer
+    -- Debounce search 120ms + highlight match + badge
     local searchDebounce = nil
     local function RunSearch(rawText)
-        local wordSearch = string.lower(rawText)
+        local wordSearch = rawText:lower()
         local matchCount = 0
 
-        -- Hiện/ẩn clear button
         clearBtn.Visible = rawText ~= ""
 
         for _, secChild in pairs(self.sectionsContainer:GetChildren()) do
@@ -916,23 +1049,17 @@ function Library:_CreateContentArea()
                             if wordSearch == "" then
                                 tabItem.Visible = true
                                 sectionHasMatch = true
-                                -- Reset highlight nếu có label
-                                local lbl = tabItem:FindFirstChildWhichIsA("TextLabel")
-                                if lbl then
-                                    CreateTween(lbl, {TextColor3 = c.Text}, animationspeed.Fast)
-                                end
+                                -- reset highlight
+                                local lbl = tabItem:FindFirstChild("TabText")
+                                if lbl then CreateTween(lbl, {TextColor3 = c.TextDark}, animationspeed.Fast) end
                             else
-                                local name = tabItem.Name:lower()
-                                local hit = name:find(wordSearch) ~= nil
+                                local hit = tabItem.Name:lower():find(wordSearch) ~= nil
                                 tabItem.Visible = hit
                                 if hit then
                                     sectionHasMatch = true
                                     matchCount = matchCount + 1
-                                    -- Highlight label tab khớp
-                                    local lbl = tabItem:FindFirstChildWhichIsA("TextLabel")
-                                    if lbl then
-                                        CreateTween(lbl, {TextColor3 = c.Accent}, animationspeed.Fast)
-                                    end
+                                    local lbl = tabItem:FindFirstChild("TabText")
+                                    if lbl then CreateTween(lbl, {TextColor3 = c.Accent}, animationspeed.Fast) end
                                 end
                             end
                         end
@@ -942,29 +1069,24 @@ function Library:_CreateContentArea()
             end
         end
 
-        -- Cập nhật result badge
         if wordSearch == "" then
             resultBadge.Visible = false
         else
             resultBadge.Visible = true
             resultBadge.Text = tostring(matchCount)
-            -- Badge đỏ nếu 0 kết quả
             local badgeColor = matchCount == 0 and Color3.fromRGB(220, 60, 80) or c.Accent
             CreateTween(resultBadge, {TextColor3 = badgeColor, BackgroundColor3 = badgeColor}, animationspeed.Fast)
         end
     end
 
     sInput:GetPropertyChangedSignal("Text"):Connect(function()
-        -- Debounce 120ms để không gọi quá nhiều lần khi type nhanh
-        if searchDebounce then
-            task.cancel(searchDebounce)
-        end
+        if searchDebounce then task.cancel(searchDebounce) end
         searchDebounce = task.delay(0.12, function()
             RunSearch(sInput.Text)
         end)
     end)
 
-    -- Tabs scroll (bắt đầu dưới search bar: offset 40px)
+    -- ── Tabs scroll (bắt đầu dưới search bar) ───────────────────
     self.sectionsContainer = CreateInstance("ScrollingFrame", {
         Name = "ScrollOfTabs",
         ScrollBarThickness = 1,
@@ -980,14 +1102,27 @@ function Library:_CreateContentArea()
     CreateListLayout(self.sectionsContainer, 3, Enum.SortOrder.LayoutOrder)
     CreatePadding(self.sectionsContainer, 2, 5, 5, 5)
 
-    -- ── Content area (phải) ──────────────────────────────────
+    -- ── Content panel (bên phải) ─────────────────────────────────
+    -- Background depth layer
+    local contentBg = CreateInstance("Frame", {
+        Name = "ContentBg",
+        BackgroundColor3 = Color3.fromRGB(14, 15, 20),
+        BackgroundTransparency = 0.45,
+        Position = UDim2.new(0, 175, 0, 8),
+        Size = UDim2.new(1, -183, 1, -16),
+        ZIndex = 1,
+        Parent = self.mainContent
+    })
+    CreateCorner(contentBg, 6)
+    CreateStroke(contentBg, Color3.fromRGB(38, 42, 58), 0)
+
     self.contentContainer = CreateInstance("ScrollingFrame", {
         Name = "ActionElementsContainer",
-        ScrollBarThickness = 3,
-        ScrollBarImageColor3 = Color3.fromRGB(60, 60, 70),
+        ScrollBarThickness = 2,
+        ScrollBarImageColor3 = Color3.fromRGB(70, 80, 120),
         BackgroundTransparency = 1,
-        Position = UDim2.new(0, 175, 0, 6),
-        Size = UDim2.new(1, -183, 1, -12),
+        Position = UDim2.new(0, 175, 0, 8),
+        Size = UDim2.new(1, -183, 1, -16),
         CanvasSize = UDim2.new(0, 0, 0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
         ScrollingDirection = Enum.ScrollingDirection.Y,
@@ -1071,7 +1206,7 @@ function Library:_ToggleMinimize()
         if not self._floatBtn then
             local btn = CreateInstance("ImageButton", {
                 Name = "FloatMinimizeBtn",
-                Image = self.logoImage or "rbxassetid://112235310154264",
+                Image = self.logoImage or "rbxassetid://105048918205765",
                 ImageColor3 = c.Accent,
                 BackgroundColor3 = c.Background,
                 BackgroundTransparency = 0,
