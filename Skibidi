@@ -1776,7 +1776,7 @@ function Library._SelectTab(lib, tab, btn, stroke, icon, textLabel, textGradient
     if activeBar then
         activeBar.Size = UDim2.new(0, 0, 0, 2)
         activeBar.BackgroundTransparency = 0
-        CreateTween(activeBar, {Size = UDim2.new(1, -16, 0, 2)}, animationspeed.Normal, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+        CreateTween(activeBar, {Size = UDim2.new(0, s.Tab.Width - 16, 0, 2)}, animationspeed.Normal, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
     end
 end
 function Library._CreateContentSection(tab, name)
