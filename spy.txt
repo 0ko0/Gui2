@@ -3701,28 +3701,37 @@ end
                             end
 
                             local function AddTogglesKeyBind(name: string)
-                                local KeyBindAdd = ToggleFrame:Clone()
-                                KeyBindAdd.Parent = Orion.KeyBind.ItemContainer
-                                local displayName = GetUniqueToggleName(name)
-                                getgenv().TogglesSaveTable[displayName] = KeyBindAdd
-                                Toggle.__DisplayName = displayName
-                                if KeyBindAdd then
-                                    if KeyBindAdd:FindFirstChild("ButtonKey") then
-                                        KeyBindAdd:FindFirstChild("ButtonKey"):Destroy()
-                                    end
-                                    if KeyBindAdd:FindFirstChild("TextButton") then
-                                        AddConnection(KeyBindAdd:FindFirstChild("TextButton").MouseButton1Up, function()
-                                            Toggle:Set(not Toggle.Value)
-                                        end)
-                                    end
-                                    if KeyBindAdd:FindFirstChild("Frame") and KeyBindAdd.Frame:FindFirstChild("Value") then
-                                        AddConnection(KeyBindAdd.Frame.Value:GetPropertyChangedSignal("Text"), function()
-                                            local width = KeyBindAdd.Frame.Value.TextBounds.X + 20
-                                            TweenService:Create(KeyBindAdd.Frame, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {Size = UDim2.new(0, width, 0, 24)}):Play()
-                                        end)
-                                    end
-                                end
-                            end
+    pcall(function()
+        KeyBindAdd() 
+        local keyBindWindow = Orion:FindFirstChild("KeyBindWindow") or Orion:FindFirstChild("KeyBind")
+        if not keyBindWindow then return end
+        
+        local container = keyBindWindow:FindFirstChild("ListContainer") or keyBindWindow:FindFirstChild("ItemContainer")
+        if not container then return end
+
+        local KeyBindAdd = ToggleFrame:Clone()
+        KeyBindAdd.Parent = container
+        local displayName = GetUniqueToggleName(name)
+        getgenv().TogglesSaveTable[displayName] = KeyBindAdd
+        Toggle.__DisplayName = displayName
+        if KeyBindAdd then
+            if KeyBindAdd:FindFirstChild("ButtonKey") then
+                KeyBindAdd:FindFirstChild("ButtonKey"):Destroy()
+            end
+            if KeyBindAdd:FindFirstChild("TextButton") then
+                AddConnection(KeyBindAdd:FindFirstChild("TextButton").MouseButton1Up, function()
+                    Toggle:Set(not Toggle.Value)
+                end)
+            end
+            if KeyBindAdd:FindFirstChild("Frame") and KeyBindAdd.Frame:FindFirstChild("Value") then
+                AddConnection(KeyBindAdd.Frame.Value:GetPropertyChangedSignal("Text"), function()
+                    local width = KeyBindAdd.Frame.Value.TextBounds.X + 20
+                    TweenService:Create(KeyBindAdd.Frame, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {Size = UDim2.new(0, width, 0, 24)}):Play()
+                end)
+            end
+        end
+    end)
+end
 
                             function Toggle:Set(Value)
                                 if getgenv().Destroy or ToggleConfig.Disabled then return end
