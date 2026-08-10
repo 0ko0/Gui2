@@ -1622,7 +1622,7 @@ end
             AutomaticCanvasSize = Enum.AutomaticSize.Y,
             CanvasSize = UDim2.fromOffset(0, 0),
             Size = UDim2.new(1, 0, 1, 0),
-            ZIndex = Level + 4,
+            ZIndex = Level + 1,
             BorderSizePixel = 0
         })
 
@@ -1677,7 +1677,7 @@ end
                 LineH = 16,
                 TextX = TextX,
                 TextActiveX = TextActiveX,
-                Z = Level + 1
+                Z = Level + 2
             })
 
             local IconImg
