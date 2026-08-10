@@ -25,20 +25,31 @@ local makefolder = makefolder or function() end
 local getcustomasset = getcustomasset or getcustomassetid or function() return "" end
 local setclipboard = setclipboard or toclipboard or function() end
 
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local TweenService = game:GetService("TweenService")
-local HttpService = game:GetService("HttpService")
-local GuiService = game:GetService("GuiService")
-local TextService = game:GetService("TextService")
-local StatsService = game:GetService("Stats")
-local MarketplaceService = game:GetService("MarketplaceService")
-local ContentProvider = game:GetService("ContentProvider")
+local Players = cloneref(game:GetService("Players"))
+local UserInputService = pcall(function() return cloneref(game:GetService("UserInputService")) end) and cloneref(game:GetService("UserInputService")) or nil
+local RunService = cloneref(game:GetService("RunService"))
+local TweenService = cloneref(game:GetService("TweenService"))
+local HttpService = cloneref(game:GetService("HttpService"))
+local GuiService = cloneref(game:GetService("GuiService"))
+local TextService = cloneref(game:GetService("TextService"))
+local StatsService = cloneref(game:GetService("Stats"))
+local MarketplaceService = cloneref(game:GetService("MarketplaceService"))
+local ContentProvider = cloneref(game:GetService("ContentProvider"))
 
-local LocalPlayer = Players.LocalPlayer
-local GuiInset = GuiService:GetGuiInset().Y
-local IsMobile = UserInputService.TouchEnabled
+local LocalPlayer = Players and Players.LocalPlayer
+local GuiInset = 36
+if GuiService then
+    pcall(function()
+        GuiInset = GuiService:GetGuiInset().Y
+    end)
+end
+
+local IsMobile = false
+if UserInputService then
+    pcall(function()
+        IsMobile = UserInputService.TouchEnabled
+    end)
+end
 
     Library.Directory = "Zolar"
     Library.ConfigFolder = "Zolar/Configs"
