@@ -1254,7 +1254,10 @@ end
             if not IsClick and not IsTouch then return end
 
             Active = true
-            Handlers.OnGrab(Input)
+                       
+            if Handlers and type(Handlers.OnGrab) == "function" then
+                Handlers.OnGrab(Input)
+            end
 
             if Watcher then return end
 
@@ -1263,7 +1266,9 @@ end
 
                 Active = false
 
-                if Handlers.OnRelease then Handlers.OnRelease() end
+                if Handlers and type(Handlers.OnRelease) == "function" then
+                    Handlers.OnRelease()
+                end
 
                 Watcher:Disconnect()
                 Watcher = nil
@@ -1275,7 +1280,9 @@ end
             local IsTouch = Input.UserInputType == Enum.UserInputType.Touch
 
             if (IsMove or IsTouch) and Active then
-                Handlers.OnMove(Input)
+                if Handlers and type(Handlers.OnMove) == "function" then
+                    Handlers.OnMove(Input)
+                end
             end
         end)
     end
