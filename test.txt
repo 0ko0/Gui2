@@ -4,7 +4,7 @@ end
 
 local Library = { } do
     local cloneref = cloneref or function(Object) return Object end
-local gethui = gethui or function() 
+local GetHui = gethui or function() 
     local coreGui = game:GetService("CoreGui")
     return cloneref(coreGui)
 end
