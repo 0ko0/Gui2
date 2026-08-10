@@ -351,7 +351,6 @@ local IsMobile = UserInputService.TouchEnabled
         if Class == "ScrollingFrame" then
             Data.Instance.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
             Data.Instance.ScrollingDirection = Enum.ScrollingDirection.Y
-            Data.Instance.TouchPanInputChangeTouch = true
             Data.Instance.ScrollBarThickness = IsMobile and 2 or 0 
         end
 
