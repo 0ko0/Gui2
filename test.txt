@@ -8485,29 +8485,33 @@ end
     Library.MobileToggle = function(Self, Window)
         if not IsMobile then return end
 
-        local ExpandedWidth = 126
-        local CollapsedWidth = 40
-        local Height = 36
+        local ButtonSize = 46
         local IsOpen = Window and Window.IsOpen or true
-        
-        local Pill = Library:Create("Frame", {
+        local LastInteraction = os.clock()
+
+        -- Container chính dạng tròn Glassmorphism
+        local Container = Library:Create("Frame", {
             Parent = Library.Holder.Instance,
             AnchorPoint = Vector2.new(1, 0.5),
-            Position = UDim2.new(1, -15, 0.3, 0),
-            Size = UDim2.fromOffset(ExpandedWidth, Height),
-            BackgroundColor3 = Color3.fromRGB(15, 17, 22),
-            BackgroundTransparency = 0.25,
-            Round = 18,
+            Position = UDim2.new(1, -12, 0.35, 0),
+            Size = UDim2.fromOffset(ButtonSize, ButtonSize),
+            BackgroundColor3 = Color3.fromRGB(18, 20, 26),
+            BackgroundTransparency = 0.15,
+            Round = ButtonSize / 2,
             Z = 2500,
-            Clip = true
+            Clip = false
         })
 
+        -- Bóng đổ dạ quang (Glow Shadow)
+        MakeShadow(Container.Instance, Library.Theme.Accent, UDim2.fromOffset(0, 0), UDim.new(0, 10), 0.6)
+
+        -- Viền Gradient phát sáng
         local Stroke = Instance.new("UIStroke")
         Stroke.Name = "\0"
-        Stroke.Color = Color3.fromRGB(255, 255, 255)
-        Stroke.Transparency = 0.8
-        Stroke.Thickness = 1.2
-        Stroke.Parent = Pill.Instance
+        Stroke.Color = Library.Theme.Accent
+        Stroke.Thickness = 1.8
+        Stroke.Transparency = 0.2
+        Stroke.Parent = Container.Instance
 
         local StrokeGrad = Instance.new("UIGradient")
         StrokeGrad.Color = ColorSequence.new({
@@ -8518,106 +8522,127 @@ end
         StrokeGrad.Rotation = 45
         StrokeGrad.Parent = Stroke
         Library:RegisterGradient(StrokeGrad)
-        
+
+        -- Icon trung tâm
         local Icon = MakeImage({
-            Parent = Pill.Instance,
+            Parent = Container.Instance,
             Icon = (Window and Window.Icon) or "layers",
-            Anchor = Vector2.new(0, 0.5),
-            Pos = UDim2.new(0, 10, 0.5, 0),
-            Size = UDim2.fromOffset(18, 18),
+            Anchor = Vector2.new(0.5, 0.5),
+            Pos = UDim2.new(0.5, 0, 0.5, 0),
+            Size = UDim2.fromOffset(22, 22),
             Color = "Accent",
             Z = 2501
         })
 
-        local Title = MakeText({
-            Parent = Pill.Instance,
-            Text = (Window and Window.Name) or "ZOLAR",
-            TextSize = 13,
-            Bold = true,
-            Anchor = Vector2.new(0, 0.5),
-            Pos = UDim2.new(0, 34, 0.5, 0),
-            Size = UDim2.fromOffset(65, 18),
-            Color = "Text",
-            Truncate = true,
-            Z = 2501
-        })
-
-        local StatusDot = MakeFrame({
-            Parent = Pill.Instance,
-            Anchor = Vector2.new(1, 0.5),
-            Pos = UDim2.new(1, -10, 0.5, 0),
-            Size = UDim2.fromOffset(6, 6),
+        -- Chấm đèn LED báo trạng thái UI (Xanh = Mở, Đỏ = Ẩn)
+        local StatusRing = MakeFrame({
+            Parent = Container.Instance,
+            Anchor = Vector2.new(1, 0),
+            Pos = UDim2.new(1, 2, 0, -2),
+            Size = UDim2.fromOffset(12, 12),
             Raw = Color3.fromRGB(72, 214, 168),
-            Round = 10,
-            Z = 2501
+            Round = 12,
+            Z = 2502
         })
 
+        local StatusStroke = Instance.new("UIStroke")
+        StatusStroke.Color = Color3.fromRGB(18, 20, 26)
+        StatusStroke.Thickness = 2
+        StatusStroke.Parent = StatusRing.Instance
+
+        -- Button tương tác
         local Hit = MakeButton({
-            Parent = Pill.Instance,
+            Parent = Container.Instance,
             Z = 2505
         })
 
-        Library.MakeDraggable({ Instance = Pill.Instance }, Hit.Instance)
+        -- Cho phép Kéo / Trượt
+        Library.MakeDraggable({ Instance = Container.Instance }, Hit.Instance)
 
+        -- Tự động Bắt dính lề màn hình mượt mà (Snap to Edge)
         local function SnapToEdge()
             local Scale = Library:GetScreenScale()
             local Viewport = workspace.CurrentCamera.ViewportSize / Scale
-            local CurrentPos = Pill.Instance.AbsolutePosition / Scale
-            local CurrentSize = Pill.Instance.AbsoluteSize / Scale
+            local Pos = Container.Instance.AbsolutePosition / Scale
+            local Size = Container.Instance.AbsoluteSize / Scale
 
-            local TargetX = (CurrentPos.X + CurrentSize.X / 2 < Viewport.X / 2) and 12 or (Viewport.X - CurrentSize.X - 12)
-            local TargetY = math.clamp(CurrentPos.Y, 40, Viewport.Y - 60)
+            local TargetX = (Pos.X + Size.X / 2 < Viewport.X / 2) and 12 or (Viewport.X - Size.X - 12)
+            local TargetY = math.clamp(Pos.Y, 50, Viewport.Y - 70)
 
             Library:Tween({
                 Position = UDim2.fromOffset(TargetX, TargetY),
                 AnchorPoint = Vector2.new(0, 0)
-            }, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), Pill.Instance)
+            }, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), Container.Instance)
         end
 
-        local function UpdateMorph(OpenState)
-            local Info = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+        -- Cập nhật trạng thái hiển thị
+        local function UpdateState(OpenState)
+            IsOpen = OpenState
+            LastInteraction = os.clock()
+
+            -- Khôi phục độ sáng khi có thao tác
+            Container.Instance.BackgroundTransparency = 0.15
+            Stroke.Transparency = 0.2
+            Icon.Instance.ImageTransparency = 0
+
+            local Info = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
             if OpenState then
-                
-                Library:Tween({ Size = UDim2.fromOffset(CollapsedWidth, Height) }, Info, Pill.Instance)
-                Title:Tween({ TextTransparency = 1 }, Info)
-                StatusDot:Tween({ BackgroundTransparency = 1 }, Info)
+                StatusRing.Instance.BackgroundColor3 = Color3.fromRGB(72, 214, 168) -- Báo xanh
+                Library:Tween({ Rotation = 180 }, Info, Icon.Instance)
             else
-                
-                Library:Tween({ Size = UDim2.fromOffset(ExpandedWidth, Height) }, Info, Pill.Instance)
-                Title:Tween({ TextTransparency = 0 }, Info)
-                StatusDot:Tween({ BackgroundTransparency = 0 }, Info)
+                StatusRing.Instance.BackgroundColor3 = Color3.fromRGB(245, 130, 120) -- Báo đỏ
+                Library:Tween({ Rotation = 0 }, Info, Icon.Instance)
             end
         end
 
-        Library:Connect(UserInputService.InputEnded, function(Input)
+        -- Vòng lặp tự động làm mờ khi đứng yên (Auto-Dimmer Idle)
+        Library:Thread(function()
+            while task.wait(0.5) do
+                if Container and Container.Instance and Container.Instance.Parent then
+                    if os.clock() - LastInteraction > 3.5 then
+                        Library:Tween({ BackgroundTransparency = 0.65 }, TweenInfo.new(0.5), Container.Instance)
+                        Library:Tween({ Transparency = 0.6 }, TweenInfo.new(0.5), Stroke)
+                        Library:Tween({ ImageTransparency = 0.45 }, TweenInfo.new(0.5), Icon.Instance)
+                    end
+                else
+                    break
+                end
+            end
+        end)
+
+        -- Hiệu ứng co giãn khi Chạm / Nhấn
+        Hit:Connect("InputBegan", function(Input)
             if Input.UserInputType == Enum.UserInputType.Touch or Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                LastInteraction = os.clock()
+                Library:Tween({ Size = UDim2.fromOffset(ButtonSize * 0.86, ButtonSize * 0.86) }, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), Container.Instance)
+            end
+        end)
+
+        Hit:Connect("InputEnded", function(Input)
+            if Input.UserInputType == Enum.UserInputType.Touch or Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                LastInteraction = os.clock()
+                Library:Tween({ Size = UDim2.fromOffset(ButtonSize, ButtonSize) }, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), Container.Instance)
                 task.delay(0.05, SnapToEdge)
             end
         end)
 
+        -- Bật / Tắt Menu khi Click
         Hit:Connect("MouseButton1Click", function()
-            
-            Library:Tween({ Size = UDim2.fromOffset(Pill.Instance.AbsoluteSize.X - 6, Height - 4) }, TweenInfo.new(0.06), Pill.Instance)
-            
-            task.delay(0.06, function()
-                IsOpen = not Window.IsOpen
-                Window:SetOpen(IsOpen)
-                UpdateMorph(IsOpen)
-            end)
+            if Window then
+                Window:SetOpen(not Window.IsOpen)
+            end
         end)
-        
+
         if Window then
-            UpdateMorph(Window.IsOpen)
-            
-            local TargetWindow = Window
-            local OriginalSetOpen = TargetWindow.SetOpen
-            TargetWindow.SetOpen = function(self, bool)
+            UpdateState(Window.IsOpen)
+            local OriginalSetOpen = Window.SetOpen
+            Window.SetOpen = function(self, bool)
                 OriginalSetOpen(self, bool)
-                UpdateMorph(bool)
+                UpdateState(bool)
             end
         end
 
-        return Pill
+        return Container
     end
 
 return Library
