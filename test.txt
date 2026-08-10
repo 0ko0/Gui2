@@ -347,6 +347,13 @@ local IsMobile = UserInputService.TouchEnabled
             Class = Class,
             Instance = Instance.new(Class)
         }
+                
+        if Class == "ScrollingFrame" then
+            Data.Instance.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
+            Data.Instance.ScrollingDirection = Enum.ScrollingDirection.Y
+            Data.Instance.TouchPanInputChangeTouch = true
+            Data.Instance.ScrollBarThickness = IsMobile and 2 or 0 
+        end
 
         for Property, Value in Properties do
             if Property == "Name" then
@@ -766,8 +773,14 @@ end
         return 1
     end
 
-    local function IsOverObject(Object)
-        local Position = UserInputService:GetMouseLocation() - Vector2.new(0, GuiInset)
+    local function IsOverObject(Object, Pos)
+        if not Object or not Object.Parent then return false end
+        local Position
+        if Pos then
+            Position = Vector2.new(Pos.X, Pos.Y)
+        else
+            Position = UserInputService:GetMouseLocation() - Vector2.new(0, GuiInset)
+        end
         local Corner = Object.AbsolutePosition
         local Size = Object.AbsoluteSize
 
@@ -777,15 +790,15 @@ end
         and Position.Y <= Corner.Y + Size.Y
     end
 
-    Library.IsMouseOverFrame = function(Self)
-        return IsOverObject(Self.Instance)
+    Library.IsMouseOverFrame = function(Self, Pos)
+        return IsOverObject(Self.Instance, Pos)
     end
 
-    local function IsOverAnyPopup()
+    local function IsOverAnyPopup(Pos)
         for Panel in Library.TouchShields do
             if not Panel.Parent then continue end
             if not Panel.Visible then continue end
-            if IsOverObject(Panel) then return true end
+            if IsOverObject(Panel, Pos) then return true end
         end
 
         return false
@@ -804,7 +817,7 @@ end
         local IsTouch = Input.UserInputType == Enum.UserInputType.Touch
 
         if not IsClick and not IsTouch then return end
-        if IsOverAnyPopup() then return end
+        if IsOverAnyPopup(Input.Position) then return end
 
         Dragging = true
         DragStart = Input.Position
@@ -1392,8 +1405,10 @@ end
             if not IsClick and not IsTouch then return end
             if not Popup.IsOpen then return end
             if Config.HoldOpen and Config.HoldOpen() then return end
-            if Frame:IsMouseOverFrame() then return end
-            if IsOverObject(GetAnchor()) then return end
+
+            local TouchPos = Input.Position
+            if Frame:IsMouseOverFrame(TouchPos) then return end
+            if IsOverObject(GetAnchor(), TouchPos) then return end
 
             Popup:SetOpen(false)
         end)
@@ -4533,11 +4548,14 @@ end
                 Z = 6
             })
 
+            local HitSize = IsMobile and 34 or 22
+            local HitOffset = IsMobile and (X - 4) or (X + 2)
+
             local Hit = MakeButton({
                 Parent = Row.Instance,
                 Anchor = Vector2.new(1, 0.5),
-                Pos = UDim2.new(1, X + 2, 0.5, 0),
-                Size = UDim2.fromOffset(22, 22),
+                Pos = UDim2.new(1, HitOffset, 0.5, 0),
+                Size = UDim2.fromOffset(HitSize, HitSize),
                 Z = 9
             })
 
@@ -4735,6 +4753,43 @@ end
         Keybind.Key = Key
         PanelKey.Instance.Text = KeyName(Key)
         Keybind.Picking = false
+        
+if IsMobile and Key and Key ~= "None" then
+    if Keybind.TouchWidget then
+        Keybind.TouchWidget:Destroy()
+        Keybind.TouchWidget = nil
+    end
+
+    local Widget = Instance.new("TextButton")
+    Widget.Name = "Zolar_KeybindWidget"
+    Widget.Size = UDim2.fromOffset(40, 40)
+    Widget.Position = UDim2.new(0.8, 0, 0.3, 0)
+    Widget.BackgroundColor3 = Library.Theme.Section
+    Widget.TextColor3 = Library.Theme.Accent
+    Widget.Text = KeyName(Key)
+    Widget.TextSize = 12
+    Widget.FontFace = UiFontBold
+    Widget.ZIndex = 2500
+    Widget.Parent = Library.Holder.Instance
+
+    local Corner = Instance.new("UICorner", Widget)
+    Corner.CornerRadius = UDim.new(0, 20)
+    local Stroke = Instance.new("UIStroke", Widget)
+    Stroke.Color = Library.Theme.Accent
+    Stroke.Thickness = 1.5
+
+    Library:Create(Widget):MakeDraggable()
+
+    Widget.Activated:Connect(function()
+        if Keybind.Mode == "Toggle" then
+            Toggle:Set(not Toggle.Value)
+        elseif Keybind.Mode == "Hold" or Keybind.Callback then
+            Library:SafeCall(Keybind.Callback, Key)
+        end
+    end)
+
+    Keybind.TouchWidget = Widget
+end
 
         SaveFlag()
     end
@@ -5111,6 +5166,20 @@ end
         Slider.Items = Items
         Items.Knob = MakeKnob(Items.Track.Instance)
 
+        Items.FloatTooltip = MakeText({
+            Parent = Items.Track.Instance,
+            Text = "",
+            TextSize = 12,
+            Bold = true,
+            Anchor = Vector2.new(0.5, 1),
+            Pos = UDim2.new(0, 0, 0, -8),
+            Size = UDim2.fromOffset(40, 18),
+            Color = "Accent",
+            Align = Enum.TextXAlignment.Center,
+            Z = 15
+        })
+        Items.FloatTooltip.Instance.Visible = false
+
         local function FormatDisplay(Val)
             if typeof(Slider.DisplayFormat) == "function" then
                 local Ok, Custom = pcall(Slider.DisplayFormat, Val)
@@ -5150,6 +5219,11 @@ end
 
             Library:Tween({ Size = UDim2.fromOffset(Frac * TrackW, 10) }, Info, Items.Fill.Instance)
             Library:Tween({ Position = UDim2.new(Frac, 0, 0.5, 0) }, Info, Items.Knob.Instance)
+           
+            if IsMobile and Items.FloatTooltip then
+                Items.FloatTooltip.Instance.Text = FormatDisplay(Val)
+                Items.FloatTooltip.Instance.Position = UDim2.new(Frac, 0, 0, -8)
+            end
 
             if not Items.ValueInput.Instance:IsFocused() then
                 Items.ValueInput.Instance.Text = FormatDisplay(Val)
@@ -5446,16 +5520,21 @@ end
                 RangeSlider:Set(RangeSlider.Value.Min, MouseVal)
             end
         end
-
+       
         AttachDrag(Items.Hit, {
             OnGrab = function(Input)
-                if RangeSlider.Disabled then return end
-                RangeSlider.ActiveKnob = nil
+                if IsMobile and Items.FloatTooltip then
+                    Items.FloatTooltip.Instance.Visible = true
+                end
                 Apply(Input)
             end,
             OnMove = Apply,
             OnRelease = function()
-                RangeSlider.ActiveKnob = nil
+                if IsMobile and Items.FloatTooltip then
+                    task.delay(0.3, function()
+                        Items.FloatTooltip.Instance.Visible = false
+                    end)
+                end
             end
         })
 
@@ -6756,6 +6835,42 @@ end
         PanelKey.Instance.Text = Formatted
         Items.ValueText.Instance.Text = "[" .. Formatted .. "]"
         Keybind.Picking = false
+        
+        if IsMobile then
+            if Keybind.TouchWidget then
+                Keybind.TouchWidget:Destroy()
+                Keybind.TouchWidget = nil
+            end
+
+            if Keybind.Key and Keybind.Key ~= Enum.KeyCode.Unknown then
+                local Widget = Instance.new("TextButton")
+                Widget.Name = "\0"
+                Widget.Size = UDim2.fromOffset(42, 42)
+                Widget.Position = UDim2.new(0.8, 0, 0.35, 0)
+                Widget.BackgroundColor3 = Library.Theme.Section
+                Widget.TextColor3 = Library.Theme.Accent
+                Widget.Text = Formatted
+                Widget.TextSize = 13
+                Widget.FontFace = UiFontBold
+                Widget.ZIndex = 2500
+                Widget.Parent = Library.Holder.Instance
+
+                Corner(Widget, 21)
+                
+                local Stroke = Instance.new("UIStroke")
+                Stroke.Color = Library.Theme.Accent
+                Stroke.Thickness = 1.5
+                Stroke.Parent = Widget
+
+                Library:Create(Widget):MakeDraggable()
+
+                Widget.Activated:Connect(function()
+                    Library:SafeCall(Keybind.Callback, Keybind.Key)
+                end)
+
+                Keybind.TouchWidget = Widget
+            end
+        end
 
         if Keybind.Flag then
             Library.Flags[Keybind.Flag] = Keybind.Key and tostring(Keybind.Key) or "None"
@@ -7755,13 +7870,16 @@ end
                     Color = "DimText",
                     Z = 5
                 })
+                
+                local HitSize = IsMobile and 34 or 22
+                local HitOffset = IsMobile and (Offset - 4) or (Offset + 2)
 
                 local Hit = MakeButton({
                     Parent = Row.Instance,
                     Anchor = Vector2.new(1, 0.5),
-                    Pos = UDim2.new(1, Offset + 7, 0.5, 0),
-                    Size = UDim2.fromOffset(28, 28),
-                    Z = 6
+                    Pos = UDim2.new(1, HitOffset, 0.5, 0),
+                    Size = UDim2.fromOffset(HitSize, HitSize),
+                    Z = 9
                 })
 
                 Hit:OnHover(function()
