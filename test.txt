@@ -5609,9 +5609,11 @@ end
             end
         end)
 
-        Items.NameBox = MakeFrame({
+        Items.Create = MakeFrame({
             Parent = Items.CreateBox.Instance,
-            Size = UDim2.fromOffset(ColW - 128, 40), 
+            Anchor = Vector2.new(1, 0),
+            Pos = UDim2.new(1, 0, 0, 0),
+            Size = UDim2.fromOffset(60, 40),
             Color = "Element",
             Round = 6,
             Clip = true,
