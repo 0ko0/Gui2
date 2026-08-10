@@ -3551,6 +3551,10 @@ end
         task.defer(function()
             Window:PlayIntro()
         end)
+                
+        if IsMobile then
+            Library:MobileToggle(Window)
+        end
 
         return setmetatable(Window, Library)
     end
@@ -8459,5 +8463,143 @@ end
 
     getgenv().Zolar = Library
 end
+
+    Library.MobileToggle = function(Self, Window)
+        if not IsMobile then return end
+
+        local ExpandedWidth = 126
+        local CollapsedWidth = 40
+        local Height = 36
+        local IsOpen = Window and Window.IsOpen or true
+        
+        local Pill = Library:Create("Frame", {
+            Parent = Library.Holder.Instance,
+            AnchorPoint = Vector2.new(1, 0.5),
+            Position = UDim2.new(1, -15, 0.3, 0),
+            Size = UDim2.fromOffset(ExpandedWidth, Height),
+            BackgroundColor3 = Color3.fromRGB(15, 17, 22),
+            BackgroundTransparency = 0.25,
+            Round = 18,
+            Z = 2500,
+            Clip = true
+        })
+
+        local Stroke = Instance.new("UIStroke")
+        Stroke.Name = "\0"
+        Stroke.Color = Color3.fromRGB(255, 255, 255)
+        Stroke.Transparency = 0.8
+        Stroke.Thickness = 1.2
+        Stroke.Parent = Pill.Instance
+
+        local StrokeGrad = Instance.new("UIGradient")
+        StrokeGrad.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Library.Theme.Accent),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
+            ColorSequenceKeypoint.new(1, Library.Theme.Accent)
+        })
+        StrokeGrad.Rotation = 45
+        StrokeGrad.Parent = Stroke
+        Library:RegisterGradient(StrokeGrad)
+        
+        local Icon = MakeImage({
+            Parent = Pill.Instance,
+            Icon = (Window and Window.Icon) or "layers",
+            Anchor = Vector2.new(0, 0.5),
+            Pos = UDim2.new(0, 10, 0.5, 0),
+            Size = UDim2.fromOffset(18, 18),
+            Color = "Accent",
+            Z = 2501
+        })
+
+        local Title = MakeText({
+            Parent = Pill.Instance,
+            Text = (Window and Window.Name) or "ZOLAR",
+            TextSize = 13,
+            Bold = true,
+            Anchor = Vector2.new(0, 0.5),
+            Pos = UDim2.new(0, 34, 0.5, 0),
+            Size = UDim2.fromOffset(65, 18),
+            Color = "Text",
+            Truncate = true,
+            Z = 2501
+        })
+
+        local StatusDot = MakeFrame({
+            Parent = Pill.Instance,
+            Anchor = Vector2.new(1, 0.5),
+            Pos = UDim2.new(1, -10, 0.5, 0),
+            Size = UDim2.fromOffset(6, 6),
+            Raw = Color3.fromRGB(72, 214, 168),
+            Round = 10,
+            Z = 2501
+        })
+
+        local Hit = MakeButton({
+            Parent = Pill.Instance,
+            Z = 2505
+        })
+
+        Library.MakeDraggable({ Instance = Pill.Instance }, Hit.Instance)
+
+        local function SnapToEdge()
+            local Scale = Library:GetScreenScale()
+            local Viewport = workspace.CurrentCamera.ViewportSize / Scale
+            local CurrentPos = Pill.Instance.AbsolutePosition / Scale
+            local CurrentSize = Pill.Instance.AbsoluteSize / Scale
+
+            local TargetX = (CurrentPos.X + CurrentSize.X / 2 < Viewport.X / 2) and 12 or (Viewport.X - CurrentSize.X - 12)
+            local TargetY = math.clamp(CurrentPos.Y, 40, Viewport.Y - 60)
+
+            Library:Tween({
+                Position = UDim2.fromOffset(TargetX, TargetY),
+                AnchorPoint = Vector2.new(0, 0)
+            }, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), Pill.Instance)
+        end
+
+        local function UpdateMorph(OpenState)
+            local Info = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+            if OpenState then
+                
+                Library:Tween({ Size = UDim2.fromOffset(CollapsedWidth, Height) }, Info, Pill.Instance)
+                Title:Tween({ TextTransparency = 1 }, Info)
+                StatusDot:Tween({ BackgroundTransparency = 1 }, Info)
+            else
+                
+                Library:Tween({ Size = UDim2.fromOffset(ExpandedWidth, Height) }, Info, Pill.Instance)
+                Title:Tween({ TextTransparency = 0 }, Info)
+                StatusDot:Tween({ BackgroundTransparency = 0 }, Info)
+            end
+        end
+
+        Library:Connect(UserInputService.InputEnded, function(Input)
+            if Input.UserInputType == Enum.UserInputType.Touch or Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                task.delay(0.05, SnapToEdge)
+            end
+        end)
+
+        Hit:Connect("MouseButton1Click", function()
+            
+            Library:Tween({ Size = UDim2.fromOffset(Pill.Instance.AbsoluteSize.X - 6, Height - 4) }, TweenInfo.new(0.06), Pill.Instance)
+            
+            task.delay(0.06, function()
+                IsOpen = not Window.IsOpen
+                Window:SetOpen(IsOpen)
+                UpdateMorph(IsOpen)
+            end)
+        end)
+        
+        if Window then
+            UpdateMorph(Window.IsOpen)
+            
+            local TargetWindow = Window
+            local OriginalSetOpen = TargetWindow.SetOpen
+            TargetWindow.SetOpen = function(self, bool)
+                OriginalSetOpen(self, bool)
+                UpdateMorph(bool)
+            end
+        end
+
+        return Pill
+    end
 
 return Library
