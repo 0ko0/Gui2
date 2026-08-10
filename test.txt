@@ -3,14 +3,7 @@ if getgenv().Zolar and getgenv().Zolar.Unload then
 end
 
 local Library = { } do
-    local rawCloneref = cloneref
-local cloneref = function(Object)
-    if type(rawCloneref) == "function" then
-        local success, res = pcall(rawCloneref, Object)
-        if success and res then return res end
-    end
-    return Object
-end
+    local cloneref = cloneref or function(Object) return Object end
 local GetHui = gethui or function() 
     local coreGui = game:GetService("CoreGui")
     return cloneref(coreGui)
@@ -26,7 +19,7 @@ local getcustomasset = getcustomasset or getcustomassetid or function() return "
 local setclipboard = setclipboard or toclipboard or function() end
 
 local Players = cloneref(game:GetService("Players"))
-local UserInputService = pcall(function() return cloneref(game:GetService("UserInputService")) end) and cloneref(game:GetService("UserInputService")) or nil
+local UserInputService = cloneref(game:GetService("UserInputService"))
 local RunService = cloneref(game:GetService("RunService"))
 local TweenService = cloneref(game:GetService("TweenService"))
 local HttpService = cloneref(game:GetService("HttpService"))
@@ -36,20 +29,9 @@ local StatsService = cloneref(game:GetService("Stats"))
 local MarketplaceService = cloneref(game:GetService("MarketplaceService"))
 local ContentProvider = cloneref(game:GetService("ContentProvider"))
 
-local LocalPlayer = Players and Players.LocalPlayer
-local GuiInset = 36
-if GuiService then
-    pcall(function()
-        GuiInset = GuiService:GetGuiInset().Y
-    end)
-end
-
-local IsMobile = false
-if UserInputService then
-    pcall(function()
-        IsMobile = UserInputService.TouchEnabled
-    end)
-end
+local LocalPlayer = Players.LocalPlayer
+local GuiInset = GuiService:GetGuiInset().Y
+local IsMobile = UserInputService.TouchEnabled
 
     Library.Directory = "Zolar"
     Library.ConfigFolder = "Zolar/Configs"
@@ -3569,10 +3551,6 @@ end
         task.defer(function()
             Window:PlayIntro()
         end)
-                
-        if IsMobile then
-            Library:MobileToggle(Window)
-        end
 
         return setmetatable(Window, Library)
     end
@@ -8481,164 +8459,5 @@ end
 
     getgenv().Zolar = Library
 end
-
-    Library.MobileToggle = function(Self, Window)
-        -- Đã bỏ "if not IsMobile then return end" để ÉP NÚT LUÔN HIỆN
-
-        local ButtonSize = 48
-        local IsOpen = Window and Window.IsOpen or true
-        local LastInteraction = os.clock()
-
-        -- Đưa nút vào Library.PopupHolder (Layer hiển thị cao nhất trên cùng)
-        local Container = Library:Create("Frame", {
-            Parent = Library.PopupHolder.Instance,
-            AnchorPoint = Vector2.new(1, 0.5),
-            Position = UDim2.new(1, -20, 0.25, 0), -- Góc trên bên phải (tránh đè nút c, e)
-            Size = UDim2.fromOffset(ButtonSize, ButtonSize),
-            BackgroundColor3 = Color3.fromRGB(22, 25, 34),
-            BackgroundTransparency = 0.1,
-            Round = ButtonSize / 2,
-            Z = 9999,
-            Clip = false
-        })
-
-        -- Viền phát sáng nổi bật
-        local Stroke = Instance.new("UIStroke")
-        Stroke.Name = "\0"
-        Stroke.Color = Library.Theme.Accent or Color3.fromRGB(179, 165, 255)
-        Stroke.Thickness = 2
-        Stroke.Transparency = 0.1
-        Stroke.Parent = Container.Instance
-
-        local StrokeGrad = Instance.new("UIGradient")
-        StrokeGrad.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Library.Theme.Accent or Color3.fromRGB(179, 165, 255)),
-            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(1, Library.Theme.Accent or Color3.fromRGB(179, 165, 255))
-        })
-        StrokeGrad.Rotation = 45
-        StrokeGrad.Parent = Stroke
-        Library:RegisterGradient(StrokeGrad)
-
-        -- Icon ở chính giữa nút
-        local Icon = MakeImage({
-            Parent = Container.Instance,
-            Icon = (Window and Window.Icon) or "layers",
-            Anchor = Vector2.new(0.5, 0.5),
-            Pos = UDim2.new(0.5, 0, 0.5, 0),
-            Size = UDim2.fromOffset(24, 24),
-            Color = "Accent",
-            Z = 10000
-        })
-
-        -- Chấm đèn LED báo trạng thái (Bật = Xanh, Tắt = Đỏ)
-        local StatusRing = MakeFrame({
-            Parent = Container.Instance,
-            Anchor = Vector2.new(1, 0),
-            Pos = UDim2.new(1, 2, 0, -2),
-            Size = UDim2.fromOffset(12, 12),
-            Raw = Color3.fromRGB(72, 214, 168),
-            Round = 12,
-            Z = 10001
-        })
-
-        local StatusStroke = Instance.new("UIStroke")
-        StatusStroke.Color = Color3.fromRGB(22, 25, 34)
-        StatusStroke.Thickness = 2
-        StatusStroke.Parent = StatusRing.Instance
-
-        -- Nút tương tác cảm ứng
-        local Hit = MakeButton({
-            Parent = Container.Instance,
-            Z = 10005
-        })
-
-        -- Cho phép Kéo / Di chuyển nút trên màn hình
-        Library.MakeDraggable({ Instance = Container.Instance }, Hit.Instance)
-
-        -- Tự động Bắt dính mép màn hình khi di chuyển (Snap to Edge)
-        local function SnapToEdge()
-            local Scale = Library:GetScreenScale()
-            local Viewport = workspace.CurrentCamera.ViewportSize / Scale
-            local Pos = Container.Instance.AbsolutePosition / Scale
-            local Size = Container.Instance.AbsoluteSize / Scale
-
-            local TargetX = (Pos.X + Size.X / 2 < Viewport.X / 2) and 15 or (Viewport.X - Size.X - 15)
-            local TargetY = math.clamp(Pos.Y, 50, Viewport.Y - 70)
-
-            Library:Tween({
-                Position = UDim2.fromOffset(TargetX, TargetY),
-                AnchorPoint = Vector2.new(0, 0)
-            }, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), Container.Instance)
-        end
-
-        -- Cập nhật màu sắc & trạng thái khi bấm
-        local function UpdateState(OpenState)
-            IsOpen = OpenState
-            LastInteraction = os.clock()
-
-            Container.Instance.BackgroundTransparency = 0.1
-            Stroke.Transparency = 0.1
-            Icon.Instance.ImageTransparency = 0
-
-            local Info = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-            if OpenState then
-                StatusRing.Instance.BackgroundColor3 = Color3.fromRGB(72, 214, 168) -- Màu Xanh
-                Library:Tween({ Rotation = 180 }, Info, Icon.Instance)
-            else
-                StatusRing.Instance.BackgroundColor3 = Color3.fromRGB(245, 130, 120) -- Màu Đỏ
-                Library:Tween({ Rotation = 0 }, Info, Icon.Instance)
-            end
-        end
-
-        -- Tự mờ nút khi không chạm sau 4 giây (Auto-Dim)
-        Library:Thread(function()
-            while task.wait(0.5) do
-                if Container and Container.Instance and Container.Instance.Parent then
-                    if os.clock() - LastInteraction > 4 then
-                        Library:Tween({ BackgroundTransparency = 0.6 }, TweenInfo.new(0.5), Container.Instance)
-                        Library:Tween({ Transparency = 0.6 }, TweenInfo.new(0.5), Stroke)
-                        Library:Tween({ ImageTransparency = 0.4 }, TweenInfo.new(0.5), Icon.Instance)
-                    end
-                else
-                    break
-                end
-            end
-        end)
-
-        -- Hiệu ứng phản hồi khi Chạm / Thả
-        Hit:Connect("InputBegan", function(Input)
-            if Input.UserInputType == Enum.UserInputType.Touch or Input.UserInputType == Enum.UserInputType.MouseButton1 then
-                LastInteraction = os.clock()
-                Library:Tween({ Size = UDim2.fromOffset(ButtonSize * 0.85, ButtonSize * 0.85) }, TweenInfo.new(0.1), Container.Instance)
-            end
-        end)
-
-        Hit:Connect("InputEnded", function(Input)
-            if Input.UserInputType == Enum.UserInputType.Touch or Input.UserInputType == Enum.UserInputType.MouseButton1 then
-                LastInteraction = os.clock()
-                Library:Tween({ Size = UDim2.fromOffset(ButtonSize, ButtonSize) }, TweenInfo.new(0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out), Container.Instance)
-                task.delay(0.05, SnapToEdge)
-            end
-        end)
-
-        -- Sự kiện bấm Đóng/Mở Menu
-        Hit:Connect("MouseButton1Click", function()
-            if Window then
-                Window:SetOpen(not Window.IsOpen)
-            end
-        end)
-
-        if Window then
-            UpdateState(Window.IsOpen)
-            local OriginalSetOpen = Window.SetOpen
-            Window.SetOpen = function(self, bool)
-                OriginalSetOpen(self, bool)
-                UpdateState(bool)
-            end
-        end
-
-        return Container
-    end
 
 return Library
