@@ -3323,10 +3323,8 @@ end
         local ColW = Window.ColW
         local Col2X = Window.Col2X
 
-        local TextW = math.ceil(MeasureText(SubTab.Name, 15, 300, UiFont).X)
         local CollapsedW = 40
-        local PaddingRight = 18 
-        local ExpandedW = 37 + TextW + PaddingRight
+        local ExpandedW = 100 
 
         SubTab.CollapsedW = CollapsedW
         SubTab.ExpandedW = ExpandedW
@@ -3352,27 +3350,36 @@ end
             Color = "DimIcon",
             Z = 23
         })
-
+       
         Items.Label = MakeText({
             Parent = Items.Pill.Instance,
             Text = SubTab.Name,
             TextSize = 15,
             Anchor = Vector2.new(0, 0.5),
             Pos = UDim2.new(0, 34, 0.5, 0),
-            Size = UDim2.fromOffset(TextW + 20, 20), 
+            Size = UDim2.new(0, 0, 0, 20),
             Color = "Text",
             Z = 23
         })
+        
+        Items.Label.Instance.AutomaticSize = Enum.AutomaticSize.X
+        Items.Label.Instance.TextTruncate = Enum.TextTruncate.None
+        Items.Label.Instance.TextWrapped = false
 
         SetRest(Items.Label.Instance, "TextTransparency", 1)
+        
+        local function UpdateSmartWidth()
+            task.wait() 
+            
+            local RealTextWidth = math.max(
+                math.ceil(Items.Label.Instance.AbsoluteSize.X),
+                math.ceil(Items.Label.Instance.TextBounds.X)
+            )
 
-        local function SyncWidth()
-            local Bounds = math.ceil(Items.Label.Instance.TextBounds.X)
-            if Bounds <= 0 then return end
-
-            ExpandedW = 34 + Bounds + 18 
+            if RealTextWidth <= 0 then return end
+            
+            ExpandedW = 34 + RealTextWidth + 20
             SubTab.ExpandedW = ExpandedW
-            Items.Label.Instance.Size = UDim2.fromOffset(Bounds + 16, 20)
 
             if Tab.Current == SubTab then
                 Items.Pill.Instance.Size = UDim2.fromOffset(ExpandedW, 30)
@@ -3380,8 +3387,9 @@ end
             end
         end
 
-        Library:Connect(Items.Label.Instance:GetPropertyChangedSignal("TextBounds"), SyncWidth)
-        task.defer(SyncWidth)
+        Library:Connect(Items.Label.Instance:GetPropertyChangedSignal("AbsoluteSize"), UpdateSmartWidth)
+        Library:Connect(Items.Label.Instance:GetPropertyChangedSignal("TextBounds"), UpdateSmartWidth)
+        task.defer(UpdateSmartWidth)
 
         Items.Hit = MakeButton({
             Parent = Items.Pill.Instance,
