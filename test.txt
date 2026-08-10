@@ -4878,12 +4878,23 @@ end
     end
 
     local function HoverSwap(Frame)
+    if not Frame then return end
+
+    if type(Frame) == "table" and type(Frame.OnHover) == "function" then
         Frame:OnHover(function()
             Frame:Tween({ BackgroundColor3 = Library.Theme.Hover })
         end, function()
             Frame:Tween({ BackgroundColor3 = Library.Theme.Element })
         end)
+    elseif typeof(Frame) == "Instance" and Frame:IsA("GuiObject") then
+        Library:Connect(Frame.MouseEnter, function()
+            Library:Tween({ BackgroundColor3 = Library.Theme.Hover }, nil, Frame)
+        end)
+        Library:Connect(Frame.MouseLeave, function()
+            Library:Tween({ BackgroundColor3 = Library.Theme.Element }, nil, Frame)
+        end)
     end
+end
 
     Library.Dropdown = function(Self, Params)
         Params = Params or { }
