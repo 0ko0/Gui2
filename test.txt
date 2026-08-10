@@ -1059,22 +1059,24 @@ end
     end
 
     local function MakeShadow(Parent, Color, Spread, Blur, Transparency)
-    local Shadow = Instance.new("ImageLabel")
-    Shadow.Name = "\0"
-    Shadow.BackgroundTransparency = 1
-    Shadow.Position = UDim2.new(0, -15, 0, -15)
-    Shadow.Size = UDim2.new(1, 30, 1, 30)
-    Shadow.Image = "rbxassetid://1316045217"
-    Shadow.ImageColor3 = Color or Color3.new(0, 0, 0)
-    Shadow.ImageTransparency = Transparency or 0.5
-    Shadow.ScaleType = Enum.ScaleType.Slice
-    Shadow.SliceCenter = Rect.new(10, 10, 118, 118)
-    Shadow.ZIndex = math.max(1, Parent.ZIndex - 1)
-    Shadow.Parent = Parent
+        local Ok, Shadow = pcall(function()
+            local S = Instance.new("UIShadow")
+            S.Name = "\0"
+            S.Color = Color
+            S.Spread = Spread
+            S.BlurRadius = Blur
+            S.Transparency = Transparency
+            S.Parent = Parent
+            return S
+        end)
 
-    Library:SetBaseline(Shadow, "ImageTransparency", Transparency or 0.5)
-    return Shadow
-end
+        if Ok and Shadow then
+            Library:SetBaseline(Shadow, "Transparency", Transparency)
+            return Shadow
+        end
+
+        return nil
+    end
 
     local function MakeAccentShadow(Parent, Spread, Blur, Transparency)
         local Shadow = MakeShadow(Parent, Library.Theme.Accent, Spread, Blur, Transparency)
