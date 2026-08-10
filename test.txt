@@ -2388,7 +2388,8 @@ end
         
         Items.Search = MakeFrame({
             Parent = Items.TopBar.Instance,
-            Pos = UDim2.fromOffset(130, 10),
+            Anchor = Vector2.new(0.5, 0.5),
+            Pos = UDim2.new(0.5, 0, 0.5, 0),
             Size = UDim2.fromOffset(240, 30),
             Color = "Element",
             Round = 5,
@@ -2856,7 +2857,7 @@ end
         local IsInfoHidden = false
 
         local function UpdateProfileInfo()
-            local dName = IsInfoHidden and "Roblox Player" or LocalPlayer.DisplayName
+            local dName = IsInfoHidden and "Roblox" or LocalPlayer.DisplayName
             local uName = IsInfoHidden and "roblox" or LocalPlayer.Name
             local uId = IsInfoHidden and "1" or tostring(LocalPlayer.UserId)
             local idAvatar = IsInfoHidden and 1 or LocalPlayer.UserId
@@ -5559,12 +5560,58 @@ end
             TextSize = 15,
             Z = 5
         })
-
-        Items.Create = MakeFrame({
+        
+        Items.Import = MakeFrame({
             Parent = Items.CreateBox.Instance,
             Anchor = Vector2.new(1, 0),
-            Pos = UDim2.new(1, 0, 0, 0),
-            Size = UDim2.fromOffset(84, 40),
+            Pos = UDim2.new(1, -64, 0, 0),
+            Size = UDim2.fromOffset(60, 40),
+            Color = "Element",
+            Round = 6,
+            Clip = true,
+            Z = 4
+        })
+
+        HoverSwap(Items.Import)
+
+        MakeText({
+            Parent = Items.Import.Instance,
+            Text = "Import",
+            TextSize = 14,
+            Size = UDim2.new(1, 0, 1, 0),
+            Color = "Text",
+            Align = Enum.TextXAlignment.Center,
+            Z = 6
+        })
+
+        Items.ImportHit = MakeButton({
+            Parent = Items.Import.Instance,
+            Z = 7
+        })
+
+        Items.ImportHit:Connect("MouseButton1Down", function()
+            if getclipboard and getclipboard() ~= "" then
+                local ClipboardData = getclipboard()
+                local Success = Library:LoadConfig(ClipboardData)
+                if Success then
+                    Library:Notification({
+                        Name = "Import Successful",
+                        Description = "Loaded config from clipboard!",
+                        Icon = "clipboard-check"
+                    })
+                else
+                    Library:Notification({
+                        Name = "Import Failed",
+                        Description = "Clipboard data is not a valid Config JSON.",
+                        Icon = "triangle-alert"
+                    })
+                end
+            end
+        end)
+
+        Items.NameBox = MakeFrame({
+            Parent = Items.CreateBox.Instance,
+            Size = UDim2.fromOffset(ColW - 128, 40), 
             Color = "Element",
             Round = 6,
             Clip = true,
@@ -5971,19 +6018,38 @@ end
                 Hit:Connect("MouseButton1Down", Callback)
             end
 
+            IconButton(-92, "zap", function()
+                local CurrentAuto = Library:GetAutoload()
+                if CurrentAuto == Name then
+                    Library:SetAutoload("")
+                    Library:Notification({
+                        Name = "Autoload Disabled",
+                        Description = "\"" .. Name .. "\" is no longer set to autoload.",
+                        Icon = "zap-off"
+                    })
+                else
+                    Library:SetAutoload(Name)
+                    Library:Notification({
+                        Name = "Autoload Enabled",
+                        Description = "\"" .. Name .. "\" will now load on script startup.",
+                        Icon = "zap"
+                    })
+                end
+                RefreshList()
+            end)
+
             IconButton(-66, "download", function()
                 local Created
-
                 pcall(function()
                     Created = HttpService:JSONDecode(readfile(ConfigPath(Name))).__created
                 end)
 
-                writefile(ConfigPath(Name), Library:GetConfig(Created))
+                Library:SaveConfigFile(Name)
                 ShowInfo(Name)
 
                 Library:Notification({
-                    Name = "Config saved",
-                    Description = "Current values were written into \"" .. Name .. "\".",
+                    Name = "Config Saved",
+                    Description = "Current settings written into \"" .. Name .. "\".",
                     Icon = "download"
                 })
             end)
@@ -5996,8 +6062,8 @@ end
                 end
 
                 Library:Notification({
-                    Name = "Config copied",
-                    Description = "\"" .. Name .. "\" was copied to your clipboard.",
+                    Name = "Config Copied",
+                    Description = "\"" .. Name .. "\" raw JSON copied to clipboard.",
                     Icon = "share-2"
                 })
             end)
@@ -6005,6 +6071,10 @@ end
             IconButton(-14, "trash-2", function()
                 if Data.Removing then return end
                 Data.Removing = true
+
+                if Data.Name == Library:GetAutoload() then
+                    Library:SetAutoload("")
+                end
 
                 if delfile and isfile and isfile(ConfigPath(Name)) then
                     delfile(ConfigPath(Name))
@@ -6024,14 +6094,13 @@ end
                 Row:FadeDescendants(false)
 
                 Library:Notification({
-                    Name = "Config deleted",
+                    Name = "Config Deleted",
                     Description = "\"" .. Name .. "\" was removed.",
                     Icon = "trash-2"
                 })
 
                 task.delay(0.3, function()
                     Slot.Instance:Destroy()
-
                     local NewHeight = #Config.Rows * 52
                     Items.List.Instance.CanvasSize = UDim2.fromOffset(0, math.max(NewHeight - 8, 0))
                 end)
@@ -6350,15 +6419,18 @@ end
         for Index, Value in Library.Flags do
             if typeof(Value) == "Color3" then
                 Config[Index] = { __color = Value:ToHex() }
+            elseif typeof(Value) == "EnumItem" then
+                Config[Index] = tostring(Value)
             else
                 Config[Index] = Value
             end
         end
 
         local ThemeColors = { }
-
         for _, Key in Library.ThemeKeys do
-            ThemeColors[Key] = Library.Theme[Key]:ToHex()
+            if Library.Theme[Key] then
+                ThemeColors[Key] = Library.Theme[Key]:ToHex()
+            end
         end
 
         Config.__accent = Library.Theme.Accent:ToHex()
@@ -6370,9 +6442,11 @@ end
         return HttpService:JSONEncode(Config)
     end
 
-    Library.LoadConfig = function(Self, Config)
+    Library.LoadConfig = function(Self, ConfigRaw)
+        if type(ConfigRaw) ~= "string" or ConfigRaw == "" then return false end
+
         local Ok, Decoded = pcall(function()
-            return HttpService:JSONDecode(Config)
+            return HttpService:JSONDecode(ConfigRaw)
         end)
 
         if not Ok or type(Decoded) ~= "table" then return false end
@@ -6383,26 +6457,29 @@ end
             local SetFunction = Library.SetFlags[Index]
             if not SetFunction then continue end
 
-            if type(Value) == "table" and Value.__color then
-                SetFunction(Color3.fromHex(Value.__color), Value.__alpha)
-            else
-                SetFunction(Value)
-            end
+            pcall(function()
+                if type(Value) == "table" and Value.__color then
+                    SetFunction(Color3.fromHex(Value.__color), Value.__alpha or 0)
+                else
+                    SetFunction(Value)
+                end
+            end)
         end
 
         if type(Decoded.__theme) == "table" then
             for Key, Hex in Decoded.__theme do
-                local OkColor, Color = pcall(Color3.fromHex, Hex)
-                if OkColor then Library.Theme[Key] = Color end
+                pcall(function()
+                    Library.Theme[Key] = Color3.fromHex(Hex)
+                end)
             end
-
             DeriveTheme()
             Library.ThemeDirty = true
         end
 
         if type(Decoded.__accent) == "string" then
-            local OkColor, Color = pcall(Color3.fromHex, Decoded.__accent)
-            if OkColor then Library:SetAccent(Color) end
+            pcall(function()
+                Library:SetAccent(Color3.fromHex(Decoded.__accent))
+            end)
         end
 
         Library.Silent = false
@@ -6411,33 +6488,84 @@ end
 
     Library.SaveConfigFile = function(Self, Name)
         if not writefile then return false end
-
-        writefile(Library.ConfigFolder .. "/" .. Name .. ".json", Library:GetConfig())
-        return true
+        local Success, Err = pcall(function()
+            writefile(Library.ConfigFolder .. "/" .. Name .. ".json", Library:GetConfig())
+        end)
+        return Success
     end
 
     Library.LoadConfigFile = function(Self, Name)
-        if not isfile then return false end
-
+        if not isfile or not readfile then return false end
         local Path = Library.ConfigFolder .. "/" .. Name .. ".json"
         if not isfile(Path) then return false end
 
         return Library:LoadConfig(readfile(Path))
     end
-
+   
     Library.ListConfigs = function(Self)
         local Result = { }
+        if not listfiles or not isfolder(Library.ConfigFolder) then return Result end
 
-        if not listfiles then return Result end
+        pcall(function()
+            for _, File in listfiles(Library.ConfigFolder) do
+                
+                local Name = string.match(File, "([^/\\]+)%.json$")
+                if Name and Name ~= "autoload_config" then 
+                    table.insert(Result, Name) 
+                end
+            end
+        end)
 
-        for _, File in listfiles(Library.ConfigFolder) do
-            if string.sub(File, -5) ~= ".json" then continue end
-
-            local Name = string.match(File, "([^/\\]+)%.json$")
-            if Name then table.insert(Result, Name) end
-        end
-
+        table.sort(Result)
         return Result
+    end
+
+    Library.SetAutoload = function(Self, Name)
+        if not writefile then return false end
+        pcall(function()
+            writefile(Library.Directory .. "/autoload.txt", Name or "")
+        end)
+    end
+
+    Library.GetAutoload = function(Self)
+        if not isfile or not readfile then return "" end
+        local Path = Library.Directory .. "/autoload.txt"
+        if not isfile(Path) then return "" end
+
+        local Content = ""
+        pcall(function()
+            Content = readfile(Path)
+        end)
+        return Content
+    end
+
+    Library.CheckAutoload = function(Self)
+        local AutoName = Library:GetAutoload()
+        if AutoName ~= "" and isfile(Library.ConfigFolder .. "/" .. AutoName .. ".json") then
+            Library:LoadConfigFile(AutoName)
+            Library:Notification({
+                Name = "Autoload Active",
+                Description = "Loaded automatically: \"" .. AutoName .. "\"",
+                Icon = "zap",
+                Duration = 4
+            })
+        end
+    end
+
+    Library.ResetConfig = function(Self)
+        Library.Silent = true
+        for FlagName, SetFunc in Library.SetFlags do
+            pcall(function()
+                
+                SetFunc(false) 
+            end)
+        end
+        Library.Silent = false
+        Library:Notification({
+            Name = "Reset Complete",
+            Description = "All settings have been restored to defaults.",
+            Icon = "refresh-cw"
+        })
     end
 
     Library:Connect(RunService.Heartbeat, function(Delta)
