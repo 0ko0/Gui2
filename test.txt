@@ -438,12 +438,13 @@ end
     end
 
     Library.Round = function(Self, Number, Float)
-        Float = Float or 1
+        Number = tonumber(Number) or 0
+        Float = (tonumber(Float) and tonumber(Float) > 0) and tonumber(Float) or 1
 
         local Result = math.floor(Number / Float + 0.5) * Float
         local Places = math.max(0, math.ceil(-math.log(Float, 10)))
 
-        return tonumber(string.format("%." .. Places .. "f", Result))
+        return tonumber(string.format("%." .. Places .. "f", Result)) or Number
     end
 
     Library.Tween = function(Self, Properties, Info, RawItem)
@@ -5119,240 +5120,45 @@ end
         end
 
         local function SnapValue(RawVal)
-            RawVal = math.clamp(RawVal, Slider.Min, Slider.Max)
-            if Slider.Step and Slider.Step > 0 then
-                local Steps = math.floor((RawVal - Slider.Min) / Slider.Step + 0.5)
-                RawVal = Slider.Min + (Steps * Slider.Step)
+            local Min = tonumber(RangeSlider.Min) or 0
+            local Max = tonumber(RangeSlider.Max) or 100
+            RawVal = tonumber(RawVal) or Min
+            RawVal = math.clamp(RawVal, Min, Max)
+            if RangeSlider.Step and tonumber(RangeSlider.Step) and RangeSlider.Step > 0 then
+                local Steps = math.floor((RawVal - Min) / RangeSlider.Step + 0.5)
+                RawVal = Min + (Steps * RangeSlider.Step)
             end
-            RawVal = math.clamp(RawVal, Slider.Min, Slider.Max)
-            return Library:Round(RawVal, Slider.Decimals)
-        end
-
-        function Slider:Set(Value, Instant, Silent)
-            if Slider.Disabled then return end
-
-            local Snapped = SnapValue(tonumber(Value) or Slider.Min)
-            Slider.Value = Snapped
-
-            if Slider.Flag then
-                Library.Flags[Slider.Flag] = Slider.Value
-            end
-
-            local Span = Slider.Max - Slider.Min
-            local Fraction = Span == 0 and 0 or (Slider.Value - Slider.Min) / Span
-            local Info = Instant and TweenInfo.new(0) or SlideInfo
-
-            Library:Tween({ Size = UDim2.fromOffset(Fraction * TrackW, 10) }, Info, Items.Fill.Instance)
-            Library:Tween({ Position = UDim2.new(Fraction, 0, 0.5, 0) }, Info, Items.Knob.Instance)
-
-            if not Items.ValueInput.Instance:IsFocused() then
-                Items.ValueInput.Instance.Text = FormatDisplay(Slider.Value)
-            end
-
-            if not Silent then
-                Library:SafeCall(Slider.Callback, Slider.Value)
-            end
-        end
-
-        function Slider:Get()
-            return Slider.Value
-        end
-
-        function Slider:SetMin(NewMin)
-            Slider.Min = NewMin or 0
-            if Slider.Max < Slider.Min then Slider.Max = Slider.Min end
-            Slider:Set(Slider.Value, true)
-        end
-
-        function Slider:SetMax(NewMax)
-            Slider.Max = NewMax or 100
-            if Slider.Min > Slider.Max then Slider.Min = Slider.Max end
-            Slider:Set(Slider.Value, true)
-        end
-
-        function Slider:SetStep(NewStep)
-            if NewStep and NewStep > 0 then
-                Slider.Step = NewStep
-                Slider:Set(Slider.Value)
-            end
-        end
-
-        function Slider:SetDisabled(Bool)
-            Slider.Disabled = Bool and true or false
-            Items.Row.Instance.BackgroundTransparency = Slider.Disabled and 0.6 or 1
-            Items.Label.Instance.TextTransparency = Slider.Disabled and 0.5 or 0
-            Items.ValueInput.Instance.TextTransparency = Slider.Disabled and 0.5 or 0
-            Items.Track.Instance.BackgroundTransparency = Slider.Disabled and 0.8 or 0
-            Items.Fill.Instance.BackgroundTransparency = Slider.Disabled and 0.5 or 0
-            Items.Knob.Instance.BackgroundTransparency = Slider.Disabled and 0.5 or 0
-        end
-
-        function Slider:SetVisible(Bool)
-            Items.Row.Instance.Visible = Bool
-            Section:Reflow()
-        end
-
-        function Slider:SetCallback(NewCallback)
-            Slider.Callback = NewCallback or function() end
-        end
-
-        local function Calculate(Input)
-            local Fraction = AxisFraction(Input, Items.Track.Instance, "X")
-            return Slider.Min + (Slider.Max - Slider.Min) * Fraction
-        end
-
-        local function Apply(Input)
-            if Slider.Disabled then return end
-            Slider:Set(Calculate(Input))
-        end
-
-        AttachDrag(Items.Hit, {
-            OnGrab = function(Input)
-                if Slider.Disabled then return end
-                Slider.Sliding = true
-                Apply(Input)
-            end,
-            OnMove = Apply,
-            OnRelease = function()
-                Slider.Sliding = false
-            end
-        })
-        
-        Library:Connect(Items.ValueInput.Instance.FocusLost, function(EnterPressed)
-            if Slider.Disabled then return end
-            local RawText = Items.ValueInput.Instance.Text
-            
-            local CleanNumber = tonumber(string.match(RawText, "%-?%d+%.?%d*"))
-
-            if CleanNumber then
-                Slider:Set(CleanNumber)
-            else
-                Items.ValueInput.Instance.Text = FormatDisplay(Slider.Value)
-            end
-        end)
-        
-        Library:Connect(UserInputService.InputChanged, function(Input)
-            if Slider.Disabled or not Slider.Hovered then return end
-            if Input.UserInputType == Enum.UserInputType.MouseWheel then
-                local Delta = Input.Position.Z
-                local Multiplier = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) and 5 or 1
-                local Change = (Slider.Step or 1) * Multiplier
-
-                if Delta > 0 then
-                    Slider:Set(Slider.Value + Change)
-                else
-                    Slider:Set(Slider.Value - Change)
-                end
-            end
-        end)
-       
-        Library:Connect(Items.Hit.Instance.MouseEnter, function()
-            Slider.Hovered = true
-            if not Slider.Disabled then
-                Library:Tween({ BackgroundColor3 = Library.Theme.Hover }, nil, Items.Track.Instance)
-            end
-        end)
-
-        Library:Connect(Items.Hit.Instance.MouseLeave, function()
-            Slider.Hovered = false
-            if not Slider.Disabled then
-                Library:Tween({ BackgroundColor3 = Library.Theme.Element }, nil, Items.Track.Instance)
-            end
-        end)
-        
-        Slider:Set(Slider.Default, true)
-
-        if Slider.Disabled then
-            Slider:SetDisabled(true)
-        end
-
-        if Slider.Flag then
-            Library.SetFlags[Slider.Flag] = function(Value)
-                Slider:Set(Value)
-            end
-        end
-
-        return setmetatable(Slider, Library)
-    end
-    
-    Library.RangeSlider = function(Self, Params)
-        Params = Params or { }
-
-        local Section = Self
-
-        local RangeSlider = {
-            Name = Params.Name or "Range Slider",
-            Min = Params.Min or 0,
-            Max = Params.Max or 100,
-            MinDistance = Params.MinDistance or Params.MinRange or 0,
-            Step = Params.Step or nil,
-            Decimals = Params.Decimals or 0,
-            Prefix = Params.Prefix or "",
-            Suffix = Params.Suffix or "",
-            DisplayFormat = Params.DisplayFormat or nil,
-            Flag = Params.Flag,
-            Callback = Params.Callback or function() end,
-            Disabled = Params.Disabled or false,
-            Value = { Min = 0, Max = 100, Low = 0, High = 100 },
-            ActiveKnob = nil,
-            Hovered = false
-        }
-
-        local DefLow = Params.Default and (Params.Default[1] or Params.Default.Min or Params.Default.Low) or Params.Min or 0
-        local DefHigh = Params.Default and (Params.Default[2] or Params.Default.Max or Params.Default.High) or Params.Max or 100
-
-        if not RangeSlider.Step or RangeSlider.Step <= 0 then
-            RangeSlider.Step = 1 / (10 ^ RangeSlider.Decimals)
-        end
-
-        local Items = BuildSliderRow(Section, RangeSlider.Name)
-        local TrackW = Items.TrackWidth
-
-        RangeSlider.Items = Items
-        Items.KnobMin = MakeKnob(Items.Track.Instance)
-        Items.KnobMax = MakeKnob(Items.Track.Instance)
-
-        local function FormatDisplay(LowVal, HighVal)
-            if typeof(RangeSlider.DisplayFormat) == "function" then
-                local Ok, Custom = pcall(RangeSlider.DisplayFormat, LowVal, HighVal)
-                if Ok and Custom then return tostring(Custom) end
-            end
-            return RangeSlider.Prefix .. tostring(LowVal) .. " - " .. tostring(HighVal) .. RangeSlider.Suffix
-        end
-
-        local function SnapValue(RawVal)
-            RawVal = math.clamp(RawVal, RangeSlider.Min, RangeSlider.Max)
-            if RangeSlider.Step and RangeSlider.Step > 0 then
-                local Steps = math.floor((RawVal - RangeSlider.Min) / RangeSlider.Step + 0.5)
-                RawVal = RangeSlider.Min + (Steps * RangeSlider.Step)
-            end
-            RawVal = math.clamp(RawVal, RangeSlider.Min, RangeSlider.Max)
-            return Library:Round(RawVal, RangeSlider.Decimals)
+            RawVal = math.clamp(RawVal, Min, Max)
+            return Library:Round(RawVal, RangeSlider.Decimals) or Min
         end
 
         function RangeSlider:Set(LowVal, HighVal, Instant, Silent)
             if RangeSlider.Disabled then return end
 
+            local Min = tonumber(RangeSlider.Min) or 0
+            local Max = tonumber(RangeSlider.Max) or 100
+            local MinDist = tonumber(RangeSlider.MinDistance) or 0
+
             if type(LowVal) == "table" then
-                HighVal = LowVal[2] or LowVal.Max or LowVal.High
-                LowVal = LowVal[1] or LowVal.Min or LowVal.Low
+                HighVal = LowVal[2] or LowVal.Max or LowVal.High or LowVal.high or LowVal.max
+                LowVal = LowVal[1] or LowVal.Min or LowVal.Low or LowVal.low or LowVal.min
             end
 
-            LowVal = SnapValue(tonumber(LowVal) or RangeSlider.Min)
-            HighVal = SnapValue(tonumber(HighVal) or RangeSlider.Max)
+            LowVal = tonumber(SnapValue(tonumber(LowVal) or Min)) or Min
+            HighVal = tonumber(SnapValue(tonumber(HighVal) or Max)) or Max
 
-            if LowVal > HighVal - RangeSlider.MinDistance then
+            if LowVal > HighVal - MinDist then
                 if RangeSlider.ActiveKnob == "Min" then
-                    LowVal = math.min(LowVal, RangeSlider.Max - RangeSlider.MinDistance)
-                    HighVal = math.max(HighVal, LowVal + RangeSlider.MinDistance)
+                    LowVal = math.min(LowVal, Max - MinDist)
+                    HighVal = math.max(HighVal, LowVal + MinDist)
                 else
-                    HighVal = math.max(HighVal, RangeSlider.Min + RangeSlider.MinDistance)
-                    LowVal = math.min(LowVal, HighVal - RangeSlider.MinDistance)
+                    HighVal = math.max(HighVal, Min + MinDist)
+                    LowVal = math.min(LowVal, HighVal - MinDist)
                 end
             end
 
-            LowVal = SnapValue(LowVal)
-            HighVal = SnapValue(HighVal)
+            LowVal = tonumber(SnapValue(LowVal)) or Min
+            HighVal = tonumber(SnapValue(HighVal)) or Max
 
             RangeSlider.Value = { Min = LowVal, Max = HighVal, Low = LowVal, High = HighVal }
 
@@ -5360,9 +5166,9 @@ end
                 Library.Flags[RangeSlider.Flag] = RangeSlider.Value
             end
 
-            local Span = RangeSlider.Max - RangeSlider.Min
-            local FracMin = Span == 0 and 0 or (LowVal - RangeSlider.Min) / Span
-            local FracMax = Span == 0 and 0 or (HighVal - RangeSlider.Min) / Span
+            local Span = Max - Min
+            local FracMin = Span == 0 and 0 or ((LowVal - Min) / Span)
+            local FracMax = Span == 0 and 0 or ((HighVal - Min) / Span)
             local Info = Instant and TweenInfo.new(0) or SlideInfo
 
             Library:Tween({
