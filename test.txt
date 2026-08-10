@@ -8483,58 +8483,55 @@ end
 end
 
     Library.MobileToggle = function(Self, Window)
-        if not IsMobile then return end
+        -- Đã bỏ "if not IsMobile then return end" để ÉP NÚT LUÔN HIỆN
 
-        local ButtonSize = 46
+        local ButtonSize = 48
         local IsOpen = Window and Window.IsOpen or true
         local LastInteraction = os.clock()
 
-        -- Container chính dạng tròn Glassmorphism
+        -- Đưa nút vào Library.PopupHolder (Layer hiển thị cao nhất trên cùng)
         local Container = Library:Create("Frame", {
-            Parent = Library.Holder.Instance,
+            Parent = Library.PopupHolder.Instance,
             AnchorPoint = Vector2.new(1, 0.5),
-            Position = UDim2.new(1, -12, 0.35, 0),
+            Position = UDim2.new(1, -20, 0.25, 0), -- Góc trên bên phải (tránh đè nút c, e)
             Size = UDim2.fromOffset(ButtonSize, ButtonSize),
-            BackgroundColor3 = Color3.fromRGB(18, 20, 26),
-            BackgroundTransparency = 0.15,
+            BackgroundColor3 = Color3.fromRGB(22, 25, 34),
+            BackgroundTransparency = 0.1,
             Round = ButtonSize / 2,
-            Z = 2500,
+            Z = 9999,
             Clip = false
         })
 
-        -- Bóng đổ dạ quang (Glow Shadow)
-        MakeShadow(Container.Instance, Library.Theme.Accent, UDim2.fromOffset(0, 0), UDim.new(0, 10), 0.6)
-
-        -- Viền Gradient phát sáng
+        -- Viền phát sáng nổi bật
         local Stroke = Instance.new("UIStroke")
         Stroke.Name = "\0"
-        Stroke.Color = Library.Theme.Accent
-        Stroke.Thickness = 1.8
-        Stroke.Transparency = 0.2
+        Stroke.Color = Library.Theme.Accent or Color3.fromRGB(179, 165, 255)
+        Stroke.Thickness = 2
+        Stroke.Transparency = 0.1
         Stroke.Parent = Container.Instance
 
         local StrokeGrad = Instance.new("UIGradient")
         StrokeGrad.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, Library.Theme.Accent),
+            ColorSequenceKeypoint.new(0, Library.Theme.Accent or Color3.fromRGB(179, 165, 255)),
             ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 255, 255)),
-            ColorSequenceKeypoint.new(1, Library.Theme.Accent)
+            ColorSequenceKeypoint.new(1, Library.Theme.Accent or Color3.fromRGB(179, 165, 255))
         })
         StrokeGrad.Rotation = 45
         StrokeGrad.Parent = Stroke
         Library:RegisterGradient(StrokeGrad)
 
-        -- Icon trung tâm
+        -- Icon ở chính giữa nút
         local Icon = MakeImage({
             Parent = Container.Instance,
             Icon = (Window and Window.Icon) or "layers",
             Anchor = Vector2.new(0.5, 0.5),
             Pos = UDim2.new(0.5, 0, 0.5, 0),
-            Size = UDim2.fromOffset(22, 22),
+            Size = UDim2.fromOffset(24, 24),
             Color = "Accent",
-            Z = 2501
+            Z = 10000
         })
 
-        -- Chấm đèn LED báo trạng thái UI (Xanh = Mở, Đỏ = Ẩn)
+        -- Chấm đèn LED báo trạng thái (Bật = Xanh, Tắt = Đỏ)
         local StatusRing = MakeFrame({
             Parent = Container.Instance,
             Anchor = Vector2.new(1, 0),
@@ -8542,67 +8539,66 @@ end
             Size = UDim2.fromOffset(12, 12),
             Raw = Color3.fromRGB(72, 214, 168),
             Round = 12,
-            Z = 2502
+            Z = 10001
         })
 
         local StatusStroke = Instance.new("UIStroke")
-        StatusStroke.Color = Color3.fromRGB(18, 20, 26)
+        StatusStroke.Color = Color3.fromRGB(22, 25, 34)
         StatusStroke.Thickness = 2
         StatusStroke.Parent = StatusRing.Instance
 
-        -- Button tương tác
+        -- Nút tương tác cảm ứng
         local Hit = MakeButton({
             Parent = Container.Instance,
-            Z = 2505
+            Z = 10005
         })
 
-        -- Cho phép Kéo / Trượt
+        -- Cho phép Kéo / Di chuyển nút trên màn hình
         Library.MakeDraggable({ Instance = Container.Instance }, Hit.Instance)
 
-        -- Tự động Bắt dính lề màn hình mượt mà (Snap to Edge)
+        -- Tự động Bắt dính mép màn hình khi di chuyển (Snap to Edge)
         local function SnapToEdge()
             local Scale = Library:GetScreenScale()
             local Viewport = workspace.CurrentCamera.ViewportSize / Scale
             local Pos = Container.Instance.AbsolutePosition / Scale
             local Size = Container.Instance.AbsoluteSize / Scale
 
-            local TargetX = (Pos.X + Size.X / 2 < Viewport.X / 2) and 12 or (Viewport.X - Size.X - 12)
+            local TargetX = (Pos.X + Size.X / 2 < Viewport.X / 2) and 15 or (Viewport.X - Size.X - 15)
             local TargetY = math.clamp(Pos.Y, 50, Viewport.Y - 70)
 
             Library:Tween({
                 Position = UDim2.fromOffset(TargetX, TargetY),
                 AnchorPoint = Vector2.new(0, 0)
-            }, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), Container.Instance)
+            }, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), Container.Instance)
         end
 
-        -- Cập nhật trạng thái hiển thị
+        -- Cập nhật màu sắc & trạng thái khi bấm
         local function UpdateState(OpenState)
             IsOpen = OpenState
             LastInteraction = os.clock()
 
-            -- Khôi phục độ sáng khi có thao tác
-            Container.Instance.BackgroundTransparency = 0.15
-            Stroke.Transparency = 0.2
+            Container.Instance.BackgroundTransparency = 0.1
+            Stroke.Transparency = 0.1
             Icon.Instance.ImageTransparency = 0
 
             local Info = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
             if OpenState then
-                StatusRing.Instance.BackgroundColor3 = Color3.fromRGB(72, 214, 168) -- Báo xanh
+                StatusRing.Instance.BackgroundColor3 = Color3.fromRGB(72, 214, 168) -- Màu Xanh
                 Library:Tween({ Rotation = 180 }, Info, Icon.Instance)
             else
-                StatusRing.Instance.BackgroundColor3 = Color3.fromRGB(245, 130, 120) -- Báo đỏ
+                StatusRing.Instance.BackgroundColor3 = Color3.fromRGB(245, 130, 120) -- Màu Đỏ
                 Library:Tween({ Rotation = 0 }, Info, Icon.Instance)
             end
         end
 
-        -- Vòng lặp tự động làm mờ khi đứng yên (Auto-Dimmer Idle)
+        -- Tự mờ nút khi không chạm sau 4 giây (Auto-Dim)
         Library:Thread(function()
             while task.wait(0.5) do
                 if Container and Container.Instance and Container.Instance.Parent then
-                    if os.clock() - LastInteraction > 3.5 then
-                        Library:Tween({ BackgroundTransparency = 0.65 }, TweenInfo.new(0.5), Container.Instance)
+                    if os.clock() - LastInteraction > 4 then
+                        Library:Tween({ BackgroundTransparency = 0.6 }, TweenInfo.new(0.5), Container.Instance)
                         Library:Tween({ Transparency = 0.6 }, TweenInfo.new(0.5), Stroke)
-                        Library:Tween({ ImageTransparency = 0.45 }, TweenInfo.new(0.5), Icon.Instance)
+                        Library:Tween({ ImageTransparency = 0.4 }, TweenInfo.new(0.5), Icon.Instance)
                     end
                 else
                     break
@@ -8610,11 +8606,11 @@ end
             end
         end)
 
-        -- Hiệu ứng co giãn khi Chạm / Nhấn
+        -- Hiệu ứng phản hồi khi Chạm / Thả
         Hit:Connect("InputBegan", function(Input)
             if Input.UserInputType == Enum.UserInputType.Touch or Input.UserInputType == Enum.UserInputType.MouseButton1 then
                 LastInteraction = os.clock()
-                Library:Tween({ Size = UDim2.fromOffset(ButtonSize * 0.86, ButtonSize * 0.86) }, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), Container.Instance)
+                Library:Tween({ Size = UDim2.fromOffset(ButtonSize * 0.85, ButtonSize * 0.85) }, TweenInfo.new(0.1), Container.Instance)
             end
         end)
 
@@ -8626,7 +8622,7 @@ end
             end
         end)
 
-        -- Bật / Tắt Menu khi Click
+        -- Sự kiện bấm Đóng/Mở Menu
         Hit:Connect("MouseButton1Click", function()
             if Window then
                 Window:SetOpen(not Window.IsOpen)
