@@ -2497,15 +2497,15 @@ end
 
         local ProfilePanel = MakeFrame({
             Parent = Library.UnusedHolder.Instance,
-            Size = UDim2.fromOffset(ProfileW, 272),
+            Size = UDim2.fromOffset(ProfileW, 304), 
             Color = "Section",
             Round = 10,
             Z = 45
         })
 
         ProfilePanel.Instance.Visible = false
-
-        MakeAvatar(ProfilePanel.Instance, {
+       
+        local ProfileAvatar = MakeAvatar(ProfilePanel.Instance, {
             Pos = UDim2.fromOffset(14, 14),
             Size = 42,
             Res = 100,
@@ -2513,7 +2513,7 @@ end
             Z = 46
         })
 
-        MakeText({
+        local ProfileDisplayName = MakeText({
             Parent = ProfilePanel.Instance,
             Text = LocalPlayer.DisplayName,
             TextSize = 15,
@@ -2524,7 +2524,7 @@ end
             Z = 46
         })
 
-        MakeText({
+        local ProfileUsername = MakeText({
             Parent = ProfilePanel.Instance,
             Text = "@" .. LocalPlayer.Name,
             TextSize = 13,
@@ -2556,7 +2556,7 @@ end
                 Z = 46
             })
 
-            MakeText({
+            return MakeText({
                 Parent = ProfilePanel.Instance,
                 Text = Value,
                 TextSize = 14,
@@ -2571,7 +2571,7 @@ end
         end
 
         ProfileDivider(68)
-        ProfileStat(79, "User ID", tostring(LocalPlayer.UserId))
+        local ProfileUserId = ProfileStat(79, "User ID", tostring(LocalPlayer.UserId))
         ProfileStat(105, "Account age", tostring(LocalPlayer.AccountAge) .. " days")
 
         local IdHit = MakeButton({
@@ -2852,10 +2852,72 @@ end
                 end)
             end)
         end)
+        
+        local IsInfoHidden = false
+
+        local function UpdateProfileInfo()
+            local dName = IsInfoHidden and "Roblox Player" or LocalPlayer.DisplayName
+            local uName = IsInfoHidden and "roblox" or LocalPlayer.Name
+            local uId = IsInfoHidden and "1" or tostring(LocalPlayer.UserId)
+            local idAvatar = IsInfoHidden and 1 or LocalPlayer.UserId
+            local thumbUrl = "rbxthumb://type=AvatarHeadShot&id=" .. idAvatar .. "&w=100&h=100"
+
+            Items.Username.Instance.Text = dName
+            Items.Avatar.Instance.Image = thumbUrl
+            ProfileAvatar.Instance.Image = thumbUrl
+            ProfileDisplayName.Instance.Text = dName
+            ProfileUsername.Instance.Text = "@" .. uName
+            ProfileUserId.Instance.Text = uId
+        end
+
+        MakeText({
+            Parent = ProfilePanel.Instance,
+            Text = "Hide info",
+            TextSize = 14,
+            Anchor = Vector2.new(0, 0.5),
+            Pos = UDim2.new(0, 14, 0, 235),
+            Size = UDim2.fromOffset(110, 20),
+            Color = "DimText",
+            Z = 46
+        })
+
+        local HideEyeIcon = MakeImage({
+            Parent = ProfilePanel.Instance,
+            Icon = "eye-off",
+            Anchor = Vector2.new(1, 0.5),
+            Pos = UDim2.new(1, -14, 0, 235),
+            Size = UDim2.fromOffset(16, 16),
+            Color = "DimText",
+            Z = 46
+        })
+
+        local HideEyeHit = MakeButton({
+            Parent = ProfilePanel.Instance,
+            Anchor = Vector2.new(1, 0.5),
+            Pos = UDim2.new(1, -8, 0, 235),
+            Size = UDim2.fromOffset(26, 26),
+            Z = 48
+        })
+
+        HideEyeHit:OnHover(function()
+            if not IsInfoHidden then
+                HideEyeIcon:Tween({ ImageColor3 = Library.Theme.Text })
+            end
+        end, function()
+            if not IsInfoHidden then
+                HideEyeIcon:Tween({ ImageColor3 = Library.Theme.DimText })
+            end
+        end)
+
+        HideEyeHit:Connect("MouseButton1Down", function()
+            IsInfoHidden = not IsInfoHidden
+            HideEyeIcon:Tween({ ImageColor3 = IsInfoHidden and Library.Theme.Accent or Library.Theme.DimText })
+            UpdateProfileInfo()
+        end)   
 
         local UnloadButton = MakeFrame({
             Parent = ProfilePanel.Instance,
-            Pos = UDim2.fromOffset(14, 236),
+            Pos = UDim2.fromOffset(14, 268), 
             Size = UDim2.fromOffset(ProfileW - 28, 28),
             Color = "Light",
             Round = 6,
