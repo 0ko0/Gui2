@@ -4777,7 +4777,7 @@ if IsMobile and Key and Key ~= "None" then
     Stroke.Color = Library.Theme.Accent
     Stroke.Thickness = 1.5
 
-    Library:Create(Widget):MakeDraggable()
+    Library.MakeDraggable({ Instance = Widget })
 
     Widget.Activated:Connect(function()
         if Keybind.Mode == "Toggle" then
@@ -6861,7 +6861,7 @@ end
                 Stroke.Thickness = 1.5
                 Stroke.Parent = Widget
 
-                Library:Create(Widget):MakeDraggable()
+                Library.MakeDraggable({ Instance = Widget })
 
                 Widget.Activated:Connect(function()
                     Library:SafeCall(Keybind.Callback, Keybind.Key)
