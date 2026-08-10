@@ -3325,7 +3325,8 @@ end
 
         local TextW = math.ceil(MeasureText(SubTab.Name, 15, 300, UiFont).X)
         local CollapsedW = 40
-        local ExpandedW = 37 + TextW + 12
+        local PaddingRight = 18 
+        local ExpandedW = 37 + TextW + PaddingRight
 
         SubTab.CollapsedW = CollapsedW
         SubTab.ExpandedW = ExpandedW
@@ -3346,7 +3347,7 @@ end
             Parent = Items.Pill.Instance,
             Icon = SubTab.Icon,
             Anchor = Vector2.new(0, 0.5),
-            Pos = UDim2.new(0, 11, 0.5, 0),
+            Pos = UDim2.new(0, 10, 0.5, 0),
             Size = UDim2.fromOffset(18, 18),
             Color = "DimIcon",
             Z = 23
@@ -3357,8 +3358,8 @@ end
             Text = SubTab.Name,
             TextSize = 15,
             Anchor = Vector2.new(0, 0.5),
-            Pos = UDim2.new(0, 37, 0.5, 0),
-            Size = UDim2.fromOffset(TextW + 8, 20),
+            Pos = UDim2.new(0, 34, 0.5, 0),
+            Size = UDim2.fromOffset(TextW + 20, 20), 
             Color = "Text",
             Z = 23
         })
@@ -3369,9 +3370,9 @@ end
             local Bounds = math.ceil(Items.Label.Instance.TextBounds.X)
             if Bounds <= 0 then return end
 
-            ExpandedW = 37 + Bounds + 12
+            ExpandedW = 34 + Bounds + 18 
             SubTab.ExpandedW = ExpandedW
-            Items.Label.Instance.Size = UDim2.fromOffset(Bounds + 8, 20)
+            Items.Label.Instance.Size = UDim2.fromOffset(Bounds + 16, 20)
 
             if Tab.Current == SubTab then
                 Items.Pill.Instance.Size = UDim2.fromOffset(ExpandedW, 30)
