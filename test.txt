@@ -2372,21 +2372,24 @@ end
             Color = "Element",
             Z = 3
         })
-
-        Items.HubIcon = MakeImage({
+       
+        Items.Title = MakeText({
             Parent = Items.TopBar.Instance,
-            Icon = Window.Icon,
-            Pos = UDim2.fromOffset(10, 10),
-            Size = UDim2.fromOffset(30, 30),
-            Raw = Color3.new(1, 1, 1),
-            Fit = true,
+            Text = Window.Name,
+            TextSize = 16,
+            Bold = true,
+            Pos = UDim2.fromOffset(15, 0),
+            Size = UDim2.fromOffset(110, TopH),
+            Color = "Text",
+            Align = Enum.TextXAlignment.Left,
+            Truncate = true,
             Z = 3
         })
-
+        
         Items.Search = MakeFrame({
             Parent = Items.TopBar.Instance,
-            Pos = UDim2.fromOffset(50, 11),
-            Size = UDim2.fromOffset(280, 30),
+            Pos = UDim2.fromOffset(130, 10),
+            Size = UDim2.fromOffset(240, 30),
             Color = "Element",
             Round = 5,
             Z = 3
