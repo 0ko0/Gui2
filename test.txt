@@ -1495,12 +1495,15 @@ end
             Debounce = false,
             Order = { },
             Host = nil,
-            OnPick = function() end
+            OnPick = function() end,
+            OnClear = nil,
+            OnSelectAll = nil
         }
 
         local Items = { }
-        local RowHeight = 30
+        local RowHeight = 32
         local SearchHeight = 30
+        local ActionHeaderHeight = 26
 
         Items.Frame = MakeFrame({
             Parent = Library.UnusedHolder.Instance,
@@ -1512,14 +1515,13 @@ end
         })
 
         Items.Frame.Instance.Visible = false
-
+        
         Items.SearchHolder = MakeFrame({
             Parent = Items.Frame.Instance,
             Size = UDim2.new(1, 0, 0, SearchHeight),
             Color = "Element",
             Z = Level + 5
         })
-
         Items.SearchHolder.Instance.Visible = false
 
         MakeImage({
@@ -1542,6 +1544,52 @@ end
 
         MakeFrame({
             Parent = Items.SearchHolder.Instance,
+            Pos = UDim2.new(0, 6, 1, -1),
+            Size = UDim2.new(1, -12, 0, 1),
+            Color = "Line",
+            Z = Level + 6
+        })
+       
+        Items.ActionHolder = MakeFrame({
+            Parent = Items.Frame.Instance,
+            Size = UDim2.new(1, 0, 0, ActionHeaderHeight),
+            Color = "Element",
+            Z = Level + 5
+        })
+        Items.ActionHolder.Instance.Visible = false
+
+        local SelectAllBtn = MakeText({
+            Parent = Items.ActionHolder.Instance,
+            Text = "Select All",
+            TextSize = 12,
+            Pos = UDim2.fromOffset(10, 0),
+            Size = UDim2.new(0.5, -10, 1, 0),
+            Color = "DimText",
+            Z = Level + 6
+        })
+        local SelectAllHit = MakeButton({ Parent = SelectAllBtn.Instance, Z = Level + 7 })
+
+        local ClearBtn = MakeText({
+            Parent = Items.ActionHolder.Instance,
+            Text = "Clear All",
+            TextSize = 12,
+            Anchor = Vector2.new(1, 0),
+            Pos = UDim2.new(1, -10, 0, 0),
+            Size = UDim2.new(0.5, -10, 1, 0),
+            Color = "DimText",
+            Align = Enum.TextXAlignment.Right,
+            Z = Level + 6
+        })
+        local ClearHit = MakeButton({ Parent = ClearBtn.Instance, Z = Level + 7 })
+
+        SelectAllHit:OnHover(function() SelectAllBtn:ChangeItemTheme({ TextColor3 = "Text" }) end, function() SelectAllBtn:ChangeItemTheme({ TextColor3 = "DimText" }) end)
+        ClearHit:OnHover(function() ClearBtn:ChangeItemTheme({ TextColor3 = "Text" }) end, function() ClearBtn:ChangeItemTheme({ TextColor3 = "DimText" }) end)
+
+        SelectAllHit:Connect("MouseButton1Down", function() if Popup.OnSelectAll then Popup.OnSelectAll() end end)
+        ClearHit:Connect("MouseButton1Down", function() if Popup.OnClear then Popup.OnClear() end end)
+
+        MakeFrame({
+            Parent = Items.ActionHolder.Instance,
             Pos = UDim2.new(0, 6, 1, -1),
             Size = UDim2.new(1, -12, 0, 1),
             Color = "Line",
@@ -1581,10 +1629,10 @@ end
 
         local function ApplySearch(Query)
             Query = string.lower(Query)
-
             for _, Data in Popup.Order do
-                local Match = Query == ""
-                or string.find(string.lower(Data.Name), Query, 1, true) ~= nil
+                local Match = Query == "" 
+                    or string.find(string.lower(Data.Name), Query, 1, true) ~= nil
+                    or (Data.Desc and string.find(string.lower(Data.Desc), Query, 1, true) ~= nil)
 
                 Data.Row.Instance.Visible = Match
             end
@@ -1594,22 +1642,46 @@ end
             ApplySearch(Items.Search.Instance.Text)
         end)
 
-        function Popup:AddRow(Text)
+        function Popup:AddRow(OptionData)
+            local Name = type(OptionData) == "table" and (OptionData.Name or OptionData.Value) or tostring(OptionData)
+            local Value = type(OptionData) == "table" and (OptionData.Value ~= nil and OptionData.Value or OptionData.Name) or OptionData
+            local Icon = type(OptionData) == "table" and OptionData.Icon or nil
+            local Desc = type(OptionData) == "table" and OptionData.Desc or nil
+
+            local HasIcon = Icon ~= nil and Icon ~= ""
+            local TextX = HasIcon and 28 or 11
+            local TextActiveX = HasIcon and 34 or 20
+
             local Built = MakeAccentRow({
                 Parent = Items.Scroll.Instance,
                 Size = UDim2.new(1, -4, 0, RowHeight - 4),
-                Text = Text,
+                Text = Name,
                 TextSize = 14,
-                LabelSize = UDim2.new(1, -20, 1, 0),
+                LabelSize = UDim2.new(1, - (HasIcon and 36 or 20), 1, 0),
                 LineX = 8,
                 LineH = 16,
-                TextX = 11,
-                TextActiveX = 20,
+                TextX = TextX,
+                TextActiveX = TextActiveX,
                 Z = Level + 1
             })
 
+            local IconImg
+            if HasIcon then
+                IconImg = MakeImage({
+                    Parent = Built.Row.Instance,
+                    Icon = Icon,
+                    Pos = UDim2.fromOffset(8, (RowHeight - 4 - 14) / 2),
+                    Size = UDim2.fromOffset(14, 14),
+                    Color = "DimIcon",
+                    Z = Level + 2
+                })
+            end
+
             local Data = {
-                Name = Text,
+                Name = Name,
+                Value = Value,
+                Icon = Icon,
+                Desc = Desc,
                 Selected = false,
                 Row = Built.Row
             }
@@ -1617,6 +1689,10 @@ end
             function Data:Set(Active, Instant)
                 Data.Selected = Active
                 Built.SetActive(Active, Instant)
+                if IconImg then
+                    IconImg:ChangeItemTheme({ ImageColor3 = Active and "Accent" or "DimIcon" })
+                    IconImg:Tween({ ImageColor3 = Active and Library.Theme.Accent or Library.Theme.DimIcon })
+                end
             end
 
             Built.Row:OnHover(function()
@@ -1639,7 +1715,6 @@ end
             for _, Data in Popup.Order do
                 Data.Row.Instance:Destroy()
             end
-
             Popup.Order = { }
         end
 
@@ -1652,24 +1727,31 @@ end
             OnOpen = function()
                 local Anchor = GetAnchor()
                 local Scale = Library:GetScreenScale()
-                local ShowSearch = #Popup.Order > 8
+                local ShowSearch = Popup.ForceSearch == true or (Popup.ForceSearch == nil and #Popup.Order > 8)
+                local ShowActions = Popup.ShowActions == true
+
                 local Width = WidthOverride or (Anchor.AbsoluteSize.X / Scale)
                 local ListHeight = math.min(#Popup.Order * RowHeight + 8, 168)
+                local TopOffsetY = 0
 
                 Items.Search.Instance.Text = ""
                 ApplySearch("")
 
                 Items.SearchHolder.Instance.Visible = ShowSearch
-
                 if ShowSearch then
-                    Items.Scroll.Instance.Position = UDim2.fromOffset(0, SearchHeight)
-                    Items.Scroll.Instance.Size = UDim2.new(1, 0, 1, -SearchHeight)
-                    Items.Frame.Instance.Size = UDim2.fromOffset(Width, ListHeight + SearchHeight)
-                else
-                    Items.Scroll.Instance.Position = UDim2.fromOffset(0, 0)
-                    Items.Scroll.Instance.Size = UDim2.new(1, 0, 1, 0)
-                    Items.Frame.Instance.Size = UDim2.fromOffset(Width, ListHeight)
+                    Items.SearchHolder.Instance.Position = UDim2.fromOffset(0, TopOffsetY)
+                    TopOffsetY += SearchHeight
                 end
+
+                Items.ActionHolder.Instance.Visible = ShowActions
+                if ShowActions then
+                    Items.ActionHolder.Instance.Position = UDim2.fromOffset(0, TopOffsetY)
+                    TopOffsetY += ActionHeaderHeight
+                end
+
+                Items.Scroll.Instance.Position = UDim2.fromOffset(0, TopOffsetY)
+                Items.Scroll.Instance.Size = UDim2.new(1, 0, 1, -TopOffsetY)
+                Items.Frame.Instance.Size = UDim2.fromOffset(Width, ListHeight + TopOffsetY)
             end,
             OnClose = function()
                 Items.Search.Instance.Text = ""
@@ -1745,6 +1827,8 @@ end
             Value = 1,
             Transparency = DefaultAlpha or 0,
             Color = Color3.new(1, 1, 1),
+            Rainbow = false,
+            RainbowSpeed = 0.5,
             IsOpen = false,
             Debounce = false
         }
@@ -1753,12 +1837,13 @@ end
         local Level = 120
         local Field = 150
         local PanelW = Field + 32
+        local PanelH = Field + 172
         local CursorSize = 14
         local CursorThickness = 2
 
         Items.Window = MakeFrame({
             Parent = Library.UnusedHolder.Instance,
-            Size = UDim2.fromOffset(PanelW, Field + 110),
+            Size = UDim2.fromOffset(PanelW, PanelH),
             Color = "Section",
             Round = 8,
             Z = Level
@@ -1862,7 +1947,7 @@ end
             return Bar, Cursor
         end
 
-        Items.HueBar, Items.HueCursor = MakeBar(Field + 30)
+        Items.HueBar, Items.HueCursor = MakeBar(Field + 24)
 
         Library:Create("UIGradient", {
             Parent = Items.HueBar.Instance,
@@ -1877,7 +1962,7 @@ end
             })
         })
 
-        Items.AlphaBar, Items.AlphaCursor = MakeBar(Field + 50)
+        Items.AlphaBar, Items.AlphaCursor = MakeBar(Field + 40)
 
         local AlphaGradient = Library:Create("UIGradient", {
             Parent = Items.AlphaBar.Instance,
@@ -1889,8 +1974,8 @@ end
 
         Items.Hex = MakeFrame({
             Parent = Items.Window.Instance,
-            Pos = UDim2.fromOffset(16, Field + 72),
-            Size = UDim2.fromOffset(Field, 26),
+            Pos = UDim2.fromOffset(16, Field + 56),
+            Size = UDim2.fromOffset(Field - 52, 24),
             Color = "Element",
             Round = 5,
             Clip = true,
@@ -1901,11 +1986,116 @@ end
             Parent = Items.Hex.Instance,
             Text = "#FFFFFF",
             Placeholder = "#FFFFFF",
-            Pos = UDim2.fromOffset(9, 0),
-            Size = UDim2.new(1, -18, 1, 0),
-            TextSize = 14,
+            Pos = UDim2.fromOffset(6, 0),
+            Size = UDim2.new(1, -12, 1, 0),
+            TextSize = 13,
             Z = Level + 2
         })
+
+        local CopyBox = MakeFrame({
+            Parent = Items.Window.Instance,
+            Pos = UDim2.fromOffset(16 + Field - 48, Field + 56),
+            Size = UDim2.fromOffset(22, 24),
+            Color = "Element",
+            Round = 5,
+            Z = Level + 1
+        })
+        MakeImage({
+            Parent = CopyBox.Instance,
+            Icon = "copy",
+            Anchor = Vector2.new(0.5, 0.5),
+            Pos = UDim2.new(0.5, 0, 0.5, 0),
+            Size = UDim2.fromOffset(12, 12),
+            Color = "DimText",
+            Z = Level + 2
+        })
+        local CopyHit = MakeButton({ Parent = CopyBox.Instance, Z = Level + 3 })
+
+        local PasteBox = MakeFrame({
+            Parent = Items.Window.Instance,
+            Pos = UDim2.fromOffset(16 + Field - 22, Field + 56),
+            Size = UDim2.fromOffset(22, 24),
+            Color = "Element",
+            Round = 5,
+            Z = Level + 1
+        })
+        MakeImage({
+            Parent = PasteBox.Instance,
+            Icon = "clipboard-paste",
+            Anchor = Vector2.new(0.5, 0.5),
+            Pos = UDim2.new(0.5, 0, 0.5, 0),
+            Size = UDim2.fromOffset(12, 12),
+            Color = "DimText",
+            Z = Level + 2
+        })
+        local PasteHit = MakeButton({ Parent = PasteBox.Instance, Z = Level + 3 })
+
+        local RainbowBox = MakeFrame({
+            Parent = Items.Window.Instance,
+            Pos = UDim2.fromOffset(16, Field + 86),
+            Size = UDim2.fromOffset(Field, 24),
+            Color = "Element",
+            Round = 5,
+            Z = Level + 1
+        })
+
+        local RainbowLabel = MakeText({
+            Parent = RainbowBox.Instance,
+            Text = "Rainbow Mode",
+            TextSize = 12,
+            Pos = UDim2.fromOffset(8, 0),
+            Size = UDim2.new(1, -30, 1, 0),
+            Color = "DimText",
+            Z = Level + 2
+        })
+
+        local RainbowIcon = MakeImage({
+            Parent = RainbowBox.Instance,
+            Icon = "sparkles",
+            Anchor = Vector2.new(1, 0.5),
+            Pos = UDim2.new(1, -6, 0.5, 0),
+            Size = UDim2.fromOffset(13, 13),
+            Color = "DimText",
+            Z = Level + 2
+        })
+
+        local RainbowHit = MakeButton({ Parent = RainbowBox.Instance, Z = Level + 3 })
+
+        local PresetColors = {
+            Color3.fromRGB(255, 255, 255),
+            Color3.fromRGB(255, 60, 60),
+            Color3.fromRGB(60, 255, 60),
+            Color3.fromRGB(60, 120, 255),
+            Color3.fromRGB(255, 220, 60),
+            Color3.fromRGB(180, 80, 255),
+            Color3.fromRGB(20, 20, 20)
+        }
+
+        local PresetContainer = MakeFrame({
+            Parent = Items.Window.Instance,
+            Pos = UDim2.fromOffset(16, Field + 116),
+            Size = UDim2.fromOffset(Field, 18),
+            Z = Level + 1
+        })
+
+        local SwatchWidth = 18
+        local SwatchGap = math.floor((Field - (#PresetColors * SwatchWidth)) / (#PresetColors - 1))
+
+        for idx, pColor in ipairs(PresetColors) do
+            local pDot = MakeFrame({
+                Parent = PresetContainer.Instance,
+                Pos = UDim2.fromOffset((idx - 1) * (SwatchWidth + SwatchGap), 0),
+                Size = UDim2.fromOffset(SwatchWidth, SwatchWidth),
+                Raw = pColor,
+                Round = 20,
+                Z = Level + 2
+            })
+            local pHit = MakeButton({ Parent = pDot.Instance, Z = Level + 3 })
+            pHit:Connect("MouseButton1Down", function()
+                Picker.Rainbow = false
+                Picker:Set(pColor, Picker.Transparency, false)
+            end)
+        end
 
         local Grabbing = nil
         local SlideInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
@@ -1930,10 +2120,67 @@ end
                 Items.HexInput.Instance.Text = "#" .. string.upper(Picker.Color:ToHex())
             end
 
-            Library:SafeCall(OnChanged, Picker.Color, Picker.Transparency)
+            RainbowLabel:ChangeItemTheme({ TextColor3 = Picker.Rainbow and "Accent" or "DimText" })
+            RainbowIcon:ChangeItemTheme({ ImageColor3 = Picker.Rainbow and "Accent" or "DimText" })
+
+            Library:SafeCall(OnChanged, Picker.Color, Picker.Transparency, Picker.Rainbow)
         end
 
-        function Picker:Set(Color, Alpha, Silent)
+        local RainbowConn
+        local function ToggleRainbow(State)
+            Picker.Rainbow = State
+            if Picker.Rainbow then
+                if not RainbowConn then
+                    RainbowConn = RunService.RenderStepped:Connect(function(Delta)
+                        if not Picker.Rainbow or not Picker.IsOpen then
+                            if RainbowConn then RainbowConn:Disconnect() RainbowConn = nil end
+                            return
+                        end
+                        Picker.Hue = (Picker.Hue + Delta * Picker.RainbowSpeed) % 1
+                        Refresh(true)
+                    end)
+                    table.insert(Library.Connections, RainbowConn)
+                end
+            else
+                if RainbowConn then
+                    RainbowConn:Disconnect()
+                    RainbowConn = nil
+                end
+            end
+            Refresh(false)
+        end
+
+        RainbowHit:Connect("MouseButton1Down", function()
+            ToggleRainbow(not Picker.Rainbow)
+        end)
+
+        CopyHit:Connect("MouseButton1Down", function()
+            if setclipboard then
+                pcall(setclipboard, "#" .. string.upper(Picker.Color:ToHex()))
+                Library:Notification({
+                    Name = "Hex Copied",
+                    Description = "Color hex code copied to clipboard!",
+                    Icon = "copy",
+                    Duration = 2
+                })
+            end
+        end)
+
+        PasteHit:Connect("MouseButton1Down", function()
+            if getclipboard then
+                local txt = getclipboard()
+                if type(txt) == "string" then
+                    txt = string.gsub(txt, "#", "")
+                    local ok, col = pcall(function() return Color3.fromHex(txt) end)
+                    if ok and col then
+                        Picker.Rainbow = false
+                        Picker:Set(col, Picker.Transparency, false)
+                    end
+                end
+            end
+        end)
+
+        function Picker:Set(Color, Alpha, Rainbow, Silent)
             if type(Color) == "table" then
                 Color = Color3.fromRGB(Color[1], Color[2], Color[3])
             end
@@ -1944,6 +2191,9 @@ end
 
             Picker.Hue, Picker.Saturation, Picker.Value = Color:ToHSV()
             Picker.Transparency = Alpha or Picker.Transparency or 0
+            Picker.Rainbow = Rainbow and true or false
+
+            ToggleRainbow(Picker.Rainbow)
 
             if Silent then
                 Picker.Color = Color3.fromHSV(Picker.Hue, Picker.Saturation, Picker.Value)
@@ -1965,6 +2215,8 @@ end
                 return
             end
 
+            Picker.Rainbow = false
+            ToggleRainbow(false)
             Refresh()
         end
 
@@ -2013,7 +2265,8 @@ end
             end)
 
             if Ok and Color then
-                Picker:Set(Color, Picker.Transparency)
+                Picker.Rainbow = false
+                Picker:Set(Color, Picker.Transparency, false)
             else
                 Refresh(true)
             end
@@ -2027,93 +2280,141 @@ end
             Place = PlaceBeside(GetAnchor)
         })
 
-        Picker:Set(Default or Library.Theme.Accent, Picker.Transparency)
+        Picker:Set(Default or Library.Theme.Accent, Picker.Transparency, false)
         return Picker
     end
 
-    local function KeyName(Key)
-        if not Key then return "None" end
+    local KeyShortcuts = {
+    [Enum.UserInputType.MouseButton1] = "MB1",
+    [Enum.UserInputType.MouseButton2] = "MB2",
+    [Enum.UserInputType.MouseButton3] = "MB3",
+    [Enum.UserInputType.MouseButton4] = "MB4",
+    [Enum.UserInputType.MouseButton5] = "MB5",
+    [Enum.KeyCode.LeftShift] = "LShift",
+    [Enum.KeyCode.RightShift] = "RShift",
+    [Enum.KeyCode.LeftControl] = "LCtrl",
+    [Enum.KeyCode.RightControl] = "RCtrl",
+    [Enum.KeyCode.LeftAlt] = "LAlt",
+    [Enum.KeyCode.RightAlt] = "RAlt",
+    [Enum.KeyCode.Backspace] = "Back",
+    [Enum.KeyCode.Return] = "Enter",
+    [Enum.KeyCode.CapsLock] = "Caps",
+    [Enum.KeyCode.PageUp] = "PgUp",
+    [Enum.KeyCode.PageDown] = "PgDn",
+    [Enum.KeyCode.Delete] = "Del",
+    [Enum.KeyCode.Insert] = "Ins",
+}
 
-        local Text = tostring(Key)
-        Text = string.gsub(Text, "Enum.KeyCode.", "")
-        Text = string.gsub(Text, "Enum.UserInputType.", "")
+local function KeyName(Key)
+    if not Key or Key == "None" or Key == "" then return "None" end
+    if KeyShortcuts[Key] then return KeyShortcuts[Key] end
 
-        return Text
-    end
+    local Text = tostring(Key)
+    Text = string.gsub(Text, "Enum.KeyCode.", "")
+    Text = string.gsub(Text, "Enum.UserInputType.", "")
+    return Text
+end
 
-    local function ParseKey(Value)
-        if type(Value) ~= "string" or Value == "None" then
-            return nil
+local function ParseKey(Value)
+    if not Value or Value == "None" or Value == "" then return nil end
+    if typeof(Value) == "EnumItem" then return Value end
+
+    local Name = tostring(Value)
+    Name = string.gsub(Name, "Enum.KeyCode.", "")
+    Name = string.gsub(Name, "Enum.UserInputType.", "")
+
+    local okKey, key = pcall(function() return Enum.KeyCode[Name] end)
+    if okKey and key then return key end
+
+    local okInput, input = pcall(function() return Enum.UserInputType[Name] end)
+    if okInput and input then return input end
+
+    return nil
+end
+
+local function KeyMatches(Input, Key)
+    if not Key then return false end
+    return Input.KeyCode == Key or Input.UserInputType == Key
+end
+
+local function CaptureKey(State, Display, OnPicked)
+    if State.Picking then return end
+
+    State.Picking = true
+    Library.Binding = true
+    Display.Text = ". . ."
+
+    task.wait(0.05)
+
+    local Connection
+    Connection = UserInputService.InputBegan:Connect(function(Input)
+        if Input.UserInputType == Enum.UserInputType.MouseMovement then return end
+
+        Connection:Disconnect()
+
+        local IsBack = Input.KeyCode == Enum.KeyCode.Backspace
+        local IsEsc = Input.KeyCode == Enum.KeyCode.Escape
+
+        if IsBack or IsEsc then
+            OnPicked(nil) 
+        elseif Input.UserInputType == Enum.UserInputType.Keyboard then
+            OnPicked(Input.KeyCode)
+        else
+            OnPicked(Input.UserInputType) 
         end
 
-        local Name = string.gsub(Value, "Enum.KeyCode.", "")
-        Name = string.gsub(Name, "Enum.UserInputType.", "")
-
-        local Ok, Key = pcall(function()
-            return Enum.KeyCode[Name]
+        task.defer(function()
+            Library.Binding = false
         end)
+    end)
+end
 
-        if Ok and Key then return Key end
-
-        return nil
-    end
-
-    local function CaptureKey(State, Display, OnPicked)
-        if State.Picking then return end
-
-        State.Picking = true
-        Library.Binding = true
-        Display.Text = ". . ."
-
-        task.wait()
-
-        local Connection
-
-        Connection = UserInputService.InputBegan:Connect(function(Input)
-            if Input.UserInputType == Enum.UserInputType.MouseMovement then return end
-
-            Connection:Disconnect()
-
-            local IsBack = Input.KeyCode == Enum.KeyCode.Backspace
-            local IsEsc = Input.KeyCode == Enum.KeyCode.Escape
-
-            if IsBack or IsEsc then
-                OnPicked(nil)
-            elseif Input.UserInputType == Enum.UserInputType.Keyboard then
-                OnPicked(Input.KeyCode)
-            else
-                OnPicked(Input.UserInputType)
-            end
-
-            task.defer(function()
-                Library.Binding = false
-            end)
-        end)
-    end
-
-    local function KeyMatches(Input, Key)
-        return Input.KeyCode == Key or Input.UserInputType == Key
-    end
+    local NotifPresets = {
+        Info = { Icon = "info", Color = Color3.fromRGB(96, 170, 255) },
+        Success = { Icon = "circle-check", Color = Color3.fromRGB(72, 214, 168) },
+        Warning = { Icon = "triangle-alert", Color = Color3.fromRGB(255, 180, 60) },
+        Error = { Icon = "circle-x", Color = Color3.fromRGB(245, 130, 120) }
+    }
 
     Library.Notification = function(Self, Params)
         if Library.Silent then return end
 
         Params = Params or { }
+        
+        local TypeData = (Params.Type and NotifPresets[Params.Type]) or {}
 
         local Title = Params.Name or Params.Title or "Notification"
         local Content = Params.Description or Params.Content or ""
-        local Icon = Params.Icon or "bell"
-        local Accent = Params.Color or Library.Theme.Accent
-        local Duration = Params.Duration or 5
+        local Icon = Params.Icon or TypeData.Icon or "bell"
+        local Accent = Params.Color or TypeData.Color or Library.Theme.Accent
+        local Duration = (Params.Duration == false or Params.Duration == 0) and 0 or (Params.Duration or 5)
+        local RichText = Params.RichText or false
+        local SoundId = Params.SoundId or Params.Sound
+        local SoundVolume = Params.SoundVolume or 0.5
+        local OnClose = Params.OnClose or Params.Callback
+        local Buttons = Params.Buttons or Params.Actions 
 
-        local CardW = 300
+        if SoundId then
+            pcall(function()
+                local Sound = Instance.new("Sound")
+                Sound.SoundId = type(SoundId) == "number" and ("rbxassetid://" .. SoundId) or SoundId
+                Sound.Volume = SoundVolume
+                Sound.Parent = GetHui()
+                Sound:Play()
+                Sound.Ended:Connect(function() Sound:Destroy() end)
+            end)
+        end
+
+        local CardW = Params.Width or 310
         local Bounds = Vector2.new(0, 0)
 
         if Content ~= "" then
             Bounds = MeasureText(Content, 14, CardW - 26, UiFont)
         end
-
-        local CardH = 38 + (Content ~= "" and Bounds.Y + 6 or 0) + 18
+        
+        local HasButtons = Buttons and #Buttons > 0
+        local ButtonRowH = HasButtons and 32 or 0
+        local CardH = 38 + (Content ~= "" and Bounds.Y + 6 or 0) + ButtonRowH + 18
         local Items = { }
 
         Items.Frame = MakeFrame({
@@ -2125,6 +2426,10 @@ end
             Round = 10,
             Z = 80
         })
+
+        local Hovered = false
+        Library:Connect(Items.Frame.Instance.MouseEnter, function() Hovered = true end)
+        Library:Connect(Items.Frame.Instance.MouseLeave, function() Hovered = false end)
 
         Items.Icon = MakeImage({
             Parent = Items.Frame.Instance,
@@ -2145,6 +2450,7 @@ end
             Truncate = true,
             Z = 81
         })
+        Items.Title.Instance.RichText = RichText
 
         Items.Close = MakeImage({
             Parent = Items.Frame.Instance,
@@ -2164,80 +2470,28 @@ end
             Z = 83
         })
 
+        local CurrentY = 35
         if Content ~= "" then
             Items.Body = MakeText({
                 Parent = Items.Frame.Instance,
                 Text = Content,
                 TextSize = 14,
-                Pos = UDim2.fromOffset(13, 35),
+                Pos = UDim2.fromOffset(13, CurrentY),
                 Size = UDim2.new(1, -26, 0, Bounds.Y),
                 Color = "DimText",
                 Wrap = true,
                 Z = 81
             })
-
+            Items.Body.Instance.RichText = RichText
             Items.Body.Instance.TextYAlignment = Enum.TextYAlignment.Top
+            CurrentY = CurrentY + Bounds.Y + 8
         end
-
-        Items.BarBack = MakeFrame({
-            Parent = Items.Frame.Instance,
-            Pos = UDim2.new(0, 13, 1, -12),
-            Size = UDim2.new(1, -26, 0, 5),
-            Color = "Element",
-            Round = 4,
-            Z = 81
-        })
-
-        Items.BarFill = MakeFrame({
-            Parent = Items.BarBack.Instance,
-            Size = UDim2.new(1, 0, 1, 0),
-            Raw = Color3.new(1, 1, 1),
-            Round = 4,
-            Z = 82
-        })
-
-        Library:RegisterGradient(Library:Create("UIGradient", {
-            Parent = Items.BarFill.Instance
-        }).Instance)
 
         local Notif = {
             Items = Items,
             Dead = false,
             Height = CardH
         }
-
-        table.insert(Library.Notifs, Notif)
-
-        local function StackHeight(Stop)
-            local Y = 15
-
-            for _, Value in Library.Notifs do
-                if Value == Stop then break end
-                if Value.Dead then continue end
-
-                Y += Value.Height + 10
-            end
-
-            return Y
-        end
-
-        local function Reflow()
-            local Info = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-            local Y = 15
-
-            for _, Value in Library.Notifs do
-                if Value.Dead then continue end
-
-                Library:Tween({ Position = UDim2.new(1, -15, 0, Y) }, Info, Value.Items.Frame.Instance)
-                Y += Value.Height + 10
-            end
-        end
-
-        local StartY = StackHeight(Notif)
-        local SlideIn = TweenInfo.new(0.45, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out)
-
-        Items.Frame.Instance.Position = UDim2.new(1, 340, 0, StartY)
-        Items.Frame:Tween({ Position = UDim2.new(1, -15, 0, StartY) }, SlideIn)
 
         local function Dismiss()
             if Notif.Dead then return end
@@ -2255,16 +2509,137 @@ end
                 if Index then table.remove(Library.Notifs, Index) end
 
                 Items.Frame.Instance:Destroy()
-                Reflow()
+
+                local Y = 15
+                local ReflowInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+                for _, Value in Library.Notifs do
+                    if Value.Dead then continue end
+                    Library:Tween({ Position = UDim2.new(1, -15, 0, Y) }, ReflowInfo, Value.Items.Frame.Instance)
+                    Y += Value.Height + 10
+                end
             end)
+
+            if OnClose then
+                Library:SafeCall(OnClose)
+            end
+        end
+
+        if HasButtons then
+            local BtnContainer = MakeFrame({
+                Parent = Items.Frame.Instance,
+                Pos = UDim2.fromOffset(13, CurrentY),
+                Size = UDim2.new(1, -26, 0, 26),
+                Z = 82
+            })
+
+            local BtnGap = 6
+            local BtnW = (#Buttons > 0) and ((CardW - 26 - ((#Buttons - 1) * BtnGap)) / #Buttons) or 0
+
+            for idx, btnData in ipairs(Buttons) do
+                local isPrimary = btnData.Primary
+                local btnBg = isPrimary and Accent or Library.Theme.Element
+
+                local btnFrame = MakeFrame({
+                    Parent = BtnContainer.Instance,
+                    Pos = UDim2.fromOffset((idx - 1) * (BtnW + BtnGap), 0),
+                    Size = UDim2.fromOffset(BtnW, 26),
+                    Raw = btnBg,
+                    Round = 6,
+                    Z = 83
+                })
+
+                local btnTxt = MakeText({
+                    Parent = btnFrame.Instance,
+                    Text = btnData.Text or "Button",
+                    TextSize = 12,
+                    Size = UDim2.new(1, 0, 1, 0),
+                    Color = isPrimary and "Text" or "DimText",
+                    Align = Enum.TextXAlignment.Center,
+                    Z = 84
+                })
+
+                local btnHit = MakeButton({
+                    Parent = btnFrame.Instance,
+                    Z = 85
+                })
+
+                btnHit:Connect("MouseButton1Down", function()
+                    if btnData.Callback then
+                        Library:SafeCall(btnData.Callback)
+                    end
+                    if btnData.CloseOnClick ~= false then
+                        Dismiss()
+                    end
+                end)
+            end
         end
 
         Items.CloseHit:Connect("MouseButton1Down", Dismiss)
 
-        local Countdown = TweenInfo.new(Duration, Enum.EasingStyle.Linear, Enum.EasingDirection.Out)
-        Library:Tween({ Size = UDim2.new(0, 0, 1, 0) }, Countdown, Items.BarFill.Instance)
+        table.insert(Library.Notifs, Notif)
 
-        task.delay(Duration, Dismiss)
+        local function StackHeight(Stop)
+            local Y = 15
+            for _, Value in Library.Notifs do
+                if Value == Stop then break end
+                if Value.Dead then continue end
+                Y += Value.Height + 10
+            end
+            return Y
+        end
+
+        local StartY = StackHeight(Notif)
+        local SlideIn = TweenInfo.new(0.45, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out)
+
+        Items.Frame.Instance.Position = UDim2.new(1, 340, 0, StartY)
+        Items.Frame:Tween({ Position = UDim2.new(1, -15, 0, StartY) }, SlideIn)
+       
+        if Duration > 0 then
+            Items.BarBack = MakeFrame({
+                Parent = Items.Frame.Instance,
+                Pos = UDim2.new(0, 13, 1, -10),
+                Size = UDim2.new(1, -26, 0, 4),
+                Color = "Element",
+                Round = 4,
+                Z = 81
+            })
+
+            Items.BarFill = MakeFrame({
+                Parent = Items.BarBack.Instance,
+                Size = UDim2.new(1, 0, 1, 0),
+                Raw = Accent,
+                Round = 4,
+                Z = 82
+            })
+
+            Library:Thread(function()
+                local Elapsed = 0
+                while Elapsed < Duration do
+                    local Delta = task.wait(0.03)
+                    if Notif.Dead then break end
+
+                    if not Hovered then
+                        Elapsed += Delta
+                        local Progress = math.clamp(1 - (Elapsed / Duration), 0, 1)
+                        Items.BarFill.Instance.Size = UDim2.new(Progress, 0, 1, 0)
+                    end
+                end
+
+                if not Notif.Dead then
+                    Dismiss()
+                end
+            end)
+        end
+    end
+
+    Library.ClearNotifications = function(Self)
+        for _, Notif in ipairs(Library.Notifs) do
+            if not Notif.Dead and Notif.Items and Notif.Items.Frame then
+                Notif.Dead = true
+                Notif.Items.Frame.Instance:Destroy()
+            end
+        end
+        Library.Notifs = {}
     end
 
     Library.Window = function(Self, Params)
@@ -3936,29 +4311,63 @@ end
 
         local Toggle = {
             Name = Params.Name or "Toggle",
+            Description = Params.Description or Params.Desc or "",
             Default = Params.Default or false,
             Flag = Params.Flag,
             Callback = Params.Callback or function() end,
+            Risky = Params.Risky or false,
+            Disabled = Params.Disabled or false,
             Value = false,
             Visual = nil,
             Token = 0,
             Items = { }
         }
+      
+        local HasDesc = Toggle.Description ~= ""
+        local RowHeight = HasDesc and 44 or 32
 
-        local Row = Section:AddRow(32, Toggle.Name)
+        local Row = Section:AddRow(RowHeight, Toggle.Name)
         local Items = { Row = Row }
+
+        if Toggle.Risky then
+            Items.RiskyIcon = MakeImage({
+                Parent = Row.Instance,
+                Icon = "triangle-alert",
+                Anchor = Vector2.new(0, 0.5),
+                Pos = UDim2.new(0, 14, 0.5, 0),
+                Size = UDim2.fromOffset(15, 15),
+                Raw = Color3.fromRGB(255, 85, 85),
+                Z = 6
+            })
+        end
+
+        local LabelX = Toggle.Risky and 33 or 15
 
         Items.Label = MakeText({
             Parent = Row.Instance,
             Text = Toggle.Name,
             TextSize = 15,
-            Anchor = Vector2.new(0, 0.5),
-            Pos = UDim2.new(0, 15, 0.5, 0),
-            Size = UDim2.fromOffset(Section.Width - 80, 20),
+            Anchor = Vector2.new(0, HasDesc and 0 or 0.5),
+            Pos = HasDesc and UDim2.new(0, LabelX, 0, 5) or UDim2.new(0, LabelX, 0.5, 0),
+            Size = UDim2.fromOffset(Section.Width - 80 - LabelX, 18),
             Color = "DimText",
             Truncate = true,
             Z = 5
         })
+
+        if HasDesc then
+            Items.DescLabel = MakeText({
+                Parent = Row.Instance,
+                Text = Toggle.Description,
+                TextSize = 12,
+                Pos = UDim2.new(0, LabelX, 0, 24),
+                Size = UDim2.fromOffset(Section.Width - 80 - LabelX, 15),
+                Color = "DimText",
+                Truncate = true,
+                Z = 5
+            })
+            Items.DescLabel.Instance.TextTransparency = 0.4
+        end
 
         Items.Box = MakeFrame({
             Parent = Row.Instance,
@@ -4010,17 +4419,8 @@ end
             Toggle.Token += 1
             local Token = Toggle.Token
 
-            if Toggle.GrowTween then
-                pcall(function()
-                    Toggle.GrowTween:Cancel()
-                end)
-            end
-
-            if Toggle.SnapTween then
-                pcall(function()
-                    Toggle.SnapTween:Cancel()
-                end)
-            end
+            if Toggle.GrowTween then pcall(function() Toggle.GrowTween:Cancel() end) end
+            if Toggle.SnapTween then pcall(function() Toggle.SnapTween:Cancel() end) end
 
             Toggle.GrowTween = nil
             Toggle.SnapTween = nil
@@ -4063,7 +4463,6 @@ end
 
             task.delay(0.08, function()
                 if Toggle.Token ~= Token then return end
-
                 Items.Circle.Instance.AnchorPoint = EndAnchor
                 Items.Circle.Instance.Position = EndPos
                 Toggle.SnapTween = Library:Tween({ Size = Small }, Snap, Items.Circle.Instance)
@@ -4072,14 +4471,14 @@ end
             task.delay(0.3, function()
                 if Toggle.Token ~= Token then return end
                 if Items.Circle.Instance.Size == Small then return end
-
                 Items.Circle.Instance.AnchorPoint = EndAnchor
                 Items.Circle.Instance.Position = EndPos
                 Items.Circle.Instance.Size = Small
             end)
         end
 
-        function Toggle:Set(Bool)
+        function Toggle:Set(Bool, Silent)
+            if Toggle.Disabled then return end
             Toggle.Value = Bool and true or false
 
             if Toggle.Flag then
@@ -4087,14 +4486,28 @@ end
             end
 
             Toggle.SetVisual(Toggle.Value, false)
-            Library:SafeCall(Toggle.Callback, Toggle.Value)
+
+            if not Silent then
+                Library:SafeCall(Toggle.Callback, Toggle.Value)
+            end
         end
 
         function Toggle:Get()
             return Toggle.Value
         end
 
+        function Toggle:SetDisabled(Disabled)
+            Toggle.Disabled = Disabled and true or false
+            Row.Instance.BackgroundTransparency = Toggle.Disabled and 0.6 or 1
+            Items.Label.Instance.TextTransparency = Toggle.Disabled and 0.5 or 0
+            if Items.DescLabel then
+                Items.DescLabel.Instance.TextTransparency = Toggle.Disabled and 0.7 or 0.4
+            end
+            Items.Box.Instance.BackgroundTransparency = Toggle.Disabled and 0.5 or 0
+        end
+
         Items.Hit:Connect("MouseButton1Down", function()
+            if Toggle.Disabled then return end
             Toggle:Set(not Toggle.Value)
         end)
 
@@ -4103,7 +4516,10 @@ end
         local function TakeSlot(Width)
             local X = Toggle.SlotX
             Toggle.SlotX -= Width + 8
-            Items.Label.Instance.Size = UDim2.fromOffset(Section.Width + Toggle.SlotX - 15, 20)
+            Items.Label.Instance.Size = UDim2.fromOffset(Section.Width + Toggle.SlotX - LabelX, 18)
+            if Items.DescLabel then
+                Items.DescLabel.Instance.Size = UDim2.fromOffset(Section.Width + Toggle.SlotX - LabelX, 15)
+            end
             return X
         end
 
@@ -4151,7 +4567,8 @@ end
 
             local Picker = {
                 Color = CParams.Default or Library.Theme.Accent,
-                Transparency = CParams.Transparency or 0
+                Transparency = CParams.Transparency or 0,
+                Rainbow = CParams.Rainbow or false
             }
 
             local X = TakeSlot(22)
@@ -4159,19 +4576,21 @@ end
 
             local Inner = MakeColorPopup(function()
                 return Swatch.Halo.Instance
-            end, CParams.Name or Toggle.Name, Picker.Color, Picker.Transparency, function(Color, Alpha)
+            end, CParams.Name or Toggle.Name, Picker.Color, Picker.Transparency, function(Color, Alpha, Rainbow)
                 Picker.Color = Color
                 Picker.Transparency = Alpha
+                Picker.Rainbow = Rainbow
                 Swatch:SetColor(Color, Alpha)
 
                 if CParams.Flag then
                     Library.Flags[CParams.Flag] = {
                         __color = Color:ToHex(),
-                        __alpha = Alpha
+                        __alpha = Alpha,
+                        __rainbow = Rainbow
                     }
                 end
 
-                Library:SafeCall(CParams.Callback, Color, Alpha)
+                Library:SafeCall(CParams.Callback, Color, Alpha, Rainbow)
             end)
 
             Swatch.Hit:Connect("MouseButton1Down", function()
@@ -4179,13 +4598,17 @@ end
             end)
 
             if CParams.Flag then
-                Library.SetFlags[CParams.Flag] = function(Color, Alpha)
-                    Inner:Set(Color, Alpha)
+                Library.SetFlags[CParams.Flag] = function(Color, Alpha, Rainbow)
+                    Inner:Set(Color, Alpha, Rainbow)
                 end
             end
 
-            function Picker:Set(Color, Alpha)
-                Inner:Set(Color, Alpha)
+            function Picker:Set(Color, Alpha, Rainbow)
+                Inner:Set(Color, Alpha, Rainbow)
+            end
+
+            function Picker:Get()
+                return Picker.Color, Picker.Transparency, Picker.Rainbow
             end
 
             Picker.Picker = Inner
@@ -4193,183 +4616,186 @@ end
         end
 
         function Toggle:Keybind(KParams)
-            KParams = KParams or { }
+    KParams = KParams or { }
 
-            local Keybind = {
-                Key = KParams.Default,
-                Mode = KParams.Mode or "Toggle",
-                Flag = KParams.Flag,
-                Picking = false,
-                IsOpen = false,
-                Debounce = false
-            }
+    local Keybind = {
+        Key = ParseKey(KParams.Default),
+        Mode = KParams.Mode or "Toggle", 
+        Flag = KParams.Flag,
+        Picking = false,
+        IsOpen = false,
+        Debounce = false
+    }
 
-            local X = TakeSlot(20)
-            local BindIcon, BindHit = SlotIcon(X, "command")
+    local X = TakeSlot(20)
+    local BindIcon, BindHit = SlotIcon(X, "command")
 
-            local PanelW = 160
+    local PanelW = 160
 
-            local Panel = MakeFrame({
-                Parent = Library.UnusedHolder.Instance,
-                Size = UDim2.fromOffset(PanelW, 128),
-                Color = "Section",
-                Round = 8,
-                Z = 40
-            })
+    local Panel = MakeFrame({
+        Parent = Library.UnusedHolder.Instance,
+        Size = UDim2.fromOffset(PanelW, 160), 
+        Color = "Section",
+        Round = 8,
+        Z = 40
+    })
 
-            Panel.Instance.Visible = false
+    Panel.Instance.Visible = false
 
-            MakeText({
-                Parent = Panel.Instance,
-                Text = "Keybind",
-                TextSize = 12,
-                Pos = UDim2.fromOffset(11, 7),
-                Size = UDim2.fromOffset(PanelW - 22, 14),
-                Color = "DimText",
-                Z = 41
-            })
+    MakeText({
+        Parent = Panel.Instance,
+        Text = "Keybind Settings",
+        TextSize = 12,
+        Pos = UDim2.fromOffset(11, 7),
+        Size = UDim2.fromOffset(PanelW - 22, 14),
+        Color = "DimText",
+        Z = 41
+    })
 
-            local KeyBox = MakeFrame({
-                Parent = Panel.Instance,
-                Pos = UDim2.fromOffset(8, 26),
-                Size = UDim2.fromOffset(PanelW - 16, 26),
-                Color = "Light",
-                Round = 5,
-                Z = 41
-            })
+    local KeyBox = MakeFrame({
+        Parent = Panel.Instance,
+        Pos = UDim2.fromOffset(8, 26),
+        Size = UDim2.fromOffset(PanelW - 16, 26),
+        Color = "Light",
+        Round = 5,
+        Z = 41
+    })
 
-            local PanelKey = MakeText({
-                Parent = KeyBox.Instance,
-                Text = "None",
-                TextSize = 13,
-                Size = UDim2.new(1, 0, 1, 0),
-                Color = "Text",
-                Align = Enum.TextXAlignment.Center,
-                Truncate = true,
-                Z = 42
-            })
+    local PanelKey = MakeText({
+        Parent = KeyBox.Instance,
+        Text = KeyName(Keybind.Key),
+        TextSize = 13,
+        Size = UDim2.new(1, 0, 1, 0),
+        Color = "Text",
+        Align = Enum.TextXAlignment.Center,
+        Truncate = true,
+        Z = 42
+    })
 
-            local KeyHit = MakeButton({
-                Parent = KeyBox.Instance,
-                Z = 43
-            })
+    local KeyHit = MakeButton({
+        Parent = KeyBox.Instance,
+        Z = 43
+    })
 
-            local ModeRows = { }
+    local ModeRows = { }
 
-            local function ModeRow(Y, ModeName)
-                local Built = MakeAccentRow({
-                    Parent = Panel.Instance,
-                    Pos = UDim2.fromOffset(8, Y),
-                    Size = UDim2.fromOffset(PanelW - 16, 28),
-                    Color = "Element",
-                    Text = ModeName,
-                    TextSize = 13,
-                    LabelSize = UDim2.new(1, -18, 1, 0),
-                    LineX = 6,
-                    LineH = 14,
-                    TextX = 10,
-                    TextActiveX = 17,
-                    SnapShadow = true,
-                    Z = 41
-                })
+    local function ModeRow(Y, ModeName)
+        local Built = MakeAccentRow({
+            Parent = Panel.Instance,
+            Pos = UDim2.fromOffset(8, Y),
+            Size = UDim2.fromOffset(PanelW - 16, 26),
+            Color = "Element",
+            Text = ModeName,
+            TextSize = 13,
+            LabelSize = UDim2.new(1, -18, 1, 0),
+            LineX = 6,
+            LineH = 14,
+            TextX = 10,
+            TextActiveX = 17,
+            SnapShadow = true,
+            Z = 41
+        })
 
-                Built.Hit:Connect("MouseButton1Down", function()
-                    Keybind:SetMode(ModeName)
-                end)
+        Built.Hit:Connect("MouseButton1Down", function()
+            Keybind:SetMode(ModeName)
+        end)
 
-                table.insert(ModeRows, {
-                    Name = ModeName,
-                    SetActive = Built.SetActive
-                })
-            end
+        table.insert(ModeRows, {
+            Name = ModeName,
+            SetActive = Built.SetActive
+        })
+    end
 
-            ModeRow(60, "Toggle")
-            ModeRow(92, "Hold")
+    ModeRow(58, "Always")
+    ModeRow(88, "Toggle")
+    ModeRow(118, "Hold")
 
-            local function SaveFlag()
-                if not Keybind.Flag then return end
+    local function SaveFlag()
+        if not Keybind.Flag then return end
+        Library.Flags[Keybind.Flag] = {
+            Key = Keybind.Key and tostring(Keybind.Key) or "None",
+            Mode = Keybind.Mode
+        }
+    end
 
-                Library.Flags[Keybind.Flag] = {
-                    Key = Keybind.Key and tostring(Keybind.Key) or "None",
-                    Mode = Keybind.Mode
-                }
-            end
+    function Keybind:SetMode(Mode, Instant)
+        Keybind.Mode = Mode
 
-            function Keybind:SetMode(Mode, Instant)
-                Keybind.Mode = Mode
-
-                for _, Data in ModeRows do
-                    Data.SetActive(Data.Name == Mode, Instant)
-                end
-
-                SaveFlag()
-            end
-
-            function Keybind:Set(Key)
-                Keybind.Key = Key
-                PanelKey.Instance.Text = KeyName(Key)
-                Keybind.Picking = false
-
-                SaveFlag()
-            end
-
-            AttachPopup({
-                Popup = Keybind,
-                Frame = Panel,
-                Level = 40,
-                GetAnchor = function()
-                    return BindHit.Instance
-                end,
-                Place = SidePlace(BindIcon.Instance),
-                From = -6,
-                To = 2,
-                Retreat = RetreatLeft
-            })
-
-            BindHit:Connect("MouseButton1Down", function()
-                Keybind:SetOpen(not Keybind.IsOpen)
-            end)
-
-            KeyHit:Connect("MouseButton1Click", function()
-                CaptureKey(Keybind, PanelKey.Instance, function(Key)
-                    Keybind:Set(Key)
-                end)
-            end)
-
-            Library:Connect(UserInputService.InputBegan, function(Input, Processed)
-                if Processed or Keybind.Picking or not Keybind.Key then return end
-                if not KeyMatches(Input, Keybind.Key) then return end
-
-                if Keybind.Mode == "Hold" then
-                    Toggle:Set(true)
-                else
-                    Toggle:Set(not Toggle.Value)
-                end
-            end)
-
-            Library:Connect(UserInputService.InputEnded, function(Input)
-                if Keybind.Mode ~= "Hold" or not Keybind.Key then return end
-                if not KeyMatches(Input, Keybind.Key) then return end
-
-                Toggle:Set(false)
-            end)
-
-            if Keybind.Flag then
-                Library.SetFlags[Keybind.Flag] = function(Value)
-                    if type(Value) == "table" then
-                        if Value.Mode then Keybind:SetMode(Value.Mode, true) end
-                        Value = Value.Key
-                    end
-
-                    Keybind:Set(ParseKey(Value))
-                end
-            end
-
-            Keybind:SetMode(Keybind.Mode, true)
-            Keybind:Set(Keybind.Key)
-
-            return Keybind
+        for _, Data in ModeRows do
+            Data.SetActive(Data.Name == Mode, Instant)
         end
+
+        if Mode == "Always" then
+            Toggle:Set(true)
+        end
+
+        SaveFlag()
+    end
+
+    function Keybind:Set(Key)
+        Keybind.Key = Key
+        PanelKey.Instance.Text = KeyName(Key)
+        Keybind.Picking = false
+
+        SaveFlag()
+    end
+
+    AttachPopup({
+        Popup = Keybind,
+        Frame = Panel,
+        Level = 40,
+        GetAnchor = function()
+            return BindHit.Instance
+        end,
+        Place = SidePlace(BindIcon.Instance),
+        From = -6,
+        To = 2,
+        Retreat = RetreatLeft
+    })
+
+    BindHit:Connect("MouseButton1Down", function()
+        Keybind:SetOpen(not Keybind.IsOpen)
+    end)
+
+    KeyHit:Connect("MouseButton1Click", function()
+        CaptureKey(Keybind, PanelKey.Instance, function(Key)
+            Keybind:Set(Key)
+        end)
+    end)
+
+    Library:Connect(UserInputService.InputBegan, function(Input, Processed)
+        if Processed or Keybind.Picking or Keybind.Mode == "Always" then return end
+        if not KeyMatches(Input, Keybind.Key) then return end
+
+        if Keybind.Mode == "Hold" then
+            Toggle:Set(true)
+        elseif Keybind.Mode == "Toggle" then
+            Toggle:Set(not Toggle.Value)
+        end
+    end)
+
+    Library:Connect(UserInputService.InputEnded, function(Input)
+        if Keybind.Mode ~= "Hold" or not Keybind.Key then return end
+        if not KeyMatches(Input, Keybind.Key) then return end
+
+        Toggle:Set(false)
+    end)
+
+    if Keybind.Flag then
+        Library.SetFlags[Keybind.Flag] = function(Value)
+            if type(Value) == "table" then
+                if Value.Mode then Keybind:SetMode(Value.Mode, true) end
+                Value = Value.Key
+            end
+            Keybind:Set(ParseKey(Value))
+        end
+    end
+
+    Keybind:SetMode(Keybind.Mode, true)
+    Keybind:Set(Keybind.Key)
+
+    return Keybind
+end
 
         function Toggle:Extra(EParams)
             EParams = EParams or { }
@@ -4522,6 +4948,31 @@ end
             Toggle.ExtraPanel = Extra
             return Extra
         end
+        
+        function Toggle:Slider(SParams)
+            local Extra = Toggle:Extra()
+            return Extra:Slider(SParams)
+        end
+
+        function Toggle:Dropdown(DParams)
+            local Extra = Toggle:Extra()
+            return Extra:Dropdown(DParams)
+        end
+
+        function Toggle:Textbox(TParams)
+            local Extra = Toggle:Extra()
+            return Extra:Textbox(TParams)
+        end
+        
+        function Toggle:RangeSlider(RSParams)
+            local Extra = Toggle:Extra()
+            return Extra:RangeSlider(RSParams)
+        end
+
+        function Toggle:Toggle(TParams)
+            local Extra = Toggle:Extra()
+            return Extra:Toggle(TParams)
+        end
 
         Toggle.Value = Toggle.Default
 
@@ -4531,6 +4982,10 @@ end
             Library.SetFlags[Toggle.Flag] = function(Value)
                 Toggle:Set(Value)
             end
+        end
+
+        if Toggle.Disabled then
+            Toggle:SetDisabled(true)
         end
 
         Toggle.SetVisual(Toggle.Value, true)
@@ -4568,24 +5023,28 @@ end
             Text = Name,
             TextSize = 15,
             Pos = UDim2.fromOffset(15, 3),
-            Size = UDim2.fromOffset(Width - 120, 20),
+            Size = UDim2.fromOffset(Width - 130, 20),
             Color = "Text",
             Truncate = true,
             Z = 5
         })
 
-        Items.Value = MakeText({
+        Items.ValueInput = Library:Create("TextBox", {
             Parent = Row.Instance,
+            Name = "\0",
+            FontFace = UiFont,
             Text = "",
-            TextSize = 15,
-            Anchor = Vector2.new(1, 0),
-            Pos = UDim2.new(1, -15, 0, 3),
-            Size = UDim2.fromOffset(100, 20),
-            Color = "DimText",
-            Align = Enum.TextXAlignment.Right,
-            Truncate = true,
-            Z = 5
-        })
+            TextSize = 14,
+            TextColor3 = Library.Theme.DimText,
+            BackgroundTransparency = 1,
+            AnchorPoint = Vector2.new(1, 0),
+            Position = UDim2.new(1, -15, 0, 3),
+            Size = UDim2.fromOffset(110, 20),
+            TextXAlignment = Enum.TextXAlignment.Right,
+            ClearTextOnFocus = false,
+            ZIndex = 6,
+            BorderSizePixel = 0
+        }):AddToTheme({ TextColor3 = "DimText" })
 
         Items.Track = MakeFrame({
             Parent = Row.Instance,
@@ -4629,14 +5088,23 @@ end
             Name = Params.Name or "Slider",
             Min = Params.Min or 0,
             Max = Params.Max or 100,
-            Default = Params.Default or 0,
-            Decimals = Params.Decimals or 1,
+            Default = Params.Default or Params.Min or 0,
+            Step = Params.Step or nil,
+            Decimals = Params.Decimals or 0,
+            Prefix = Params.Prefix or "",
             Suffix = Params.Suffix or "",
+            DisplayFormat = Params.DisplayFormat or nil, 
             Flag = Params.Flag,
             Callback = Params.Callback or function() end,
+            Disabled = Params.Disabled or false,
             Value = 0,
-            Sliding = false
+            Sliding = false,
+            Hovered = false
         }
+        
+        if not Slider.Step or Slider.Step <= 0 then
+            Slider.Step = 1 / (10 ^ Slider.Decimals)
+        end
 
         local Items = BuildSliderRow(Section, Slider.Name)
         local TrackW = Items.TrackWidth
@@ -4644,9 +5112,29 @@ end
         Slider.Items = Items
         Items.Knob = MakeKnob(Items.Track.Instance)
 
-        function Slider:Set(Value, Instant)
-            local Clamped = math.clamp(Value, Slider.Min, Slider.Max)
-            Slider.Value = Library:Round(Clamped, Slider.Decimals)
+        local function FormatDisplay(Val)
+            if typeof(Slider.DisplayFormat) == "function" then
+                local Ok, Custom = pcall(Slider.DisplayFormat, Val)
+                if Ok and Custom then return tostring(Custom) end
+            end
+            return Slider.Prefix .. tostring(Val) .. Slider.Suffix
+        end
+
+        local function SnapValue(RawVal)
+            RawVal = math.clamp(RawVal, Slider.Min, Slider.Max)
+            if Slider.Step and Slider.Step > 0 then
+                local Steps = math.floor((RawVal - Slider.Min) / Slider.Step + 0.5)
+                RawVal = Slider.Min + (Steps * Slider.Step)
+            end
+            RawVal = math.clamp(RawVal, Slider.Min, Slider.Max)
+            return Library:Round(RawVal, Slider.Decimals)
+        end
+
+        function Slider:Set(Value, Instant, Silent)
+            if Slider.Disabled then return end
+
+            local Snapped = SnapValue(tonumber(Value) or Slider.Min)
+            Slider.Value = Snapped
 
             if Slider.Flag then
                 Library.Flags[Slider.Flag] = Slider.Value
@@ -4659,12 +5147,55 @@ end
             Library:Tween({ Size = UDim2.fromOffset(Fraction * TrackW, 10) }, Info, Items.Fill.Instance)
             Library:Tween({ Position = UDim2.new(Fraction, 0, 0.5, 0) }, Info, Items.Knob.Instance)
 
-            Items.Value.Instance.Text = tostring(Slider.Value) .. Slider.Suffix
-            Library:SafeCall(Slider.Callback, Slider.Value)
+            if not Items.ValueInput.Instance:IsFocused() then
+                Items.ValueInput.Instance.Text = FormatDisplay(Slider.Value)
+            end
+
+            if not Silent then
+                Library:SafeCall(Slider.Callback, Slider.Value)
+            end
         end
 
         function Slider:Get()
             return Slider.Value
+        end
+
+        function Slider:SetMin(NewMin)
+            Slider.Min = NewMin or 0
+            if Slider.Max < Slider.Min then Slider.Max = Slider.Min end
+            Slider:Set(Slider.Value, true)
+        end
+
+        function Slider:SetMax(NewMax)
+            Slider.Max = NewMax or 100
+            if Slider.Min > Slider.Max then Slider.Min = Slider.Max end
+            Slider:Set(Slider.Value, true)
+        end
+
+        function Slider:SetStep(NewStep)
+            if NewStep and NewStep > 0 then
+                Slider.Step = NewStep
+                Slider:Set(Slider.Value)
+            end
+        end
+
+        function Slider:SetDisabled(Bool)
+            Slider.Disabled = Bool and true or false
+            Items.Row.Instance.BackgroundTransparency = Slider.Disabled and 0.6 or 1
+            Items.Label.Instance.TextTransparency = Slider.Disabled and 0.5 or 0
+            Items.ValueInput.Instance.TextTransparency = Slider.Disabled and 0.5 or 0
+            Items.Track.Instance.BackgroundTransparency = Slider.Disabled and 0.8 or 0
+            Items.Fill.Instance.BackgroundTransparency = Slider.Disabled and 0.5 or 0
+            Items.Knob.Instance.BackgroundTransparency = Slider.Disabled and 0.5 or 0
+        end
+
+        function Slider:SetVisible(Bool)
+            Items.Row.Instance.Visible = Bool
+            Section:Reflow()
+        end
+
+        function Slider:SetCallback(NewCallback)
+            Slider.Callback = NewCallback or function() end
         end
 
         local function Calculate(Input)
@@ -4673,11 +5204,13 @@ end
         end
 
         local function Apply(Input)
+            if Slider.Disabled then return end
             Slider:Set(Calculate(Input))
         end
 
         AttachDrag(Items.Hit, {
             OnGrab = function(Input)
+                if Slider.Disabled then return end
                 Slider.Sliding = true
                 Apply(Input)
             end,
@@ -4686,8 +5219,54 @@ end
                 Slider.Sliding = false
             end
         })
+        
+        Library:Connect(Items.ValueInput.Instance.FocusLost, function(EnterPressed)
+            if Slider.Disabled then return end
+            local RawText = Items.ValueInput.Instance.Text
+            
+            local CleanNumber = tonumber(string.match(RawText, "%-?%d+%.?%d*"))
 
+            if CleanNumber then
+                Slider:Set(CleanNumber)
+            else
+                Items.ValueInput.Instance.Text = FormatDisplay(Slider.Value)
+            end
+        end)
+        
+        Library:Connect(UserInputService.InputChanged, function(Input)
+            if Slider.Disabled or not Slider.Hovered then return end
+            if Input.UserInputType == Enum.UserInputType.MouseWheel then
+                local Delta = Input.Position.Z
+                local Multiplier = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) and 5 or 1
+                local Change = (Slider.Step or 1) * Multiplier
+
+                if Delta > 0 then
+                    Slider:Set(Slider.Value + Change)
+                else
+                    Slider:Set(Slider.Value - Change)
+                end
+            end
+        end)
+       
+        Library:Connect(Items.Hit.Instance.MouseEnter, function()
+            Slider.Hovered = true
+            if not Slider.Disabled then
+                Library:Tween({ BackgroundColor3 = Library.Theme.Hover }, nil, Items.Track.Instance)
+            end
+        end)
+
+        Library:Connect(Items.Hit.Instance.MouseLeave, function()
+            Slider.Hovered = false
+            if not Slider.Disabled then
+                Library:Tween({ BackgroundColor3 = Library.Theme.Element }, nil, Items.Track.Instance)
+            end
+        end)
+        
         Slider:Set(Slider.Default, true)
+
+        if Slider.Disabled then
+            Slider:SetDisabled(true)
+        end
 
         if Slider.Flag then
             Library.SetFlags[Slider.Flag] = function(Value)
@@ -4697,119 +5276,265 @@ end
 
         return setmetatable(Slider, Library)
     end
-
+    
     Library.RangeSlider = function(Self, Params)
         Params = Params or { }
 
         local Section = Self
 
-        local Slider = {
-            Name = Params.Name or "Range",
+        local RangeSlider = {
+            Name = Params.Name or "Range Slider",
             Min = Params.Min or 0,
             Max = Params.Max or 100,
-            Default = Params.Default,
-            Decimals = Params.Decimals or 1,
+            MinDistance = Params.MinDistance or Params.MinRange or 0,
+            Step = Params.Step or nil,
+            Decimals = Params.Decimals or 0,
+            Prefix = Params.Prefix or "",
             Suffix = Params.Suffix or "",
+            DisplayFormat = Params.DisplayFormat or nil,
             Flag = Params.Flag,
             Callback = Params.Callback or function() end,
-            Value = { 0, 0 },
-            Grabbing = nil
+            Disabled = Params.Disabled or false,
+            Value = { Min = 0, Max = 100, Low = 0, High = 100 },
+            ActiveKnob = nil,
+            Hovered = false
         }
 
-        Slider.MinGap = Params.MinGap or Slider.Decimals
-        Slider.Default = Slider.Default or { Slider.Min, Slider.Max }
+        local DefLow = Params.Default and (Params.Default[1] or Params.Default.Min or Params.Default.Low) or Params.Min or 0
+        local DefHigh = Params.Default and (Params.Default[2] or Params.Default.Max or Params.Default.High) or Params.Max or 100
 
-        local Items = BuildSliderRow(Section, Slider.Name)
-        local TrackW = Items.TrackWidth
-
-        Slider.Items = Items
-        Items.MinKnob = MakeKnob(Items.Track.Instance)
-        Items.MaxKnob = MakeKnob(Items.Track.Instance)
-
-        local function Normalize(Value)
-            local Span = Slider.Max - Slider.Min
-            return Span == 0 and 0 or (Value - Slider.Min) / Span
+        if not RangeSlider.Step or RangeSlider.Step <= 0 then
+            RangeSlider.Step = 1 / (10 ^ RangeSlider.Decimals)
         end
 
-        function Slider:Set(MinValue, MaxValue, Instant)
-            if type(MinValue) == "table" then
-                MinValue, MaxValue = MinValue[1], MinValue[2]
+        local Items = BuildSliderRow(Section, RangeSlider.Name)
+        local TrackW = Items.TrackWidth
+
+        RangeSlider.Items = Items
+        Items.KnobMin = MakeKnob(Items.Track.Instance)
+        Items.KnobMax = MakeKnob(Items.Track.Instance)
+
+        local function FormatDisplay(LowVal, HighVal)
+            if typeof(RangeSlider.DisplayFormat) == "function" then
+                local Ok, Custom = pcall(RangeSlider.DisplayFormat, LowVal, HighVal)
+                if Ok and Custom then return tostring(Custom) end
+            end
+            return RangeSlider.Prefix .. tostring(LowVal) .. " - " .. tostring(HighVal) .. RangeSlider.Suffix
+        end
+
+        local function SnapValue(RawVal)
+            RawVal = math.clamp(RawVal, RangeSlider.Min, RangeSlider.Max)
+            if RangeSlider.Step and RangeSlider.Step > 0 then
+                local Steps = math.floor((RawVal - RangeSlider.Min) / RangeSlider.Step + 0.5)
+                RawVal = RangeSlider.Min + (Steps * RangeSlider.Step)
+            end
+            RawVal = math.clamp(RawVal, RangeSlider.Min, RangeSlider.Max)
+            return Library:Round(RawVal, RangeSlider.Decimals)
+        end
+
+        function RangeSlider:Set(LowVal, HighVal, Instant, Silent)
+            if RangeSlider.Disabled then return end
+
+            if type(LowVal) == "table" then
+                HighVal = LowVal[2] or LowVal.Max or LowVal.High
+                LowVal = LowVal[1] or LowVal.Min or LowVal.Low
             end
 
-            MinValue = math.clamp(MinValue or Slider.Min, Slider.Min, Slider.Max)
-            MaxValue = math.clamp(MaxValue or Slider.Max, Slider.Min, Slider.Max)
+            LowVal = SnapValue(tonumber(LowVal) or RangeSlider.Min)
+            HighVal = SnapValue(tonumber(HighVal) or RangeSlider.Max)
 
-            MinValue = Library:Round(MinValue, Slider.Decimals)
-            MaxValue = Library:Round(MaxValue, Slider.Decimals)
-
-            if MinValue > MaxValue then
-                MinValue, MaxValue = MaxValue, MinValue
+            if LowVal > HighVal - RangeSlider.MinDistance then
+                if RangeSlider.ActiveKnob == "Min" then
+                    LowVal = math.min(LowVal, RangeSlider.Max - RangeSlider.MinDistance)
+                    HighVal = math.max(HighVal, LowVal + RangeSlider.MinDistance)
+                else
+                    HighVal = math.max(HighVal, RangeSlider.Min + RangeSlider.MinDistance)
+                    LowVal = math.min(LowVal, HighVal - RangeSlider.MinDistance)
+                end
             end
 
-            Slider.Value = { MinValue, MaxValue }
+            LowVal = SnapValue(LowVal)
+            HighVal = SnapValue(HighVal)
 
-            if Slider.Flag then
-                Library.Flags[Slider.Flag] = Slider.Value
+            RangeSlider.Value = { Min = LowVal, Max = HighVal, Low = LowVal, High = HighVal }
+
+            if RangeSlider.Flag then
+                Library.Flags[RangeSlider.Flag] = RangeSlider.Value
             end
 
-            local MinF = Normalize(MinValue)
-            local MaxF = Normalize(MaxValue)
+            local Span = RangeSlider.Max - RangeSlider.Min
+            local FracMin = Span == 0 and 0 or (LowVal - RangeSlider.Min) / Span
+            local FracMax = Span == 0 and 0 or (HighVal - RangeSlider.Min) / Span
             local Info = Instant and TweenInfo.new(0) or SlideInfo
 
             Library:Tween({
-                Position = UDim2.fromOffset(MinF * TrackW, 0),
-                Size = UDim2.fromOffset((MaxF - MinF) * TrackW, 10)
+                Position = UDim2.new(FracMin, 0, 0, 0),
+                Size = UDim2.fromOffset((FracMax - FracMin) * TrackW, 10)
             }, Info, Items.Fill.Instance)
 
-            Library:Tween({ Position = UDim2.new(MinF, 0, 0.5, 0) }, Info, Items.MinKnob.Instance)
-            Library:Tween({ Position = UDim2.new(MaxF, 0, 0.5, 0) }, Info, Items.MaxKnob.Instance)
+            Library:Tween({ Position = UDim2.new(FracMin, 0, 0.5, 0) }, Info, Items.KnobMin.Instance)
+            Library:Tween({ Position = UDim2.new(FracMax, 0, 0.5, 0) }, Info, Items.KnobMax.Instance)
 
-            local Text = tostring(MinValue) .. Slider.Suffix
-            Text = Text .. " - " .. tostring(MaxValue) .. Slider.Suffix
+            if not Items.ValueInput.Instance:IsFocused() then
+                Items.ValueInput.Instance.Text = FormatDisplay(LowVal, HighVal)
+            end
 
-            Items.Value.Instance.Text = Text
-            Library:SafeCall(Slider.Callback, Slider.Value)
+            if not Silent then
+                Library:SafeCall(RangeSlider.Callback, RangeSlider.Value)
+            end
         end
 
-        function Slider:Get()
-            return Slider.Value
+        function RangeSlider:Get()
+            return RangeSlider.Value
+        end
+
+        function RangeSlider:SetMin(NewMin)
+            RangeSlider.Min = NewMin or 0
+            if RangeSlider.Max < RangeSlider.Min then RangeSlider.Max = RangeSlider.Min end
+            RangeSlider:Set(RangeSlider.Value.Min, RangeSlider.Value.Max, true)
+        end
+
+        function RangeSlider:SetMax(NewMax)
+            RangeSlider.Max = NewMax or 100
+            if RangeSlider.Min > RangeSlider.Max then RangeSlider.Min = RangeSlider.Max end
+            RangeSlider:Set(RangeSlider.Value.Min, RangeSlider.Value.Max, true)
+        end
+
+        function RangeSlider:SetStep(NewStep)
+            if NewStep and NewStep > 0 then
+                RangeSlider.Step = NewStep
+                RangeSlider:Set(RangeSlider.Value.Min, RangeSlider.Value.Max)
+            end
+        end
+
+        function RangeSlider:SetDisabled(Bool)
+            RangeSlider.Disabled = Bool and true or false
+            Items.Row.Instance.BackgroundTransparency = RangeSlider.Disabled and 0.6 or 1
+            Items.Label.Instance.TextTransparency = RangeSlider.Disabled and 0.5 or 0
+            Items.ValueInput.Instance.TextTransparency = RangeSlider.Disabled and 0.5 or 0
+            Items.Track.Instance.BackgroundTransparency = RangeSlider.Disabled and 0.8 or 0
+            Items.Fill.Instance.BackgroundTransparency = RangeSlider.Disabled and 0.5 or 0
+            Items.KnobMin.Instance.BackgroundTransparency = RangeSlider.Disabled and 0.5 or 0
+            Items.KnobMax.Instance.BackgroundTransparency = RangeSlider.Disabled and 0.5 or 0
+        end
+
+        function RangeSlider:SetVisible(Bool)
+            Items.Row.Instance.Visible = Bool
+            Section:Reflow()
+        end
+
+        function RangeSlider:SetCallback(NewCallback)
+            RangeSlider.Callback = NewCallback or function() end
+        end
+
+        local function Calculate(Input)
+            local Fraction = AxisFraction(Input, Items.Track.Instance, "X")
+            return RangeSlider.Min + (RangeSlider.Max - RangeSlider.Min) * Fraction
         end
 
         local function Apply(Input)
-            local Point = AxisFraction(Input, Items.Track.Instance, "X")
-            local Value = Slider.Min + (Slider.Max - Slider.Min) * Point
+            if RangeSlider.Disabled then return end
+            local MouseVal = Calculate(Input)
 
-            if Slider.Grabbing == "Min" then
-                Slider:Set(math.min(Value, Slider.Value[2] - Slider.MinGap), Slider.Value[2])
+            if not RangeSlider.ActiveKnob then
+                local DistMin = math.abs(MouseVal - RangeSlider.Value.Min)
+                local DistMax = math.abs(MouseVal - RangeSlider.Value.Max)
+
+                if DistMin < DistMax then
+                    RangeSlider.ActiveKnob = "Min"
+                elseif DistMax < DistMin then
+                    RangeSlider.ActiveKnob = "Max"
+                else
+                    RangeSlider.ActiveKnob = MouseVal < RangeSlider.Value.Min and "Min" or "Max"
+                end
+            end
+
+            if RangeSlider.ActiveKnob == "Min" then
+                RangeSlider:Set(MouseVal, RangeSlider.Value.Max)
             else
-                Slider:Set(Slider.Value[1], math.max(Value, Slider.Value[1] + Slider.MinGap))
+                RangeSlider:Set(RangeSlider.Value.Min, MouseVal)
             end
         end
 
         AttachDrag(Items.Hit, {
             OnGrab = function(Input)
-                local Point = AxisFraction(Input, Items.Track.Instance, "X")
-                local MinF = Normalize(Slider.Value[1])
-                local MaxF = Normalize(Slider.Value[2])
-
-                Slider.Grabbing = math.abs(Point - MinF) <= math.abs(Point - MaxF) and "Min" or "Max"
+                if RangeSlider.Disabled then return end
+                RangeSlider.ActiveKnob = nil
                 Apply(Input)
             end,
             OnMove = Apply,
             OnRelease = function()
-                Slider.Grabbing = nil
+                RangeSlider.ActiveKnob = nil
             end
         })
 
-        Slider:Set(Slider.Default[1], Slider.Default[2], true)
+        Library:Connect(Items.ValueInput.Instance.FocusLost, function()
+            if RangeSlider.Disabled then return end
+            local RawText = Items.ValueInput.Instance.Text
+            local Numbers = {}
 
-        if Slider.Flag then
-            Library.SetFlags[Slider.Flag] = function(Value)
-                Slider:Set(Value)
+            for Num in string.gmatch(RawText, "%-?%d+%.?%d*") do
+                table.insert(Numbers, tonumber(Num))
+            end
+
+            if #Numbers >= 2 then
+                RangeSlider:Set(Numbers[1], Numbers[2])
+            elseif #Numbers == 1 then
+                local Val = Numbers[1]
+                local DistMin = math.abs(Val - RangeSlider.Value.Min)
+                local DistMax = math.abs(Val - RangeSlider.Value.Max)
+                if DistMin < DistMax then
+                    RangeSlider:Set(Val, RangeSlider.Value.Max)
+                else
+                    RangeSlider:Set(RangeSlider.Value.Min, Val)
+                end
+            else
+                Items.ValueInput.Instance.Text = FormatDisplay(RangeSlider.Value.Min, RangeSlider.Value.Max)
+            end
+        end)
+
+        Library:Connect(UserInputService.InputChanged, function(Input)
+            if RangeSlider.Disabled or not RangeSlider.Hovered then return end
+            if Input.UserInputType == Enum.UserInputType.MouseWheel then
+                local Delta = Input.Position.Z
+                local Multiplier = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) and 5 or 1
+                local Change = (RangeSlider.Step or 1) * Multiplier
+
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+                    RangeSlider:Set(RangeSlider.Value.Min, RangeSlider.Value.Max + (Delta > 0 and Change or -Change))
+                else
+                    RangeSlider:Set(RangeSlider.Value.Min + (Delta > 0 and Change or -Change), RangeSlider.Value.Max)
+                end
+            end
+        end)
+
+        Library:Connect(Items.Hit.Instance.MouseEnter, function()
+            RangeSlider.Hovered = true
+            if not RangeSlider.Disabled then
+                Library:Tween({ BackgroundColor3 = Library.Theme.Hover }, nil, Items.Track.Instance)
+            end
+        end)
+
+        Library:Connect(Items.Hit.Instance.MouseLeave, function()
+            RangeSlider.Hovered = false
+            if not RangeSlider.Disabled then
+                Library:Tween({ BackgroundColor3 = Library.Theme.Element }, nil, Items.Track.Instance)
+            end
+        end)
+
+        RangeSlider:Set(DefLow, DefHigh, true)
+
+        if RangeSlider.Disabled then
+            RangeSlider:SetDisabled(true)
+        end
+
+        if RangeSlider.Flag then
+            Library.SetFlags[RangeSlider.Flag] = function(Value)
+                RangeSlider:Set(Value)
             end
         end
 
-        return setmetatable(Slider, Library)
+        return setmetatable(RangeSlider, Library)
     end
 
     local function MakeFieldRow(Section, Name, SearchName)
@@ -4903,24 +5628,72 @@ end
 
         local Dropdown = {
             Name = Params.Name or "Dropdown",
-            Options = Params.Items or Params.Options or { },
+            Description = Params.Description or Params.Desc or "",
+            Options = Params.Items or Params.Options or Params.Values or { },
             Default = Params.Default,
             Multi = Params.Multi or false,
+            Max = Params.Max or nil,
+            Search = Params.Search, 
+            Placeholder = Params.Placeholder or "None",
             Flag = Params.Flag,
             Callback = Params.Callback or function() end,
+            Disabled = Params.Disabled or false,
             Value = nil,
             Items = { }
         }
 
         if Dropdown.Multi then
-            Dropdown.Value = { }
+            Dropdown.Value = type(Dropdown.Default) == "table" and Dropdown.Default or { }
+        else
+            Dropdown.Value = Dropdown.Default
         end
 
-        local Items = MakeFieldRow(Section, Dropdown.Name)
+        local HasDesc = Dropdown.Description ~= ""
+        local RowHeight = HasDesc and 62 or 54
+
+        local Row = Section:AddRow(RowHeight, Dropdown.Name)
+        local Items = { Row = Row }
+
+        Items.Label = MakeText({
+            Parent = Row.Instance,
+            Text = Dropdown.Name,
+            TextSize = 15,
+            Pos = UDim2.fromOffset(15, 4),
+            Size = UDim2.fromOffset(Section.Width - 30, 18),
+            Color = "DimText",
+            Truncate = true,
+            Z = 5
+        })
+
+        if HasDesc then
+            Items.DescLabel = MakeText({
+                Parent = Row.Instance,
+                Text = Dropdown.Description,
+                TextSize = 12,
+                Pos = UDim2.fromOffset(15, 22),
+                Size = UDim2.fromOffset(Section.Width - 30, 14),
+                Color = "DimText",
+                Truncate = true,
+                Z = 5
+            })
+            Items.DescLabel.Instance.TextTransparency = 0.4
+        end
+
+        local BoxY = HasDesc and 38 or 24
+
+        Items.Box = MakeFrame({
+            Parent = Row.Instance,
+            Pos = UDim2.fromOffset(15, BoxY),
+            Size = UDim2.fromOffset(Section.Width - 30, 30),
+            Color = "Element",
+            Round = 6,
+            Clip = true,
+            Z = 5
+        })
 
         Items.Selected = MakeText({
             Parent = Items.Box.Instance,
-            Text = "None",
+            Text = Dropdown.Placeholder,
             TextSize = 15,
             Pos = UDim2.fromOffset(11, 0),
             Size = UDim2.new(1, -34, 1, 0),
@@ -4950,83 +5723,155 @@ end
             return Items.Box.Instance
         end)
 
+        Popup.ForceSearch = Dropdown.Search
+        Popup.ShowActions = Dropdown.Multi
+
         Popup.OnState = function(Open)
             Items.Arrow:Tween({ Rotation = Open and 180 or 0 })
         end
 
         Dropdown.Popup = Popup
 
+        local function FormatText()
+            if Dropdown.Multi then
+                if type(Dropdown.Value) == "table" and #Dropdown.Value > 0 then
+                    return table.concat(Dropdown.Value, ", ")
+                end
+            else
+                if Dropdown.Value ~= nil and tostring(Dropdown.Value) ~= "" then
+                    return tostring(Dropdown.Value)
+                end
+            end
+            return Dropdown.Placeholder
+        end
+
         local function Report()
             if Dropdown.Flag then
                 Library.Flags[Dropdown.Flag] = Dropdown.Value
             end
 
-            if Dropdown.Multi then
-                Items.Selected.Instance.Text = #Dropdown.Value > 0
-                and table.concat(Dropdown.Value, ", ")
-                or "None"
-            else
-                Items.Selected.Instance.Text = Dropdown.Value ~= nil
-                and tostring(Dropdown.Value)
-                or "None"
-            end
-
+            Items.Selected.Instance.Text = FormatText()
             Library:SafeCall(Dropdown.Callback, Dropdown.Value)
         end
 
         Popup.OnPick = function(Data)
+            if Dropdown.Disabled then return end
+
+            local TargetVal = Data.Value ~= nil and Data.Value or Data.Name
+
             if Dropdown.Multi then
-                local Index = table.find(Dropdown.Value, Data.Name)
+                local Index = table.find(Dropdown.Value, TargetVal)
 
                 if Index then
                     table.remove(Dropdown.Value, Index)
                     Data:Set(false)
                 else
-                    table.insert(Dropdown.Value, Data.Name)
+                    if Dropdown.Max and #Dropdown.Value >= Dropdown.Max then
+                        Library:Notification({
+                            Name = "Limit Reached",
+                            Description = "You can only select up to " .. tostring(Dropdown.Max) .. " items.",
+                            Icon = "triangle-alert"
+                        })
+                        return
+                    end
+                    table.insert(Dropdown.Value, TargetVal)
                     Data:Set(true)
                 end
             else
-                Dropdown.Value = Data.Name
-
+                Dropdown.Value = TargetVal
                 for _, Other in Popup.Order do
                     Other:Set(Other == Data)
                 end
+                Popup:SetOpen(false)
             end
 
             Report()
         end
 
-        function Dropdown:Refresh(List)
-            Popup:Clear()
-            Dropdown.Options = List
-
-            for _, Option in List do
-                Popup:AddRow(tostring(Option))
+        Popup.OnClear = function()
+            if Dropdown.Disabled then return end
+            if Dropdown.Multi then
+                Dropdown.Value = { }
+                for _, Data in Popup.Order do
+                    Data:Set(false)
+                end
+                Report()
             end
+        end
+
+        Popup.OnSelectAll = function()
+            if Dropdown.Disabled then return end
+            if Dropdown.Multi then
+                Dropdown.Value = { }
+                for _, Data in Popup.Order do
+                    if not Dropdown.Max or #Dropdown.Value < Dropdown.Max then
+                        table.insert(Dropdown.Value, Data.Value ~= nil and Data.Value or Data.Name)
+                        Data:Set(true)
+                    else
+                        Data:Set(false)
+                    end
+                end
+                Report()
+            end
+        end
+
+        function Dropdown:Refresh(List, KeepValue)
+            Popup:Clear()
+            Dropdown.Options = List or { }
+
+            for _, Option in Dropdown.Options do
+                Popup:AddRow(Option)
+            end
+
+            if not KeepValue then
+                if Dropdown.Multi then
+                    Dropdown.Value = { }
+                else
+                    Dropdown.Value = nil
+                end
+            end
+
+            Dropdown:Set(Dropdown.Value)
+        end
+
+        function Dropdown:AddOption(OptionData)
+            table.insert(Dropdown.Options, OptionData)
+            Popup:AddRow(OptionData)
+        end
+
+        function Dropdown:RemoveOption(OptionNameOrValue)
+            for i, Data in ipairs(Popup.Order) do
+                if Data.Name == OptionNameOrValue or Data.Value == OptionNameOrValue then
+                    Data.Row.Instance:Destroy()
+                    table.remove(Popup.Order, i)
+                    break
+                end
+            end
+
+            if Dropdown.Multi then
+                local idx = table.find(Dropdown.Value, OptionNameOrValue)
+                if idx then table.remove(Dropdown.Value, idx) end
+            elseif Dropdown.Value == OptionNameOrValue then
+                Dropdown.Value = nil
+            end
+
+            Report()
         end
 
         function Dropdown:Set(Value)
             if Dropdown.Multi then
-                if type(Value) ~= "table" then return end
-
+                if type(Value) ~= "table" then Value = { } end
                 Dropdown.Value = Value
 
                 for _, Data in Popup.Order do
-                    Data:Set(table.find(Value, Data.Name) ~= nil, true)
+                    local Val = Data.Value ~= nil and Data.Value or Data.Name
+                    Data:Set(table.find(Value, Val) ~= nil, true)
                 end
             else
-                local Found = false
-
-                for _, Data in Popup.Order do
-                    if Data.Name == Value then Found = true end
-                end
-
-                if not Found then return end
-
                 Dropdown.Value = Value
-
                 for _, Data in Popup.Order do
-                    Data:Set(Data.Name == Value, true)
+                    local Val = Data.Value ~= nil and Data.Value or Data.Name
+                    Data:Set(Val == Value, true)
                 end
             end
 
@@ -5037,18 +5882,53 @@ end
             return Dropdown.Value
         end
 
+        function Dropdown:SelectAll()
+            if Popup.OnSelectAll then Popup.OnSelectAll() end
+        end
+
+        function Dropdown:Clear()
+            if Popup.OnClear then Popup.OnClear() else Dropdown:Set(nil) end
+        end
+
+        function Dropdown:SetDisabled(Disabled)
+            Dropdown.Disabled = Disabled and true or false
+            Row.Instance.BackgroundTransparency = Dropdown.Disabled and 0.6 or 1
+            Items.Label.Instance.TextTransparency = Dropdown.Disabled and 0.5 or 0
+            if Items.DescLabel then
+                Items.DescLabel.Instance.TextTransparency = Dropdown.Disabled and 0.7 or 0.4
+            end
+            Items.Box.Instance.BackgroundTransparency = Dropdown.Disabled and 0.5 or 0
+            if Dropdown.IsOpen then Popup:SetOpen(false) end
+        end
+
+        function Dropdown:SetVisible(Bool)
+            Row.Instance.Visible = Bool
+            Section:Reflow()
+        end
+
+        function Dropdown:SetCallback(NewCallback)
+            Dropdown.Callback = NewCallback or function() end
+        end
+
         Items.Hit:Connect("MouseButton1Down", function()
+            if Dropdown.Disabled then return end
             Popup:SetOpen(not Popup.IsOpen)
         end)
 
         HoverSwap(Items.Box)
 
         for _, Option in Dropdown.Options do
-            Popup:AddRow(tostring(Option))
+            Popup:AddRow(Option)
         end
 
         if Dropdown.Default ~= nil then
             Dropdown:Set(Dropdown.Default)
+        else
+            Report()
+        end
+
+        if Dropdown.Disabled then
+            Dropdown:SetDisabled(true)
         end
 
         if Dropdown.Flag then
@@ -5066,18 +5946,31 @@ end
         local Section = Self
 
         local Button = {
-            Name = Params.Name or "Button",
-            Callback = Params.Callback or function() end,
+            Name = Params.Name or Params.Text or "Button",
+            Description = Params.Description or Params.Desc or "",
+            Icon = Params.Icon or nil,
+            Callback = Params.Callback or Params.OnClick or function() end,
+            Risky = Params.Risky or false,
+            Disabled = Params.Disabled or false,
+            Confirm = Params.Confirm or false,
+            ConfirmText = Params.ConfirmText or "Are you sure?",
+            HoldTime = Params.HoldTime or 0,
+            IsConfirming = false,
+            IsHolding = false,
+            SlotX = -12,
             Items = { }
         }
 
-        local Row = Section:AddRow(36, Button.Name)
+        local HasDesc = Button.Description ~= ""
+        local RowHeight = HasDesc and 54 or 38
+
+        local Row, Data = Section:AddRow(RowHeight, Button.Name)
         local Items = { Row = Row }
 
         Items.Frame = MakeFrame({
             Parent = Row.Instance,
-            Pos = UDim2.fromOffset(15, 3),
-            Size = UDim2.fromOffset(Section.Width - 30, 30),
+            Pos = UDim2.fromOffset(12, 4),
+            Size = UDim2.fromOffset(Section.Width - 24, RowHeight - 8),
             Color = "Element",
             Round = 6,
             Clip = true,
@@ -5086,16 +5979,72 @@ end
 
         Items.Sweep = MakeSweep(Items.Frame.Instance, 6)
 
+        if Button.HoldTime > 0 then
+            Items.HoldProgress = MakeFrame({
+                Parent = Items.Frame.Instance,
+                Pos = UDim2.fromOffset(0, 0),
+                Size = UDim2.new(0, 0, 1, 0),
+                Color = "Accent",
+                Round = 6,
+                Z = 6
+            })
+            Items.HoldProgress.Instance.BackgroundTransparency = 0.7
+        end
+
+        local ContentX = 12
+        if Button.Risky then
+            Items.RiskyIcon = MakeImage({
+                Parent = Items.Frame.Instance,
+                Icon = "triangle-alert",
+                Anchor = Vector2.new(0, 0.5),
+                Pos = UDim2.new(0, ContentX, 0.5, 0),
+                Size = UDim2.fromOffset(16, 16),
+                Raw = Color3.fromRGB(255, 85, 85),
+                Z = 7
+            })
+            ContentX = ContentX + 22
+        end
+
+        if Button.Icon then
+            Items.Icon = MakeImage({
+                Parent = Items.Frame.Instance,
+                Icon = Button.Icon,
+                Anchor = Vector2.new(0, 0.5),
+                Pos = UDim2.new(0, ContentX, 0.5, 0),
+                Size = UDim2.fromOffset(16, 16),
+                Color = "Text",
+                Z = 7
+            })
+            ContentX = ContentX + 22
+        end
+
         Items.Label = MakeText({
             Parent = Items.Frame.Instance,
             Text = Button.Name,
-            TextSize = 15,
-            Size = UDim2.new(1, 0, 1, 0),
+            TextSize = 14,
+            Anchor = Vector2.new(0, HasDesc and 0 or 0.5),
+            Pos = HasDesc and UDim2.new(0, ContentX, 0, 6) or UDim2.new(0, ContentX, 0.5, 0),
+            Size = UDim2.new(1, -(ContentX + 12), 0, 18),
             Color = "Text",
-            Align = Enum.TextXAlignment.Center,
+            Align = (Button.Icon or Button.Risky or HasDesc) and Enum.TextXAlignment.Left or Enum.TextXAlignment.Center,
             Truncate = true,
             Z = 7
         })
+
+        if HasDesc then
+            Items.DescLabel = MakeText({
+                Parent = Items.Frame.Instance,
+                Text = Button.Description,
+                TextSize = 12,
+                Pos = UDim2.new(0, ContentX, 0, 24),
+                Size = UDim2.new(1, -(ContentX + 12), 0, 15),
+                Color = "DimText",
+                Align = Enum.TextXAlignment.Left,
+                Truncate = true,
+                Z = 7
+            })
+            Items.DescLabel.Instance.TextTransparency = 0.4
+        end
 
         Items.Hit = MakeButton({
             Parent = Items.Frame.Instance,
@@ -5105,18 +6054,251 @@ end
         Button.Items = Items
         HoverSwap(Items.Frame)
 
-        function Button:Press()
+        function Button:Press(...)
+            if Button.Disabled then return end
+
+            if Button.Confirm and not Button.IsConfirming then
+                Button.IsConfirming = true
+                Items.Label.Instance.Text = Button.ConfirmText
+                Items.Label.Instance.TextColor3 = Color3.fromRGB(255, 85, 85)
+
+                task.delay(3, function()
+                    if Button.IsConfirming then
+                        Button.IsConfirming = false
+                        Items.Label.Instance.Text = Button.Name
+                        Items.Label.Instance.TextColor3 = Library.Theme.Text
+                    end
+                end)
+                return
+            end
+
+            if Button.IsConfirming then
+                Button.IsConfirming = false
+                Items.Label.Instance.Text = Button.Name
+                Items.Label.Instance.TextColor3 = Library.Theme.Text
+            end
+
             PlaySweep(Items.Sweep.Instance)
-            Library:SafeCall(Button.Callback)
+            Library:SafeCall(Button.Callback, ...)
         end
 
         function Button:SetText(Text)
-            Items.Label.Instance.Text = tostring(Text)
+            Button.Name = tostring(Text)
+            if not Button.IsConfirming then
+                Items.Label.Instance.Text = Button.Name
+            end
         end
 
-        Items.Hit:Connect("MouseButton1Down", function()
-            Button:Press()
-        end)
+        function Button:SetDescription(Desc)
+            Button.Description = tostring(Desc)
+            if Items.DescLabel then
+                Items.DescLabel.Instance.Text = Button.Description
+            end
+        end
+
+        function Button:SetIcon(Icon)
+            Button.Icon = Icon
+            if Items.Icon then
+                ApplyIcon(Items.Icon.Instance, Icon)
+            end
+        end
+
+        function Button:SetCallback(NewCallback)
+            Button.Callback = NewCallback or function() end
+        end
+
+        function Button:SetDisabled(Disabled)
+            Button.Disabled = Disabled and true or false
+            Items.Frame.Instance.BackgroundTransparency = Button.Disabled and 0.6 or 0
+            Items.Label.Instance.TextTransparency = Button.Disabled and 0.5 or 0
+            if Items.DescLabel then
+                Items.DescLabel.Instance.TextTransparency = Button.Disabled and 0.7 or 0.4
+            end
+            if Items.Icon then
+                Items.Icon.Instance.ImageTransparency = Button.Disabled and 0.5 or 0
+            end
+        end
+
+        function Button:SetVisible(Bool)
+            Row.Instance.Visible = Bool
+            Section:Reflow()
+        end
+
+        if Button.HoldTime > 0 then
+            local HoldTween
+            Items.Hit:Connect("InputBegan", function(Input)
+                if Button.Disabled then return end
+                local IsClick = Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch
+                if not IsClick then return end
+
+                Button.IsHolding = true
+                Items.HoldProgress.Instance.Size = UDim2.new(0, 0, 1, 0)
+                HoldTween = Library:Tween({ Size = UDim2.new(1, 0, 1, 0) }, TweenInfo.new(Button.HoldTime, Enum.EasingStyle.Linear), Items.HoldProgress.Instance)
+
+                task.delay(Button.HoldTime, function()
+                    if Button.IsHolding then
+                        Button.IsHolding = false
+                        Items.HoldProgress.Instance.Size = UDim2.new(0, 0, 1, 0)
+                        Button:Press()
+                    end
+                end)
+            end)
+
+            Items.Hit:Connect("InputEnded", function(Input)
+                local IsClick = Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch
+                if not IsClick then return end
+
+                if Button.IsHolding then
+                    Button.IsHolding = false
+                    if HoldTween then pcall(function() HoldTween:Cancel() end) end
+                    Library:Tween({ Size = UDim2.new(0, 0, 1, 0) }, TweenInfo.new(0.2), Items.HoldProgress.Instance)
+                end
+            end)
+        else
+            Items.Hit:Connect("MouseButton1Down", function()
+                Button:Press()
+            end)
+        end
+
+        function Button:TakeSlot(Width)
+            local X = Button.SlotX
+            Button.SlotX = Button.SlotX - (Width + 6)
+            return X
+        end
+
+        function Button:SlotIcon(X, Icon)
+            local Glyph = MakeImage({
+                Parent = Items.Frame.Instance,
+                Icon = Icon,
+                Anchor = Vector2.new(1, 0.5),
+                Pos = UDim2.new(1, X, 0.5, 0),
+                Size = UDim2.fromOffset(16, 16),
+                Color = "DimText",
+                Z = 9
+            })
+
+            local Hit = MakeButton({
+                Parent = Items.Frame.Instance,
+                Anchor = Vector2.new(1, 0.5),
+                Pos = UDim2.new(1, X - 3, 0.5, 0),
+                Size = UDim2.fromOffset(22, 22),
+                Z = 10
+            })
+
+            Hit:OnHover(function()
+                Glyph:Tween({ ImageColor3 = Library.Theme.Text })
+            end, function()
+                Glyph:Tween({ ImageColor3 = Library.Theme.DimText })
+            end)
+
+            return Glyph, Hit
+        end
+
+        function Button:Keybind(KParams)
+            KParams = KParams or {}
+            local Keybind = {
+                Key = KParams.Default,
+                Mode = KParams.Mode or "Toggle",
+                Flag = KParams.Flag,
+                Picking = false,
+                IsOpen = false,
+                Debounce = false
+            }
+
+            local X = Button:TakeSlot(20)
+            local BindIcon, BindHit = Button:SlotIcon(X, "command")
+
+            local PanelW = 160
+            local Panel = MakeFrame({
+                Parent = Library.UnusedHolder.Instance,
+                Size = UDim2.fromOffset(PanelW, 72),
+                Color = "Section",
+                Round = 8,
+                Z = 40
+            })
+            Panel.Instance.Visible = false
+
+            MakeText({
+                Parent = Panel.Instance,
+                Text = "Keybind",
+                TextSize = 12,
+                Pos = UDim2.fromOffset(11, 7),
+                Size = UDim2.fromOffset(PanelW - 22, 14),
+                Color = "DimText",
+                Z = 41
+            })
+
+            local KeyBox = MakeFrame({
+                Parent = Panel.Instance,
+                Pos = UDim2.fromOffset(8, 28),
+                Size = UDim2.fromOffset(PanelW - 16, 30),
+                Color = "Light",
+                Round = 5,
+                Z = 41
+            })
+
+            local PanelKey = MakeText({
+                Parent = KeyBox.Instance,
+                Text = "None",
+                TextSize = 13,
+                Size = UDim2.new(1, 0, 1, 0),
+                Color = "Text",
+                Align = Enum.TextXAlignment.Center,
+                Truncate = true,
+                Z = 42
+            })
+
+            local KeyHit = MakeButton({
+                Parent = KeyBox.Instance,
+                Z = 43
+            })
+
+            function Keybind:Set(Key)
+                Keybind.Key = Key
+                PanelKey.Instance.Text = KeyName(Key)
+                Keybind.Picking = false
+                if Keybind.Flag then
+                    Library.Flags[Keybind.Flag] = Key and tostring(Key) or "None"
+                end
+            end
+
+            AttachPopup({
+                Popup = Keybind,
+                Frame = Panel,
+                Level = 40,
+                GetAnchor = function() return BindHit.Instance end,
+                Place = function(Off)
+                    local Anchor = BindIcon.Instance
+                    local PScale = Library:GetScreenScale()
+                    local Right = Anchor.AbsolutePosition.X + Anchor.AbsoluteSize.X
+                    local PX = Right / PScale + 8 + (Off or 0)
+                    local PY = (Anchor.AbsolutePosition.Y + GuiInset) / PScale - 4
+                    return UDim2.fromOffset(PX, PY)
+                end,
+                From = -6,
+                To = 2,
+                Retreat = RetreatLeft
+            })
+
+            BindHit:Connect("MouseButton1Down", function() Keybind:SetOpen(not Keybind.IsOpen) end)
+            KeyHit:Connect("MouseButton1Click", function()
+                CaptureKey(Keybind, PanelKey.Instance, function(Key) Keybind:Set(Key) end)
+            end)
+
+            Library:Connect(UserInputService.InputBegan, function(Input, Processed)
+                if Processed or Keybind.Picking or not Keybind.Key then return end
+                if KeyMatches(Input, Keybind.Key) then
+                    Button:Press()
+                end
+            end)
+
+            Keybind:Set(Keybind.Key)
+            return Keybind
+        end
+
+        if Button.Disabled then
+            Button:SetDisabled(true)
+        end
 
         return setmetatable(Button, Library)
     end
@@ -5128,57 +6310,322 @@ end
 
         local Textbox = {
             Name = Params.Name or "Textbox",
+            Description = Params.Description or Params.Desc or "",
             Default = Params.Default or "",
             Placeholder = Params.Placeholder or "...",
             Finished = Params.Finished or false,
+            ClearOnFocus = Params.ClearOnFocus or false,
+            Numeric = Params.Numeric or Params.NumbersOnly or false,
+            Min = Params.Min,
+            Max = Params.Max,
+            MaxCharacters = Params.MaxCharacters or Params.MaxLength,
+            Icon = Params.Icon,
+            ClearButton = Params.ClearButton or false,
+            CopyButton = Params.CopyButton or false,
+            Disabled = Params.Disabled or false,
             Flag = Params.Flag,
             Callback = Params.Callback or function() end,
+            OnFocus = Params.OnFocus or function() end,
+            OnFocusLost = Params.OnFocusLost or function() end,
             Value = "",
             Items = { }
         }
 
-        local Items = MakeFieldRow(Section, Textbox.Name)
+        local HasDesc = Textbox.Description ~= ""
+        local RowHeight = HasDesc and 62 or 54
+
+        local Row = Section:AddRow(RowHeight, Textbox.Name)
+        local Items = { Row = Row }
+
+        Items.Label = MakeText({
+            Parent = Row.Instance,
+            Text = Textbox.Name,
+            TextSize = 15,
+            Pos = UDim2.fromOffset(15, 4),
+            Size = UDim2.fromOffset(Section.Width - 30, 18),
+            Color = "DimText",
+            Truncate = true,
+            Z = 5
+        })
+
+        if HasDesc then
+            Items.DescLabel = MakeText({
+                Parent = Row.Instance,
+                Text = Textbox.Description,
+                TextSize = 12,
+                Pos = UDim2.fromOffset(15, 22),
+                Size = UDim2.fromOffset(Section.Width - 30, 14),
+                Color = "DimText",
+                Truncate = true,
+                Z = 5
+            })
+            Items.DescLabel.Instance.TextTransparency = 0.4
+        end
+
+        local BoxY = HasDesc and 38 or 24
+
+        Items.Box = MakeFrame({
+            Parent = Row.Instance,
+            Pos = UDim2.fromOffset(15, BoxY),
+            Size = UDim2.fromOffset(Section.Width - 30, 30),
+            Color = "Element",
+            Round = 6,
+            Clip = true,
+            Z = 5
+        })
+
+        local LeftOffset = 11
+        local RightOffset = 11
+
+        if Textbox.Icon then
+            Items.Icon = MakeImage({
+                Parent = Items.Box.Instance,
+                Icon = Textbox.Icon,
+                Anchor = Vector2.new(0, 0.5),
+                Pos = UDim2.new(0, 8, 0.5, 0),
+                Size = UDim2.fromOffset(16, 16),
+                Color = "DimText",
+                Z = 6
+            })
+            LeftOffset = 30
+        end
+
+        local ActionX = -8
+
+        if Textbox.CopyButton then
+            local CopyImg = MakeImage({
+                Parent = Items.Box.Instance,
+                Icon = "copy",
+                Anchor = Vector2.new(1, 0.5),
+                Pos = UDim2.new(1, ActionX, 0.5, 0),
+                Size = UDim2.fromOffset(14, 14),
+                Color = "DimText",
+                Z = 7
+            })
+            local CopyBtn = MakeButton({
+                Parent = Items.Box.Instance,
+                Anchor = Vector2.new(1, 0.5),
+                Pos = UDim2.new(1, ActionX - 3, 0.5, 0),
+                Size = UDim2.fromOffset(20, 20),
+                Z = 8
+            })
+            CopyBtn:OnHover(
+                function() CopyImg:Tween({ ImageColor3 = Library.Theme.Text }) end,
+                function() CopyImg:Tween({ ImageColor3 = Library.Theme.DimText }) end
+            )
+            CopyBtn:Connect("MouseButton1Down", function()
+                if setclipboard then
+                    pcall(setclipboard, Textbox.Value)
+                    Library:Notification({
+                        Name = "Copied",
+                        Description = "Copied text to clipboard!",
+                        Icon = "clipboard-check",
+                        Duration = 2
+                    })
+                end
+            end)
+            ActionX = ActionX - 22
+            RightOffset = RightOffset + 22
+        end
+
+        if Textbox.ClearButton then
+            local ClearImg = MakeImage({
+                Parent = Items.Box.Instance,
+                Icon = "x",
+                Anchor = Vector2.new(1, 0.5),
+                Pos = UDim2.new(1, ActionX, 0.5, 0),
+                Size = UDim2.fromOffset(14, 14),
+                Color = "DimText",
+                Z = 7
+            })
+            local ClearBtn = MakeButton({
+                Parent = Items.Box.Instance,
+                Anchor = Vector2.new(1, 0.5),
+                Pos = UDim2.new(1, ActionX - 3, 0.5, 0),
+                Size = UDim2.fromOffset(20, 20),
+                Z = 8
+            })
+            ClearBtn:OnHover(
+                function() ClearImg:Tween({ ImageColor3 = Library.Theme.Text }) end,
+                function() ClearImg:Tween({ ImageColor3 = Library.Theme.DimText }) end
+            )
+            ClearBtn:Connect("MouseButton1Down", function()
+                Textbox:Set("")
+            end)
+            ActionX = ActionX - 22
+            RightOffset = RightOffset + 22
+        end
 
         Items.Input = MakeInput({
             Parent = Items.Box.Instance,
             Placeholder = Textbox.Placeholder,
-            Pos = UDim2.fromOffset(11, 0),
-            Size = UDim2.new(1, -22, 1, 0),
+            Pos = UDim2.fromOffset(LeftOffset, 0),
+            Size = UDim2.new(1, -(LeftOffset + RightOffset), 1, 0),
             TextSize = 15,
             Z = 6
         })
 
+        if Textbox.ClearOnFocus then
+            Items.Input.Instance.ClearTextOnFocus = true
+        end
+
         Textbox.Items = Items
 
-        function Textbox:Set(Value)
-            Textbox.Value = tostring(Value)
+        local function ProcessText(text)
+            text = tostring(text or "")
+
+            if Textbox.Numeric then
+                local isNegative = text:sub(1, 1) == "-"
+                text = text:gsub("[^%d%.]", "")
+                local parts = string.split(text, ".")
+                if #parts > 2 then
+                    text = parts[1] .. "." .. table.concat(parts, "", 2)
+                end
+                if isNegative then
+                    text = "-" .. text
+                end
+            end
+
+            if Textbox.MaxCharacters and #text > Textbox.MaxCharacters then
+                text = text:sub(1, Textbox.MaxCharacters)
+            end
+
+            return text
+        end
+
+        function Textbox:Set(Value, Silent)
+            local Processed = ProcessText(Value)
+
+            if Textbox.Numeric and Processed ~= "" and Processed ~= "-" then
+                local num = tonumber(Processed)
+                if num then
+                    if Textbox.Min and num < Textbox.Min then num = Textbox.Min end
+                    if Textbox.Max and num > Textbox.Max then num = Textbox.Max end
+                    Processed = tostring(num)
+                end
+            end
+
+            Textbox.Value = Processed
             Items.Input.Instance.Text = Textbox.Value
 
             if Textbox.Flag then
                 Library.Flags[Textbox.Flag] = Textbox.Value
             end
 
-            Library:SafeCall(Textbox.Callback, Textbox.Value)
+            if not Silent then
+                Library:SafeCall(Textbox.Callback, Textbox.Value)
+            end
         end
 
         function Textbox:Get()
             return Textbox.Value
         end
 
-        if Textbox.Finished then
-            Items.Input:Connect("FocusLost", function(Enter)
-                if Enter then
-                    Textbox:Set(Items.Input.Instance.Text)
+        function Textbox:Clear()
+            Textbox:Set("")
+        end
+
+        function Textbox:SetPlaceholder(Text)
+            Textbox.Placeholder = tostring(Text)
+            Items.Input.Instance.PlaceholderText = Textbox.Placeholder
+        end
+
+        function Textbox:SetTitle(Text)
+            Textbox.Name = tostring(Text)
+            Items.Label.Instance.Text = Textbox.Name
+        end
+
+        function Textbox:SetDescription(Desc)
+            Textbox.Description = tostring(Desc)
+            if Items.DescLabel then
+                Items.DescLabel.Instance.Text = Textbox.Description
+            end
+        end
+
+        function Textbox:SetCallback(NewCallback)
+            Textbox.Callback = NewCallback or function() end
+        end
+
+        function Textbox:SetDisabled(Disabled)
+            Textbox.Disabled = Disabled and true or false
+            Row.Instance.BackgroundTransparency = Textbox.Disabled and 0.6 or 1
+            Items.Label.Instance.TextTransparency = Textbox.Disabled and 0.5 or 0
+            if Items.DescLabel then
+                Items.DescLabel.Instance.TextTransparency = Textbox.Disabled and 0.7 or 0.4
+            end
+            Items.Box.Instance.BackgroundTransparency = Textbox.Disabled and 0.5 or 0
+            Items.Input.Instance.TextEditable = not Textbox.Disabled
+        end
+
+        function Textbox:SetVisible(Bool)
+            Row.Instance.Visible = Bool
+            Section:Reflow()
+        end
+
+        HoverSwap(Items.Box)
+
+        Library:Connect(Items.Input.Instance.Focused, function()
+            if Textbox.Disabled then return end
+            Library:Tween({ BackgroundColor3 = Library.Theme.Light }, nil, Items.Box.Instance)
+            Library:SafeCall(Textbox.OnFocus)
+        end)
+
+        Library:Connect(Items.Input.Instance.FocusLost, function(EnterPressed)
+            Library:Tween({ BackgroundColor3 = Library.Theme.Element }, nil, Items.Box.Instance)
+
+            local InputText = Items.Input.Instance.Text
+            local Validated = ProcessText(InputText)
+
+            if Textbox.Numeric and Validated ~= "" and Validated ~= "-" then
+                local num = tonumber(Validated)
+                if num then
+                    if Textbox.Min and num < Textbox.Min then num = Textbox.Min end
+                    if Textbox.Max and num > Textbox.Max then num = Textbox.Max end
+                    Validated = tostring(num)
                 end
-            end)
-        else
+            end
+
+            Textbox.Value = Validated
+            Items.Input.Instance.Text = Validated
+
+            if Textbox.Flag then
+                Library.Flags[Textbox.Flag] = Textbox.Value
+            end
+
+            if Textbox.Finished then
+                Library:SafeCall(Textbox.Callback, Textbox.Value)
+            end
+
+            Library:SafeCall(Textbox.OnFocusLost, EnterPressed)
+        end)
+
+        if not Textbox.Finished then
             Library:Connect(Items.Input.Instance:GetPropertyChangedSignal("Text"), function()
-                Textbox:Set(Items.Input.Instance.Text)
+                if Items.Input.Instance:IsFocused() then
+                    local RawText = Items.Input.Instance.Text
+                    local CleanText = ProcessText(RawText)
+
+                    if RawText ~= CleanText then
+                        Items.Input.Instance.Text = CleanText
+                    end
+
+                    Textbox.Value = CleanText
+
+                    if Textbox.Flag then
+                        Library.Flags[Textbox.Flag] = Textbox.Value
+                    end
+
+                    Library:SafeCall(Textbox.Callback, Textbox.Value)
+                end
             end)
         end
 
         if Textbox.Default ~= "" then
-            Textbox:Set(Textbox.Default)
+            Textbox:Set(Textbox.Default, true)
+        end
+
+        if Textbox.Disabled then
+            Textbox:SetDisabled(true)
         end
 
         if Textbox.Flag then
@@ -5191,173 +6638,191 @@ end
     end
 
     Library.Keybind = function(Self, Params)
-        Params = Params or { }
+    Params = Params or { }
 
-        local Section = Self
+    local Section = Self
 
-        local Keybind = {
-            Name = Params.Name or "Keybind",
-            Key = Params.Default,
-            Flag = Params.Flag,
-            Callback = Params.Callback or function() end,
-            Picking = false,
-            IsOpen = false,
-            Debounce = false,
-            Items = { }
-        }
+    local Keybind = {
+        Name = Params.Name or "Keybind",
+        Key = ParseKey(Params.Default),
+        Mode = Params.Mode or "Toggle",
+        Flag = Params.Flag,
+        Callback = Params.Callback or function() end,
+        Picking = false,
+        IsOpen = false,
+        Debounce = false,
+        Items = { }
+    }
 
-        local Row = Section:AddRow(32, Keybind.Name)
-        local Items = { Row = Row }
+    local Row = Section:AddRow(32, Keybind.Name)
+    local Items = { Row = Row }
 
-        Items.Label = MakeText({
-            Parent = Row.Instance,
-            Text = Keybind.Name,
-            TextSize = 15,
-            Anchor = Vector2.new(0, 0.5),
-            Pos = UDim2.new(0, 14, 0.5, 0),
-            Size = UDim2.fromOffset(Section.Width - 60, 20),
-            Color = "Text",
-            Truncate = true,
-            Z = 5
-        })
+    Items.Label = MakeText({
+        Parent = Row.Instance,
+        Text = Keybind.Name,
+        TextSize = 15,
+        Anchor = Vector2.new(0, 0.5),
+        Pos = UDim2.new(0, 14, 0.5, 0),
+        Size = UDim2.fromOffset(Section.Width - 80, 20),
+        Color = "Text",
+        Truncate = true,
+        Z = 5
+    })
 
-        Items.Icon = MakeImage({
-            Parent = Row.Instance,
-            Icon = "command",
-            Anchor = Vector2.new(1, 0.5),
-            Pos = UDim2.new(1, -16, 0.5, 0),
-            Size = UDim2.fromOffset(16, 16),
-            Color = "DimText",
-            Z = 6
-        })
+    Items.ValueText = MakeText({
+        Parent = Row.Instance,
+        Text = "[" .. KeyName(Keybind.Key) .. "]",
+        TextSize = 13,
+        Anchor = Vector2.new(1, 0.5),
+        Pos = UDim2.new(1, -36, 0.5, 0),
+        Size = UDim2.fromOffset(70, 20),
+        Color = "DimText",
+        Align = Enum.TextXAlignment.Right,
+        Truncate = true,
+        Z = 6
+    })
 
-        Items.Hit = MakeButton({
-            Parent = Row.Instance,
-            Anchor = Vector2.new(1, 0.5),
-            Pos = UDim2.new(1, -8, 0.5, 0),
-            Size = UDim2.fromOffset(30, 26),
-            Z = 8
-        })
+    Items.Icon = MakeImage({
+        Parent = Row.Instance,
+        Icon = "command",
+        Anchor = Vector2.new(1, 0.5),
+        Pos = UDim2.new(1, -16, 0.5, 0),
+        Size = UDim2.fromOffset(16, 16),
+        Color = "DimText",
+        Z = 6
+    })
 
-        Items.Hit:OnHover(function()
-            Items.Icon:Tween({ ImageColor3 = Library.Theme.Text })
-        end, function()
-            Items.Icon:Tween({ ImageColor3 = Library.Theme.DimText })
-        end)
+    Items.Hit = MakeButton({
+        Parent = Row.Instance,
+        Anchor = Vector2.new(1, 0.5),
+        Pos = UDim2.new(1, -8, 0.5, 0),
+        Size = UDim2.fromOffset(100, 26),
+        Z = 8
+    })
 
-        Keybind.Items = Items
+    Items.Hit:OnHover(function()
+        Items.Icon:Tween({ ImageColor3 = Library.Theme.Text })
+        Items.ValueText:Tween({ TextColor3 = Library.Theme.Text })
+    end, function()
+        Items.Icon:Tween({ ImageColor3 = Library.Theme.DimText })
+        Items.ValueText:Tween({ TextColor3 = Library.Theme.DimText })
+    end)
 
-        local PanelW = 170
+    Keybind.Items = Items
 
-        local Panel = MakeFrame({
-            Parent = Library.UnusedHolder.Instance,
-            Size = UDim2.fromOffset(PanelW, 72),
-            Color = "Section",
-            Round = 8,
-            Z = 40
-        })
+    local PanelW = 170
 
-        Panel.Instance.Visible = false
+    local Panel = MakeFrame({
+        Parent = Library.UnusedHolder.Instance,
+        Size = UDim2.fromOffset(PanelW, 72),
+        Color = "Section",
+        Round = 8,
+        Z = 40
+    })
 
-        MakeText({
-            Parent = Panel.Instance,
-            Text = Keybind.Name,
-            TextSize = 12,
-            Pos = UDim2.fromOffset(11, 8),
-            Size = UDim2.fromOffset(PanelW - 22, 14),
-            Color = "DimText",
-            Truncate = true,
-            Z = 41
-        })
+    Panel.Instance.Visible = false
 
-        local KeyBox = MakeFrame({
-            Parent = Panel.Instance,
-            Pos = UDim2.fromOffset(9, 32),
-            Size = UDim2.fromOffset(PanelW - 18, 30),
-            Color = "Light",
-            Round = 5,
-            Clip = true,
-            Z = 41
-        })
+    MakeText({
+        Parent = Panel.Instance,
+        Text = Keybind.Name,
+        TextSize = 12,
+        Pos = UDim2.fromOffset(11, 8),
+        Size = UDim2.fromOffset(PanelW - 22, 14),
+        Color = "DimText",
+        Truncate = true,
+        Z = 41
+    })
 
-        local PanelKey = MakeText({
-            Parent = KeyBox.Instance,
-            Text = "None",
-            TextSize = 13,
-            Size = UDim2.new(1, 0, 1, 0),
-            Color = "Text",
-            Align = Enum.TextXAlignment.Center,
-            Truncate = true,
-            Z = 42
-        })
+    local KeyBox = MakeFrame({
+        Parent = Panel.Instance,
+        Pos = UDim2.fromOffset(9, 32),
+        Size = UDim2.fromOffset(PanelW - 18, 30),
+        Color = "Light",
+        Round = 5,
+        Clip = true,
+        Z = 41
+    })
 
-        local KeyHit = MakeButton({
-            Parent = KeyBox.Instance,
-            Z = 43
-        })
+    local PanelKey = MakeText({
+        Parent = KeyBox.Instance,
+        Text = KeyName(Keybind.Key),
+        TextSize = 13,
+        Size = UDim2.new(1, 0, 1, 0),
+        Color = "Text",
+        Align = Enum.TextXAlignment.Center,
+        Truncate = true,
+        Z = 42
+    })
 
-        function Keybind:Set(Key)
-            Keybind.Key = Key
-            PanelKey.Instance.Text = KeyName(Key)
-            Keybind.Picking = false
+    local KeyHit = MakeButton({
+        Parent = KeyBox.Instance,
+        Z = 43
+    })
 
-            if Keybind.Flag then
-                Library.Flags[Keybind.Flag] = Key and tostring(Key) or "None"
-            end
-        end
-
-        function Keybind:Get()
-            return Keybind.Key
-        end
-
-        AttachPopup({
-            Popup = Keybind,
-            Frame = Panel,
-            Level = 40,
-            GetAnchor = function()
-                return Items.Hit.Instance
-            end,
-            Place = function(Off)
-                local Anchor = Items.Icon.Instance
-                local PScale = Library:GetScreenScale()
-                local Right = Anchor.AbsolutePosition.X + Anchor.AbsoluteSize.X
-                local PX = Right / PScale + 8 + (Off or 0)
-                local PY = (Anchor.AbsolutePosition.Y + GuiInset) / PScale - 4
-
-                return UDim2.fromOffset(PX, PY)
-            end,
-            From = -6,
-            To = 2,
-            Retreat = RetreatLeft
-        })
-
-        Items.Hit:Connect("MouseButton1Down", function()
-            Keybind:SetOpen(not Keybind.IsOpen)
-        end)
-
-        KeyHit:Connect("MouseButton1Click", function()
-            CaptureKey(Keybind, PanelKey.Instance, function(Key)
-                Keybind:Set(Key)
-            end)
-        end)
-
-        Library:Connect(UserInputService.InputBegan, function(Input, Processed)
-            if Processed or Keybind.Picking or not Keybind.Key then return end
-            if not KeyMatches(Input, Keybind.Key) then return end
-
-            Library:SafeCall(Keybind.Callback, Keybind.Key)
-        end)
-
-        Keybind:Set(Keybind.Key)
+    function Keybind:Set(Key)
+        Keybind.Key = ParseKey(Key)
+        local Formatted = KeyName(Keybind.Key)
+        PanelKey.Instance.Text = Formatted
+        Items.ValueText.Instance.Text = "[" .. Formatted .. "]"
+        Keybind.Picking = false
 
         if Keybind.Flag then
-            Library.SetFlags[Keybind.Flag] = function(Value)
-                Keybind:Set(ParseKey(Value))
-            end
+            Library.Flags[Keybind.Flag] = Keybind.Key and tostring(Keybind.Key) or "None"
         end
-
-        return setmetatable(Keybind, Library)
     end
+
+    function Keybind:Get()
+        return Keybind.Key
+    end
+
+    AttachPopup({
+        Popup = Keybind,
+        Frame = Panel,
+        Level = 40,
+        GetAnchor = function()
+            return Items.Hit.Instance
+        end,
+        Place = function(Off)
+            local Anchor = Items.Icon.Instance
+            local PScale = Library:GetScreenScale()
+            local Right = Anchor.AbsolutePosition.X + Anchor.AbsoluteSize.X
+            local PX = Right / PScale + 8 + (Off or 0)
+            local PY = (Anchor.AbsolutePosition.Y + GuiInset) / PScale - 4
+
+            return UDim2.fromOffset(PX, PY)
+        end,
+        From = -6,
+        To = 2,
+        Retreat = RetreatLeft
+    })
+
+    Items.Hit:Connect("MouseButton1Down", function()
+        Keybind:SetOpen(not Keybind.IsOpen)
+    end)
+
+    KeyHit:Connect("MouseButton1Click", function()
+        CaptureKey(Keybind, PanelKey.Instance, function(Key)
+            Keybind:Set(Key)
+        end)
+    end)
+
+    Library:Connect(UserInputService.InputBegan, function(Input, Processed)
+        if Processed or Keybind.Picking or not Keybind.Key then return end
+        if not KeyMatches(Input, Keybind.Key) then return end
+
+        Library:SafeCall(Keybind.Callback, Keybind.Key)
+    end)
+
+    Keybind:Set(Keybind.Key)
+
+    if Keybind.Flag then
+        Library.SetFlags[Keybind.Flag] = function(Value)
+            Keybind:Set(ParseKey(Value))
+        end
+    end
+
+    return setmetatable(Keybind, Library)
+end
 
     Library.Colorpicker = function(Self, Params)
         Params = Params or { }
@@ -5368,6 +6833,7 @@ end
             Name = Params.Name or "Color",
             Default = Params.Default or Library.Theme.Accent,
             Transparency = Params.Transparency or 0,
+            Rainbow = Params.Rainbow or false,
             Flag = Params.Flag,
             Callback = Params.Callback or function() end,
             Color = Params.Default or Library.Theme.Accent,
@@ -5394,29 +6860,31 @@ end
 
         local Picker = MakeColorPopup(function()
             return Items.Swatch.Halo.Instance
-        end, Colorpicker.Name, Colorpicker.Default, Colorpicker.Transparency, function(Color, Alpha)
+        end, Colorpicker.Name, Colorpicker.Default, Colorpicker.Transparency, function(Color, Alpha, Rainbow)
             Colorpicker.Color = Color
             Colorpicker.Transparency = Alpha
+            Colorpicker.Rainbow = Rainbow
             Items.Swatch:SetColor(Color, Alpha)
 
             if Colorpicker.Flag then
                 Library.Flags[Colorpicker.Flag] = {
                     __color = Color:ToHex(),
-                    __alpha = Alpha
+                    __alpha = Alpha,
+                    __rainbow = Rainbow
                 }
             end
 
-            Library:SafeCall(Colorpicker.Callback, Color, Alpha)
+            Library:SafeCall(Colorpicker.Callback, Color, Alpha, Rainbow)
         end)
 
         Colorpicker.Picker = Picker
 
-        function Colorpicker:Set(Color, Alpha)
-            Picker:Set(Color, Alpha)
+        function Colorpicker:Set(Color, Alpha, Rainbow)
+            Picker:Set(Color, Alpha, Rainbow)
         end
 
         function Colorpicker:Get()
-            return Colorpicker.Color, Colorpicker.Transparency
+            return Colorpicker.Color, Colorpicker.Transparency, Colorpicker.Rainbow
         end
 
         Items.Swatch.Hit:Connect("MouseButton1Down", function()
@@ -5424,8 +6892,8 @@ end
         end)
 
         if Colorpicker.Flag then
-            Library.SetFlags[Colorpicker.Flag] = function(Color, Alpha)
-                Picker:Set(Color, Alpha)
+            Library.SetFlags[Colorpicker.Flag] = function(Color, Alpha, Rainbow)
+                Picker:Set(Color, Alpha, Rainbow)
             end
         end
 
@@ -5438,26 +6906,146 @@ end
         local Section = Self
 
         local Label = {
-            Name = Params.Name or "Label",
+            Name = Params.Name or Params.Text or "Label",
+            Description = Params.Description or Params.Desc or "",
+            Icon = Params.Icon or nil,
+            Color = Params.Color or "DimText",
+            DescColor = Params.DescColor or "DimText",
+            RightText = Params.RightText or "",
+            RightColor = Params.RightColor or "Accent",
+            RichText = Params.RichText or false,
+            Align = Params.Align or Enum.TextXAlignment.Left,
+            Wrap = Params.Wrap or false,
             Items = { }
         }
 
-        local Row = Section:AddRow(24, Label.Name)
+        local HasDesc = Label.Description ~= ""
+        local HasIcon = Label.Icon ~= nil and Label.Icon ~= ""
+        local HasRight = Label.RightText ~= ""
 
-        Label.Items.Text = MakeText({
+        local LeftMargin = HasIcon and 34 or 14
+        local RightMargin = HasRight and 80 or 14
+        local AvailableWidth = Section.Width - LeftMargin - RightMargin
+        
+        local TitleSize = MeasureText(Label.Name, 15, AvailableWidth, UiFont)
+        local DescSize = HasDesc and MeasureText(Label.Description, 12, AvailableWidth, UiFont) or Vector2.new(0, 0)
+
+        local RowHeight = 28
+        if Label.Wrap then
+            RowHeight = TitleSize.Y + (HasDesc and DescSize.Y + 4 or 0) + 10
+            RowHeight = math.max(RowHeight, 28)
+        else
+            RowHeight = HasDesc and 44 or 28
+        end
+
+        local Row = Section:AddRow(RowHeight, Label.Name)
+        local Items = { Row = Row }
+
+        if HasIcon then
+            Items.Icon = MakeImage({
+                Parent = Row.Instance,
+                Icon = Label.Icon,
+                Anchor = Vector2.new(0, 0.5),
+                Pos = UDim2.new(0, 14, 0.5, 0),
+                Size = UDim2.fromOffset(16, 16),
+                Color = Label.Color,
+                Z = 5
+            })
+        end
+
+        Items.Text = MakeText({
             Parent = Row.Instance,
             Text = Label.Name,
             TextSize = 15,
-            Anchor = Vector2.new(0, 0.5),
-            Pos = UDim2.new(0, 14, 0.5, 0),
-            Size = UDim2.fromOffset(Section.Width - 28, 20),
-            Color = "DimText",
-            Truncate = true,
+            Anchor = Vector2.new(0, HasDesc and 0 or 0.5),
+            Pos = HasDesc and UDim2.new(0, LeftMargin, 0, 4) or UDim2.new(0, LeftMargin, 0.5, 0),
+            Size = UDim2.new(1, -(LeftMargin + RightMargin), 0, Label.Wrap and TitleSize.Y or 20),
+            Color = Label.Color,
+            Align = Label.Align,
+            Wrap = Label.Wrap,
+            Truncate = not Label.Wrap,
             Z = 5
         })
+        Items.Text.Instance.RichText = Label.RichText
+
+        if HasDesc then
+            local DescY = Label.Wrap and (TitleSize.Y + 6) or 22
+            Items.DescLabel = MakeText({
+                Parent = Row.Instance,
+                Text = Label.Description,
+                TextSize = 12,
+                Pos = UDim2.new(0, LeftMargin, 0, DescY),
+                Size = UDim2.new(1, -(LeftMargin + RightMargin), 0, Label.Wrap and DescSize.Y or 15),
+                Color = Label.DescColor,
+                Align = Label.Align,
+                Wrap = Label.Wrap,
+                Truncate = not Label.Wrap,
+                Z = 5
+            })
+            Items.DescLabel.Instance.RichText = Label.RichText
+            Items.DescLabel.Instance.TextTransparency = 0.4
+        end
+
+        if HasRight then
+            Items.RightText = MakeText({
+                Parent = Row.Instance,
+                Text = Label.RightText,
+                TextSize = 13,
+                Anchor = Vector2.new(1, 0.5),
+                Pos = UDim2.new(1, -14, 0.5, 0),
+                Size = UDim2.fromOffset(70, 20),
+                Color = Label.RightColor,
+                Align = Enum.TextXAlignment.Right,
+                Truncate = true,
+                Z = 5
+            })
+            Items.RightText.Instance.RichText = Label.RichText
+        end
+
+        Label.Items = Items
 
         function Label:Set(Text)
-            Label.Items.Text.Instance.Text = tostring(Text)
+            Label.Name = tostring(Text)
+            Items.Text.Instance.Text = Label.Name
+        end
+
+        function Label:SetText(Text)
+            Label:Set(Text)
+        end
+
+        function Label:SetDescription(Desc)
+            Label.Description = tostring(Desc)
+            if Items.DescLabel then
+                Items.DescLabel.Instance.Text = Label.Description
+                Items.DescLabel.Instance.Visible = Label.Description ~= ""
+            end
+        end
+
+        function Label:SetRightText(Text)
+            Label.RightText = tostring(Text)
+            if Items.RightText then
+                Items.RightText.Instance.Text = Label.RightText
+            end
+        end
+
+        function Label:SetColor(ColorKeyOrColor3)
+            if typeof(ColorKeyOrColor3) == "Color3" then
+                Items.Text.Instance.TextColor3 = ColorKeyOrColor3
+            else
+                Items.Text:ChangeItemTheme({ TextColor3 = ColorKeyOrColor3 })
+            end
+        end
+
+        function Label:SetIcon(Icon)
+            Label.Icon = Icon
+            if Items.Icon then
+                ApplyIcon(Items.Icon.Instance, Icon)
+            end
+        end
+
+        function Label:SetVisible(Bool)
+            Row.Instance.Visible = Bool
+            Section:Reflow()
         end
 
         return setmetatable(Label, Library)
@@ -5470,44 +7058,207 @@ end
 
         local Paragraph = {
             Title = Params.Title or Params.Name or "Paragraph",
-            Content = Params.Content or "",
+            Content = Params.Content or Params.Text or Params.Desc or "",
+            TitleColor = Params.TitleColor or "Text",
+            ContentColor = Params.ContentColor or Params.Color or "DimText",
+            TitleSize = Params.TitleSize or 15,
+            ContentSize = Params.ContentSize or 14,
+            Icon = Params.Icon or nil,
+            IconColor = Params.IconColor or "DimText",
+            RichText = Params.RichText or false,
+            Align = Params.Align or Enum.TextXAlignment.Left,
+            CopyButton = Params.CopyButton or false,
             Items = { }
         }
 
-        local Width = Section.Width - 28
-        local TitleBounds = MeasureText(Paragraph.Title, 15, Width, UiFont)
-        local BodyBounds = MeasureText(Paragraph.Content, 14, Width, UiFont)
-        local Total = TitleBounds.Y + BodyBounds.Y + 16
+        local HasIcon = Paragraph.Icon ~= nil and Paragraph.Icon ~= ""
+        local IconWidth = HasIcon and 24 or 0
+        local ActionWidth = Paragraph.CopyButton and 24 or 0
 
-        local Row = Section:AddRow(Total, Paragraph.Title .. " " .. Paragraph.Content)
+        local LeftMargin = 14 + IconWidth
+        local RightMargin = 14 + ActionWidth
+        local AvailableWidth = Section.Width - LeftMargin - RightMargin
 
-        local function Block(Text, TextSize, Y, Height, Color)
-            local Item = MakeText({
+        local TitleBounds = MeasureText(Paragraph.Title, Paragraph.TitleSize, AvailableWidth, UiFont)
+        local ContentBounds = MeasureText(Paragraph.Content, Paragraph.ContentSize, AvailableWidth, UiFont)
+
+        local RowHeight = TitleBounds.Y + (Paragraph.Content ~= "" and ContentBounds.Y + 6 or 0) + 16
+        RowHeight = math.max(RowHeight, 32)
+
+        local Row, RowData = Section:AddRow(RowHeight, Paragraph.Title .. " " .. Paragraph.Content)
+        local Items = { Row = Row, Data = RowData }
+
+        if HasIcon then
+            Items.Icon = MakeImage({
                 Parent = Row.Instance,
-                Text = Text,
-                TextSize = TextSize,
-                Pos = UDim2.fromOffset(14, Y),
-                Size = UDim2.fromOffset(Width, Height),
-                Color = Color,
-                Wrap = true,
+                Icon = Paragraph.Icon,
+                Pos = UDim2.fromOffset(14, 10),
+                Size = UDim2.fromOffset(16, 16),
+                Color = Paragraph.IconColor,
                 Z = 5
             })
-
-            Item.Instance.TextYAlignment = Enum.TextYAlignment.Top
-            return Item
         end
 
-        Paragraph.Items.Title = Block(Paragraph.Title, 15, 6, TitleBounds.Y, "Text")
-        Paragraph.Items.Body = Block(Paragraph.Content, 14, TitleBounds.Y + 8, BodyBounds.Y, "DimText")
+        if Paragraph.CopyButton then
+            local CopyImg = MakeImage({
+                Parent = Row.Instance,
+                Icon = "copy",
+                Anchor = Vector2.new(1, 0),
+                Pos = UDim2.new(1, -12, 0, 10),
+                Size = UDim2.fromOffset(14, 14),
+                Color = "DimText",
+                Z = 6
+            })
+
+            local CopyHit = MakeButton({
+                Parent = Row.Instance,
+                Anchor = Vector2.new(1, 0),
+                Pos = UDim2.new(1, -12, 0, 8),
+                Size = UDim2.fromOffset(20, 20),
+                Z = 7
+            })
+
+            CopyHit:OnHover(
+                function() CopyImg:Tween({ ImageColor3 = Library.Theme.Text }) end,
+                function() CopyImg:Tween({ ImageColor3 = Library.Theme.DimText }) end
+            )
+
+            CopyHit:Connect("MouseButton1Down", function()
+                if setclipboard then
+                    local textToCopy = Paragraph.Content ~= "" and Paragraph.Content or Paragraph.Title
+                    pcall(setclipboard, textToCopy)
+                    Library:Notification({
+                        Name = "Copied",
+                        Description = "Copied text to clipboard!",
+                        Icon = "clipboard-check",
+                        Duration = 2
+                    })
+                end
+            end)
+
+            Items.CopyImg = CopyImg
+            Items.CopyHit = CopyHit
+        end
+
+        Items.Title = MakeText({
+            Parent = Row.Instance,
+            Text = Paragraph.Title,
+            TextSize = Paragraph.TitleSize,
+            Pos = UDim2.fromOffset(LeftMargin, 8),
+            Size = UDim2.fromOffset(AvailableWidth, TitleBounds.Y),
+            Color = Paragraph.TitleColor,
+            Align = Paragraph.Align,
+            Wrap = true,
+            Z = 5
+        })
+        Items.Title.Instance.RichText = Paragraph.RichText
+        Items.Title.Instance.TextYAlignment = Enum.TextYAlignment.Top
+
+        local ContentY = 8 + TitleBounds.Y + (Paragraph.Content ~= "" and 6 or 0)
+        Items.Body = MakeText({
+            Parent = Row.Instance,
+            Text = Paragraph.Content,
+            TextSize = Paragraph.ContentSize,
+            Pos = UDim2.fromOffset(LeftMargin, ContentY),
+            Size = UDim2.fromOffset(AvailableWidth, ContentBounds.Y),
+            Color = Paragraph.ContentColor,
+            Align = Paragraph.Align,
+            Wrap = true,
+            Z = 5
+        })
+        Items.Body.Instance.RichText = Paragraph.RichText
+        Items.Body.Instance.TextYAlignment = Enum.TextYAlignment.Top
+
+        function Paragraph:RecalculateHeight()
+            HasIcon = Paragraph.Icon ~= nil and Paragraph.Icon ~= ""
+            IconWidth = HasIcon and 24 or 0
+            ActionWidth = Paragraph.CopyButton and 24 or 0
+
+            LeftMargin = 14 + IconWidth
+            RightMargin = 14 + ActionWidth
+            AvailableWidth = Section.Width - LeftMargin - RightMargin
+
+            local TBounds = MeasureText(Paragraph.Title, Paragraph.TitleSize, AvailableWidth, UiFont)
+            local CBounds = MeasureText(Paragraph.Content, Paragraph.ContentSize, AvailableWidth, UiFont)
+
+            local NewHeight = TBounds.Y + (Paragraph.Content ~= "" and CBounds.Y + 6 or 0) + 16
+            NewHeight = math.max(NewHeight, 32)
+
+            Items.Title.Instance.Size = UDim2.fromOffset(AvailableWidth, TBounds.Y)
+            Items.Title.Instance.Position = UDim2.fromOffset(LeftMargin, 8)
+
+            local NewContentY = 8 + TBounds.Y + (Paragraph.Content ~= "" and 6 or 0)
+            Items.Body.Instance.Size = UDim2.fromOffset(AvailableWidth, CBounds.Y)
+            Items.Body.Instance.Position = UDim2.fromOffset(LeftMargin, NewContentY)
+
+            RowData.Height = NewHeight
+            Row.Instance.Size = UDim2.fromOffset(Section.Width, NewHeight)
+
+            Section:Reflow()
+        end
 
         function Paragraph:SetTitle(Text)
-            Paragraph.Items.Title.Instance.Text = tostring(Text)
+            Paragraph.Title = tostring(Text or "")
+            Items.Title.Instance.Text = Paragraph.Title
+            Paragraph:RecalculateHeight()
         end
 
         function Paragraph:SetContent(Text)
-            Paragraph.Items.Body.Instance.Text = tostring(Text)
+            Paragraph.Content = tostring(Text or "")
+            Items.Body.Instance.Text = Paragraph.Content
+            Paragraph:RecalculateHeight()
         end
 
+        function Paragraph:SetText(Title, Content)
+            if Title then Paragraph.Title = tostring(Title) end
+            if Content then Paragraph.Content = tostring(Content) end
+            Items.Title.Instance.Text = Paragraph.Title
+            Items.Body.Instance.Text = Paragraph.Content
+            Paragraph:RecalculateHeight()
+        end
+
+        function Paragraph:SetTitleColor(Color)
+            if typeof(Color) == "Color3" then
+                Items.Title.Instance.TextColor3 = Color
+            else
+                Items.Title:ChangeItemTheme({ TextColor3 = Color })
+            end
+        end
+
+        function Paragraph:SetContentColor(Color)
+            if typeof(Color) == "Color3" then
+                Items.Body.Instance.TextColor3 = Color
+            else
+                Items.Body:ChangeItemTheme({ TextColor3 = Color })
+            end
+        end
+
+        function Paragraph:SetIcon(Icon)
+            Paragraph.Icon = Icon
+            if Items.Icon then
+                ApplyIcon(Items.Icon.Instance, Icon)
+            else
+                if Icon and Icon ~= "" then
+                    Items.Icon = MakeImage({
+                        Parent = Row.Instance,
+                        Icon = Icon,
+                        Pos = UDim2.fromOffset(14, 10),
+                        Size = UDim2.fromOffset(16, 16),
+                        Color = Paragraph.IconColor,
+                        Z = 5
+                    })
+                end
+            end
+            Paragraph:RecalculateHeight()
+        end
+
+        function Paragraph:SetVisible(Bool)
+            Row.Instance.Visible = Bool
+            RowData.Visible = Bool
+            Section:Reflow()
+        end
+
+        Paragraph.Items = Items
         return setmetatable(Paragraph, Library)
     end
 
@@ -6472,7 +8223,7 @@ end
 
             pcall(function()
                 if type(Value) == "table" and Value.__color then
-                    SetFunction(Color3.fromHex(Value.__color), Value.__alpha or 0)
+                    SetFunction(Color3.fromHex(Value.__color), Value.__alpha or 0, Value.__rainbow or false)
                 else
                     SetFunction(Value)
                 end
