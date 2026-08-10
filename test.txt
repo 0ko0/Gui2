@@ -6170,17 +6170,18 @@ end
             Order += 1
             return Order
         end
-
-        Items.Icon = MakeImage({
+        
+        Items.Title = MakeText({
             Parent = Items.Bar.Instance,
-            Icon = Icon,
-            Size = UDim2.fromOffset(20, 20),
-            Raw = Color3.new(1, 1, 1),
-            Fit = true,
+            Text = Params.Name or "ZOLAR",
+            TextSize = 14,
+            Bold = true,
+            Size = UDim2.fromOffset(0, 16),
+            Color = "Text",
             Z = 61
         })
-
-        Items.Icon.Instance.LayoutOrder = NextOrder()
+        Items.Title.Instance.AutomaticSize = Enum.AutomaticSize.X
+        Items.Title.Instance.LayoutOrder = NextOrder()
 
         local function Separator()
             local Sep = MakeFrame({
@@ -6256,11 +6257,13 @@ end
 
         local Watermark = { Instance = Items.Bar.Instance }
 
-        function Watermark:SetIcon(NewIcon)
-            ApplyIcon(Items.Icon.Instance, NewIcon)
+        function Watermark:SetIcon(NewIcon)      
         end
 
-        function Watermark:SetName()
+        function Watermark:SetName(NewName)
+            if Items.Title then
+                Items.Title.Instance.Text = tostring(NewName)
+            end
         end
 
         function Watermark:SetVisible(Bool)
