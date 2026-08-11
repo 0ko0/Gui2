@@ -2925,14 +2925,34 @@ end
             Round = 20,
             Z = 3
         })
-
-        Items.ProfileHit = MakeButton({
+        
+        Items.MinimizeBtn = MakeImage({
             Parent = Items.TopBar.Instance,
-            Anchor = Vector2.new(1, 0),
-            Pos = UDim2.new(1, -4, 0, 8),
-            Size = UDim2.fromOffset(42, 36),
+            Icon = "minus",
+            Anchor = Vector2.new(1, 0.5),
+            Pos = UDim2.new(1, -95, 0.5, 0),
+            Size = UDim2.fromOffset(18, 18),
+            Color = "DimText",
+            Z = 4
+        })
+
+        Items.MinimizeHit = MakeButton({
+            Parent = Items.TopBar.Instance,
+            Anchor = Vector2.new(1, 0.5),
+            Pos = UDim2.new(1, -104, 0.5, 0),
+            Size = UDim2.fromOffset(36, 36), 
             Z = 5
         })
+
+        Items.MinimizeHit:OnHover(function()
+            Items.MinimizeBtn:Tween({ ImageColor3 = Library.Theme.Text })
+        end, function()
+            Items.MinimizeBtn:Tween({ ImageColor3 = Library.Theme.DimIcon })
+        end)
+
+        Items.MinimizeHit:Connect("MouseButton1Down", function()
+            Window:SetOpen(false)
+        end)
                 
         Items.MinimizeBtn = MakeImage({
             Parent = Items.TopBar.Instance,
@@ -3623,6 +3643,72 @@ end
         function Window:LayoutSubBar(Instant)
             Window:FitSubBar(Instant)
         end
+        
+        local IslandFrame = MakeFrame({
+            Parent = Library.Holder.Instance,
+            Anchor = Vector2.new(0.5, 0),
+            Pos = UDim2.new(0.5, 0, 0, 15),
+            Size = UDim2.fromOffset(165, 36),
+            Color = "Section",
+            Round = 18,
+            Z = 100
+        })
+        IslandFrame.Instance.Visible = false
+
+        MakeImage({
+            Parent = IslandFrame.Instance,
+            Icon = Window.Icon or "layers",
+            Anchor = Vector2.new(0, 0.5),
+            Pos = UDim2.new(0, 12, 0.5, 0),
+            Size = UDim2.fromOffset(18, 18),
+            Color = "Accent",
+            Z = 101
+        })
+
+        MakeText({
+            Parent = IslandFrame.Instance,
+            Text = Window.Name, 
+            TextSize = 14,
+            Bold = true,
+            Anchor = Vector2.new(0, 0.5),
+            Pos = UDim2.new(0, 38, 0.5, 0),
+            Size = UDim2.fromOffset(115, 20),
+            Color = "Text",
+            Align = Enum.TextXAlignment.Left,
+            Truncate = true,
+            Z = 101
+        })
+
+        IslandFrame:MakeDraggable()
+
+        local IslandHit = MakeButton({
+            Parent = IslandFrame.Instance,
+            Size = UDim2.new(1, 0, 1, 0),
+            Z = 105
+        })
+
+        local DragDistance = 0
+        local StartPos = Vector2.new(0, 0)
+
+        IslandHit:Connect("InputBegan", function(Input)
+            if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+                StartPos = Input.Position
+                DragDistance = 0
+            end
+        end)
+
+        IslandHit:Connect("InputChanged", function(Input)
+            if Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch then
+                DragDistance = (Input.Position - StartPos).Magnitude
+            end
+        end)
+
+        IslandHit:Connect("MouseButton1Click", function()
+            
+            if DragDistance < 8 then
+                Window:SetOpen(true)
+            end
+        end)
 
         function Window:SetOpen(Bool)
             Window.IsOpen = Bool
@@ -3636,10 +3722,22 @@ end
                 Sub:SnapVisible()
             end
 
-            if Bool and Window.PlayIntro then
-                Window:PlayIntro()
+            if Bool then
+                
+                IslandFrame:FadeDescendants(false, function()
+                    IslandFrame.Instance.Visible = false
+                end)
+                if Window.PlayIntro then
+                    Window:PlayIntro()
+                else
+                    Items.Root:FadeDescendants(true)
+                end
             else
-                Items.Root:FadeDescendants(Bool)
+                
+                Items.Root:FadeDescendants(false, function()
+                    IslandFrame.Instance.Visible = true
+                    IslandFrame:FadeDescendants(true)
+                end)
             end
         end
 
