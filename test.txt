@@ -1306,10 +1306,15 @@ end
         return function(Extra)
             local Anchor = GetAnchor()
             local Scale = Library:GetScreenScale()
+            local Viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920, 1080)
+            
             local X = Anchor.AbsolutePosition.X / Scale
-            local Y = Anchor.AbsolutePosition.Y + Anchor.AbsoluteSize.Y + GuiInset
+            local Y = (Anchor.AbsolutePosition.Y + Anchor.AbsoluteSize.Y + GuiInset) / Scale + (Extra or 0)
+                       
+            local MaxX = (Viewport.X / Scale) - 160
+            X = math.clamp(X, 10, math.max(10, MaxX))
 
-            return UDim2.fromOffset(X, Y / Scale + (Extra or 0))
+            return UDim2.fromOffset(X, Y)
         end
     end
 
@@ -1516,9 +1521,9 @@ end
         }
 
         local Items = { }
-        local RowHeight = 32
-        local SearchHeight = 30
-        local ActionHeaderHeight = 26
+        local RowHeight = IsMobile and 40 or 32 
+        local SearchHeight = IsMobile and 36 or 30
+        local ActionHeaderHeight = IsMobile and 32 or 26
 
         Items.Frame = MakeFrame({
             Parent = Library.UnusedHolder.Instance,
@@ -1853,7 +1858,7 @@ end
         local Field = 150
         local PanelW = Field + 32
         local PanelH = Field + 172
-        local CursorSize = 14
+        local CursorSize = IsMobile and 20 or 14 
         local CursorThickness = 2
 
         Items.Window = MakeFrame({
@@ -1945,7 +1950,7 @@ end
                 Name = "\0",
                 AutoButtonColor = false,
                 Position = UDim2.fromOffset(16, Y),
-                Size = UDim2.fromOffset(Field, 10),
+                Size = UDim2.fromOffset(Field, IsMobile and 18 or 10), 
                 ZIndex = Level + 1,
                 BorderSizePixel = 0,
                 BackgroundColor3 = Color3.new(1, 1, 1)
@@ -2294,6 +2299,49 @@ end
             GetAnchor = GetAnchor,
             Place = PlaceBeside(GetAnchor)
         })
+               
+        local Dragging = false
+        local DragStart, StartPosition
+
+        Library:Connect(Items.Window.Instance.InputBegan, function(Input)
+            local IsClick = Input.UserInputType == Enum.UserInputType.MouseButton1
+            local IsTouch = Input.UserInputType == Enum.UserInputType.Touch
+
+            if not IsClick and not IsTouch then return end
+            if Grabbing then return end 
+
+            Dragging = true
+            DragStart = Input.Position
+
+            StartPosition = Vector2.new(
+                Items.Window.Instance.Position.X.Offset,
+                Items.Window.Instance.Position.Y.Offset
+            )
+        end)
+
+        Library:Connect(UserInputService.InputEnded, function(Input)
+            local IsClick = Input.UserInputType == Enum.UserInputType.MouseButton1
+            local IsTouch = Input.UserInputType == Enum.UserInputType.Touch
+
+            if IsClick or IsTouch then
+                Dragging = false
+            end
+        end)
+
+        Library:Connect(UserInputService.InputChanged, function(Input)
+            local IsMove = Input.UserInputType == Enum.UserInputType.MouseMovement
+            local IsTouch = Input.UserInputType == Enum.UserInputType.Touch
+
+            if (IsMove or IsTouch) and Dragging and not Grabbing then
+                local Scale = Library:GetScreenScale()
+                local DragDelta = (Input.Position - DragStart) / Scale
+
+                Items.Window.Instance.Position = UDim2.fromOffset(
+                    StartPosition.X + DragDelta.X,
+                    StartPosition.Y + DragDelta.Y
+                )
+            end
+        end)       
 
         Picker:Set(Default or Library.Theme.Accent, Picker.Transparency, false)
         return Picker
@@ -4386,9 +4434,9 @@ end
             Parent = Row.Instance,
             Anchor = Vector2.new(1, 0.5),
             Pos = UDim2.new(1, -15, 0.5, 0),
-            Size = UDim2.fromOffset(35, 21),
+            Size = UDim2.fromOffset(IsMobile and 42 or 35, IsMobile and 24 or 21), 
             Color = "Element",
-            Round = 10,
+            Round = 12,
             Clip = true,
             Z = 5
         })
@@ -4547,8 +4595,8 @@ end
                 Z = 6
             })
 
-            local HitSize = IsMobile and 34 or 22
-            local HitOffset = IsMobile and (X - 4) or (X + 2)
+            local HitSize = IsMobile and 42 or 22 
+            local HitOffset = IsMobile and (X - 8) or (X + 2)
 
             local Hit = MakeButton({
                 Parent = Row.Instance,
@@ -5121,10 +5169,13 @@ end
             Parent = Items.Fill.Instance
         }).Instance)
 
+        local TouchHitH = IsMobile and 36 or 22
+        local TouchHitY = IsMobile and 14 or 22
+        
         Items.Hit = MakeButton({
             Parent = Row.Instance,
-            Pos = UDim2.fromOffset(9, 22),
-            Size = UDim2.fromOffset(TrackW + 12, 22),
+            Pos = UDim2.fromOffset(IsMobile and 0 or 9, TouchHitY),
+            Size = UDim2.fromOffset(TrackW + (IsMobile and 30 or 12), TouchHitH),
             Z = 8
         })
 
