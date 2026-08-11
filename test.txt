@@ -406,35 +406,35 @@ local IsMobile = UserInputService.TouchEnabled
     end
 
     Library.Connect = function(Self, Signal, Callback)
-    local Connection
+        local Connection
 
-    if typeof(Signal) == "RBXScriptSignal" and type(Callback) == "function" then
-        Connection = Signal:Connect(Callback)
+        if typeof(Signal) == "RBXScriptSignal" and type(Callback) == "function" then
+            Connection = Signal:Connect(Callback)
 
-    elseif typeof(Self) == "RBXScriptSignal" and type(Signal) == "function" then
-        Connection = Self:Connect(Signal)
+        elseif typeof(Self) == "RBXScriptSignal" and type(Signal) == "function" then
+            Connection = Self:Connect(Signal)
 
-    elseif type(Signal) == "string" and type(Self) == "table" and Self.Instance and typeof(Self.Instance) == "Instance" then
-        local IsClick = Signal == "MouseButton1Down" or Signal == "MouseButton1Click" or Signal == "Activated"
+        elseif type(Signal) == "string" and type(Self) == "table" and Self.Instance then
+            local IsClick = Signal == "MouseButton1Down" or Signal == "MouseButton1Click" or Signal == "Activated"
 
-        if IsClick and Self.Instance:IsA("GuiButton") then
-            Connection = Self.Instance.Activated:Connect(function(Input)
-                Callback(Input)
-            end)
-        else
-            local ok, TargetSignal = pcall(function() return Self.Instance[Signal] end)
-            if ok and TargetSignal and typeof(TargetSignal) == "RBXScriptSignal" and type(Callback) == "function" then
-                Connection = TargetSignal:Connect(Callback)
+            if IsClick and Self.Instance:IsA("GuiButton") then
+                Connection = Self.Instance.Activated:Connect(function(Input)
+                    Callback(Input)
+                end)
+            else
+                local TargetSignal = Self.Instance[Signal]
+                if TargetSignal and typeof(TargetSignal) == "RBXScriptSignal" and type(Callback) == "function" then
+                    Connection = TargetSignal:Connect(Callback)
+                end
             end
         end
-    end
 
-    if Connection then
-        table.insert(Library.Connections, Connection)
-    end
+        if Connection then
+            table.insert(Library.Connections, Connection)
+        end
 
-    return Connection
-end
+        return Connection
+    end
 
     Library.Thread = function(Self, Function)
         local NewThread = coroutine.create(Function)
@@ -813,16 +813,14 @@ end
     end
 
     Library.MakeDraggable = function(Self, Handle)
-    local Target = Handle or Self
-    local Gui = (type(Target) == "table" and Target.Instance) or Target
-
-    if not Gui or typeof(Gui) ~= "Instance" then return end
-    Gui.Active = true
+    local Gui = Self.Instance
+    Handle = Handle or Gui
+    Handle.Active = true
 
     local Dragging = false
     local DragStart, StartPosition
 
-    Library:Connect(Gui.InputBegan, function(Input)
+    Library:Connect(Handle.InputBegan, function(Input)
         local IsClick = Input.UserInputType == Enum.UserInputType.MouseButton1
         local IsTouch = Input.UserInputType == Enum.UserInputType.Touch
 
@@ -833,7 +831,7 @@ end
         DragStart = Input.Position
 
         local Scale = Library:GetScreenScale()
-        local ParentSize = Gui.Parent and Gui.Parent.AbsoluteSize / Scale or Vector2.new(1920, 1080)
+        local ParentSize = Gui.Parent.AbsoluteSize / Scale
 
         StartPosition = Vector2.new(
             Gui.Position.X.Scale * ParentSize.X + Gui.Position.X.Offset,
@@ -854,7 +852,7 @@ end
         local IsMove = Input.UserInputType == Enum.UserInputType.MouseMovement
         local IsTouch = Input.UserInputType == Enum.UserInputType.Touch
 
-        if (IsMove or IsTouch) and Dragging and Gui.Parent then
+        if (IsMove or IsTouch) and Dragging then
             local Scale = Library:GetScreenScale()
             local DragDelta = (Input.Position - DragStart) / Scale
             local NewX = StartPosition.X + DragDelta.X
@@ -1174,12 +1172,10 @@ end
     end
 
     Library.CloseAllPopups = function(Self)
-    for _, Value in Library.OpenFrames do
-        if type(Value) == "table" and type(Value.SetOpen) == "function" then
-            Value:SetOpen(false)
+        for _, Value in Library.OpenFrames do
+            if Value.SetOpen then Value:SetOpen(false) end
         end
     end
-end
 
     local function UpdateScale()
         local Scale = Library.UserScale
@@ -1389,10 +1385,10 @@ end
                 Frame:Tween({ Position = Place(To) })
 
                 for _, Value in Library.OpenFrames do
-    if not KeepOpen(Value) and type(Value) == "table" and type(Value.SetOpen) == "function" then
-        Value:SetOpen(false)
-    end
-end
+                    if not KeepOpen(Value) then
+                        Value:SetOpen(false)
+                    end
+                end
 
                 Library.OpenFrames[Popup] = Popup
 
@@ -2929,34 +2925,14 @@ end
             Round = 20,
             Z = 3
         })
-        
-        Items.MinimizeBtn = MakeImage({
-            Parent = Items.TopBar.Instance,
-            Icon = "minus",
-            Anchor = Vector2.new(1, 0.5),
-            Pos = UDim2.new(1, -95, 0.5, 0),
-            Size = UDim2.fromOffset(18, 18),
-            Color = "DimText",
-            Z = 4
-        })
 
-        Items.MinimizeHit = MakeButton({
+        Items.ProfileHit = MakeButton({
             Parent = Items.TopBar.Instance,
-            Anchor = Vector2.new(1, 0.5),
-            Pos = UDim2.new(1, -104, 0.5, 0),
-            Size = UDim2.fromOffset(36, 36), 
+            Anchor = Vector2.new(1, 0),
+            Pos = UDim2.new(1, -4, 0, 8),
+            Size = UDim2.fromOffset(42, 36),
             Z = 5
         })
-
-        Items.MinimizeHit:OnHover(function()
-            Items.MinimizeBtn:Tween({ ImageColor3 = Library.Theme.Text })
-        end, function()
-            Items.MinimizeBtn:Tween({ ImageColor3 = Library.Theme.DimIcon })
-        end)
-
-        Items.MinimizeHit:Connect("MouseButton1Down", function()
-            Window:SetOpen(false)
-        end)
                 
         Items.MinimizeBtn = MakeImage({
             Parent = Items.TopBar.Instance,
@@ -2971,8 +2947,8 @@ end
         Items.MinimizeHit = MakeButton({
             Parent = Items.TopBar.Instance,
             Anchor = Vector2.new(1, 0.5),
-            Pos = UDim2.new(1, -120, 0.5, 0),
-            Size = UDim2.fromOffset(32, 32),
+            Pos = UDim2.new(1, -100, 0.5, 0),
+            Size = UDim2.fromOffset(IsMobile and 46 or 40, IsMobile and 40 or 36),
             Z = 5
         })
 
@@ -2986,7 +2962,7 @@ end
             Parent = Library.Holder.Instance,
             Anchor = Vector2.new(0.5, 0),
             Pos = UDim2.new(0.5, 0, 0, 12),
-            Size = UDim2.fromOffset(210, 36),
+            Size = UDim2.fromOffset(160, 36),
             Color = "Section",
             Round = 18,
             Z = 2500
@@ -3016,24 +2992,12 @@ end
             Bold = true,
             Anchor = Vector2.new(0, 0.5),
             Pos = UDim2.new(0, 28, 0.5, 0),
-            Size = UDim2.fromOffset(90, 20),
+            Size = UDim2.fromOffset(95, 20),
             Color = "Text",
             Truncate = true,
             Z = 2501
         })
 
-        local IslandStatus = MakeText({
-            Parent = DynamicIsland.Instance,
-            Text = "Active",
-            TextSize = 11,
-            Anchor = Vector2.new(0, 0.5),
-            Pos = UDim2.new(0, 115, 0.5, 0),
-            Size = UDim2.fromOffset(50, 20),
-            Color = "DimText",
-            Truncate = true,
-            Z = 2501
-        })
-       
         local ExpandIcon = MakeImage({
             Parent = DynamicIsland.Instance,
             Icon = "maximize-2", 
@@ -3044,15 +3008,14 @@ end
             Z = 2501
         })
 
-        local ExpandHit = MakeButton({
+        local FullIslandHit = MakeButton({
             Parent = DynamicIsland.Instance,
-            Anchor = Vector2.new(1, 0.5),
-            Pos = UDim2.new(1, -6, 0.5, 0),
-            Size = UDim2.fromOffset(30, 30),
+            Pos = UDim2.fromOffset(0, 0),
+            Size = UDim2.new(1, 0, 1, 0),
             Z = 2502
         })
 
-        Library:MakeDraggable(DynamicIsland)
+        Library:MakeDraggable(DynamicIsland, FullIslandHit)
 
         Library:Connect(RunService.Heartbeat, function()
             if DynamicIsland.Instance.Visible and IslandStroke then
@@ -3068,9 +3031,9 @@ end
                 Library:CloseAllPopups()
                 Items.Root.Instance.Visible = false
                               
-                DynamicIsland.Instance.Size = UDim2.fromOffset(100, 36)
+                DynamicIsland.Instance.Size = UDim2.fromOffset(90, 36)
                 DynamicIsland.Instance.Visible = true
-                Library:Tween({ Size = UDim2.fromOffset(210, 36) }, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), DynamicIsland.Instance)
+                Library:Tween({ Size = UDim2.fromOffset(160, 36) }, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), DynamicIsland.Instance)
             else
                 DynamicIsland.Instance.Visible = false
                 Items.Root.Instance.Visible = true
@@ -3078,7 +3041,39 @@ end
         end
 
         Items.MinimizeHit:Connect("MouseButton1Down", ToggleMinimize)
-        ExpandHit:Connect("MouseButton1Down", ToggleMinimize)
+
+        local DragStartPos = nil
+        local WasDragged = false
+
+        FullIslandHit:Connect("InputBegan", function(Input)
+            local IsClick = Input.UserInputType == Enum.UserInputType.MouseButton1
+            local IsTouch = Input.UserInputType == Enum.UserInputType.Touch
+            if IsClick or IsTouch then
+                DragStartPos = Input.Position
+                WasDragged = false
+            end
+        end)
+
+        Library:Connect(UserInputService.InputChanged, function(Input)
+            local IsMove = Input.UserInputType == Enum.UserInputType.MouseMovement
+            local IsTouch = Input.UserInputType == Enum.UserInputType.Touch
+            if (IsMove or IsTouch) and DragStartPos then
+                if (Input.Position - DragStartPos).Magnitude > 6 then
+                    WasDragged = true
+                end
+            end
+        end)
+
+        FullIslandHit:Connect("InputEnded", function(Input)
+            local IsClick = Input.UserInputType == Enum.UserInputType.MouseButton1
+            local IsTouch = Input.UserInputType == Enum.UserInputType.Touch
+            if IsClick or IsTouch then
+                if not WasDragged then
+                    ToggleMinimize()
+                end
+                DragStartPos = nil
+            end
+        end)
 
         local Profile = {
             IsOpen = false,
@@ -3647,72 +3642,6 @@ end
         function Window:LayoutSubBar(Instant)
             Window:FitSubBar(Instant)
         end
-        
-        local IslandFrame = MakeFrame({
-            Parent = Library.Holder.Instance,
-            Anchor = Vector2.new(0.5, 0),
-            Pos = UDim2.new(0.5, 0, 0, 15),
-            Size = UDim2.fromOffset(165, 36),
-            Color = "Section",
-            Round = 18,
-            Z = 100
-        })
-        IslandFrame.Instance.Visible = false
-
-        MakeImage({
-            Parent = IslandFrame.Instance,
-            Icon = Window.Icon or "layers",
-            Anchor = Vector2.new(0, 0.5),
-            Pos = UDim2.new(0, 12, 0.5, 0),
-            Size = UDim2.fromOffset(18, 18),
-            Color = "Accent",
-            Z = 101
-        })
-
-        MakeText({
-            Parent = IslandFrame.Instance,
-            Text = Window.Name, 
-            TextSize = 14,
-            Bold = true,
-            Anchor = Vector2.new(0, 0.5),
-            Pos = UDim2.new(0, 38, 0.5, 0),
-            Size = UDim2.fromOffset(115, 20),
-            Color = "Text",
-            Align = Enum.TextXAlignment.Left,
-            Truncate = true,
-            Z = 101
-        })
-
-        IslandFrame:MakeDraggable()
-
-        local IslandHit = MakeButton({
-            Parent = IslandFrame.Instance,
-            Size = UDim2.new(1, 0, 1, 0),
-            Z = 105
-        })
-
-        local DragDistance = 0
-        local StartPos = Vector2.new(0, 0)
-
-        IslandHit:Connect("InputBegan", function(Input)
-            if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
-                StartPos = Input.Position
-                DragDistance = 0
-            end
-        end)
-
-        IslandHit:Connect("InputChanged", function(Input)
-            if Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch then
-                DragDistance = (Input.Position - StartPos).Magnitude
-            end
-        end)
-
-        IslandHit:Connect("MouseButton1Click", function()
-            
-            if DragDistance < 8 then
-                Window:SetOpen(true)
-            end
-        end)
 
         function Window:SetOpen(Bool)
             Window.IsOpen = Bool
@@ -3726,22 +3655,10 @@ end
                 Sub:SnapVisible()
             end
 
-            if Bool then
-                
-                IslandFrame:FadeDescendants(false, function()
-                    IslandFrame.Instance.Visible = false
-                end)
-                if Window.PlayIntro then
-                    Window:PlayIntro()
-                else
-                    Items.Root:FadeDescendants(true)
-                end
+            if Bool and Window.PlayIntro then
+                Window:PlayIntro()
             else
-                
-                Items.Root:FadeDescendants(false, function()
-                    IslandFrame.Instance.Visible = true
-                    IslandFrame:FadeDescendants(true)
-                end)
+                Items.Root:FadeDescendants(Bool)
             end
         end
 
@@ -5251,12 +5168,10 @@ end
                 end,
                 HoldOpen = HasOpenChild,
                 OnClose = function()
-    for _, Value in Library.OpenFrames do
-        if Value.Host == Extra and type(Value) == "table" and type(Value.SetOpen) == "function" then
-            Value:SetOpen(false)
-        end
-    end
-end
+                    for _, Value in Library.OpenFrames do
+                        if Value.Host == Extra then Value:SetOpen(false) end
+                    end
+                end
             })
 
             ExtraHit:Connect("MouseButton1Down", function()
