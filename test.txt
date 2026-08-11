@@ -406,26 +406,35 @@ local IsMobile = UserInputService.TouchEnabled
     end
 
     Library.Connect = function(Self, Signal, Callback)
-    local Connection
+        local Connection
 
-    if type(Signal) == "string" and Self.Instance then
-        local IsClick = Signal == "MouseButton1Down" or Signal == "MouseButton1Click" or Signal == "Activated"
+        if typeof(Signal) == "RBXScriptSignal" and type(Callback) == "function" then
+            Connection = Signal:Connect(Callback)
 
-        if IsClick and Self.Instance:IsA("GuiButton") then
-            
-            Connection = Self.Instance.Activated:Connect(function(Input)
-                Callback(Input)
-            end)
-        else
-            Connection = Self.Instance[Signal]:Connect(Callback)
+        elseif typeof(Self) == "RBXScriptSignal" and type(Signal) == "function" then
+            Connection = Self:Connect(Signal)
+
+        elseif type(Signal) == "string" and type(Self) == "table" and Self.Instance then
+            local IsClick = Signal == "MouseButton1Down" or Signal == "MouseButton1Click" or Signal == "Activated"
+
+            if IsClick and Self.Instance:IsA("GuiButton") then
+                Connection = Self.Instance.Activated:Connect(function(Input)
+                    Callback(Input)
+                end)
+            else
+                local TargetSignal = Self.Instance[Signal]
+                if TargetSignal and typeof(TargetSignal) == "RBXScriptSignal" and type(Callback) == "function" then
+                    Connection = TargetSignal:Connect(Callback)
+                end
+            end
         end
-    else
-        Connection = Signal:Connect(Callback)
-    end
 
-    table.insert(Library.Connections, Connection)
-    return Connection
-end
+        if Connection then
+            table.insert(Library.Connections, Connection)
+        end
+
+        return Connection
+    end
 
     Library.Thread = function(Self, Function)
         local NewThread = coroutine.create(Function)
