@@ -2808,19 +2808,66 @@ end
             Color = "Element",
             Z = 3
         })
-       
-        Items.Title = MakeText({
+               
+        local FirstNameChar = string.sub(Window.Name, 1, 1)
+        local RestNameChar = string.sub(Window.Name, 2)
+
+        Items.TitleContainer = MakeFrame({
             Parent = Items.TopBar.Instance,
-            Text = Window.Name,
+            Pos = UDim2.fromOffset(12, math.floor((TopH - 26) / 2)),
+            Size = UDim2.fromOffset(140, 26),
+            Z = 3
+        })
+       
+        Items.FirstLetterBadge = MakeFrame({
+            Parent = Items.TitleContainer.Instance,
+            Pos = UDim2.fromOffset(0, 0),
+            Size = UDim2.fromOffset(26, 26),
+            Color = "Element",
+            Round = 6,
+            Z = 4
+        })
+
+        local FirstLetterText = MakeText({
+            Parent = Items.FirstLetterBadge.Instance,
+            Text = FirstNameChar,
+            TextSize = 15,
+            Bold = true,
+            Size = UDim2.new(1, 0, 1, 0),
+            Color = "Accent",
+            Align = Enum.TextXAlignment.Center,
+            Z = 5
+        })
+
+        local FirstLetterStroke = Instance.new("UIStroke")
+        FirstLetterStroke.Color = Library.Theme.Accent
+        FirstLetterStroke.Thickness = 1
+        FirstLetterStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        FirstLetterStroke.Parent = Items.FirstLetterBadge.Instance
+
+        Items.FirstLetterHit = MakeButton({
+            Parent = Items.FirstLetterBadge.Instance,
+            Z = 6
+        })
+
+        Items.TitleRest = MakeText({
+            Parent = Items.TitleContainer.Instance,
+            Text = RestNameChar,
             TextSize = 16,
             Bold = true,
-            Pos = UDim2.fromOffset(15, 0),
-            Size = UDim2.fromOffset(110, TopH),
+            Pos = UDim2.fromOffset(32, 0),
+            Size = UDim2.fromOffset(100, 26),
             Color = "Text",
             Align = Enum.TextXAlignment.Left,
             Truncate = true,
-            Z = 3
+            Z = 4
         })
+
+        Items.FirstLetterHit:OnHover(function()
+            Library:Tween({ BackgroundColor3 = Library.Theme.Hover }, nil, Items.FirstLetterBadge.Instance)
+        end, function()
+            Library:Tween({ BackgroundColor3 = Library.Theme.Element }, nil, Items.FirstLetterBadge.Instance)
+        end)
         
         Items.Search = MakeFrame({
             Parent = Items.TopBar.Instance,
@@ -3440,6 +3487,117 @@ end
 
         Items.Root:MakeDraggable(Items.Main.Instance)
         Items.Root:MakeDraggable(Items.Rail.Instance)
+        
+        Window.IsIsland = false
+
+        Items.Island = MakeFrame({
+            Parent = Library.Holder.Instance,
+            Anchor = Vector2.new(0.5, 0),
+            Pos = UDim2.new(0.5, 0, 0, -60), 
+            Size = UDim2.fromOffset(200, 38),
+            Color = "Section",
+            Round = 19,
+            Clip = true,
+            Z = 100
+        })
+        Items.Island.Instance.Visible = false
+
+        local IslandStroke = Instance.new("UIStroke")
+        IslandStroke.Color = Library.Theme.Accent
+        IslandStroke.Thickness = 1.5
+        IslandStroke.Transparency = 0.3
+        IslandStroke.Parent = Items.Island.Instance
+
+        MakeImage({
+            Parent = Items.Island.Instance,
+            Icon = Window.Icon or "layers",
+            Anchor = Vector2.new(0, 0.5),
+            Pos = UDim2.new(0, 12, 0.5, 0),
+            Size = UDim2.fromOffset(18, 18),
+            Color = "Accent",
+            Z = 101
+        })
+
+        MakeText({
+            Parent = Items.Island.Instance,
+            Text = Window.Name,
+            TextSize = 14,
+            Bold = true,
+            Anchor = Vector2.new(0, 0.5),
+            Pos = UDim2.new(0, 38, 0.5, 0),
+            Size = UDim2.fromOffset(100, 20),
+            Color = "Text",
+            Align = Enum.TextXAlignment.Left,
+            Truncate = true,
+            Z = 101
+        })
+
+        local StatusDot = MakeFrame({
+            Parent = Items.Island.Instance,
+            Anchor = Vector2.new(1, 0.5),
+            Pos = UDim2.new(1, -32, 0.5, 0),
+            Size = UDim2.fromOffset(8, 8),
+            Raw = Color3.fromRGB(72, 214, 168), 
+            Round = 10,
+            Z = 101
+        })
+
+        MakeImage({
+            Parent = Items.Island.Instance,
+            Icon = "maximize-2",
+            Anchor = Vector2.new(1, 0.5),
+            Pos = UDim2.new(1, -10, 0.5, 0),
+            Size = UDim2.fromOffset(14, 14),
+            Color = "DimText",
+            Z = 101
+        })
+
+        Items.IslandHit = MakeButton({
+            Parent = Items.Island.Instance,
+            Size = UDim2.new(1, 0, 1, 0),
+            Z = 102
+        })
+
+        Items.Island:MakeDraggable()
+        
+        function Window:SetIsland(Enable)
+            if Window.IsIsland == Enable then return end
+            Window.IsIsland = Enable
+
+            local FastAnim = TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+            local ElasticAnim = TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+
+            if Enable then
+                
+                Library:CloseAllPopups()
+                Items.Root:FadeDescendants(false)
+
+                Library:Tween({ Position = UDim2.new(0.5, -RootW/2, 0, -100) }, FastAnim, Items.Root.Instance)
+               
+                Items.Island.Instance.Visible = true
+                Items.Island.Instance.Position = UDim2.new(0.5, 0, 0, -50)
+                Items.Island:FadeDescendants(true)
+                Library:Tween({ Position = UDim2.new(0.5, 0, 0, 15) }, ElasticAnim, Items.Island.Instance)
+            else
+                
+                Library:Tween({ Position = UDim2.new(0.5, 0, 0, -60) }, FastAnim, Items.Island.Instance)
+                Items.Island:FadeDescendants(false, function()
+                    Items.Island.Instance.Visible = false
+                end)
+
+                Items.Root.Instance.Visible = true
+                Window:Center()
+                Items.Root:FadeDescendants(true)
+            end
+        end
+        
+        Items.FirstLetterHit:Connect("MouseButton1Down", function()
+            Window:SetIsland(true)
+        end)
+
+        Items.IslandHit:Connect("MouseButton1Down", function()
+            Window:SetIsland(false)
+        end)        
 
         table.insert(Library.Windows, Window)
 
@@ -3498,17 +3656,26 @@ end
 
             if not Bool then
                 Library:CloseAllPopups()
-            end
-
-            local Sub = Window.Current and Window.Current.Current
-            if Sub and Sub.SnapVisible then
-                Sub:SnapVisible()
-            end
-
-            if Bool and Window.PlayIntro then
-                Window:PlayIntro()
+                if Window.IsIsland then
+                    Items.Island:FadeDescendants(false)
+                    Items.Island.Instance.Visible = false
+                end
+                Items.Root:FadeDescendants(false)
             else
-                Items.Root:FadeDescendants(Bool)
+                if Window.IsIsland then
+                    Window:SetIsland(false)
+                else
+                    local Sub = Window.Current and Window.Current.Current
+                    if Sub and Sub.SnapVisible then
+                        Sub:SnapVisible()
+                    end
+
+                    if Window.PlayIntro then
+                        Window:PlayIntro()
+                    else
+                        Items.Root:FadeDescendants(true)
+                    end
+                end
             end
         end
 
