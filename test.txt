@@ -406,35 +406,35 @@ local IsMobile = UserInputService.TouchEnabled
     end
 
     Library.Connect = function(Self, Signal, Callback)
-        local Connection
+    local Connection
 
-        if typeof(Signal) == "RBXScriptSignal" and type(Callback) == "function" then
-            Connection = Signal:Connect(Callback)
+    if typeof(Signal) == "RBXScriptSignal" and type(Callback) == "function" then
+        Connection = Signal:Connect(Callback)
 
-        elseif typeof(Self) == "RBXScriptSignal" and type(Signal) == "function" then
-            Connection = Self:Connect(Signal)
+    elseif typeof(Self) == "RBXScriptSignal" and type(Signal) == "function" then
+        Connection = Self:Connect(Signal)
 
-        elseif type(Signal) == "string" and type(Self) == "table" and Self.Instance then
-            local IsClick = Signal == "MouseButton1Down" or Signal == "MouseButton1Click" or Signal == "Activated"
+    elseif type(Signal) == "string" and type(Self) == "table" and Self.Instance and typeof(Self.Instance) == "Instance" then
+        local IsClick = Signal == "MouseButton1Down" or Signal == "MouseButton1Click" or Signal == "Activated"
 
-            if IsClick and Self.Instance:IsA("GuiButton") then
-                Connection = Self.Instance.Activated:Connect(function(Input)
-                    Callback(Input)
-                end)
-            else
-                local TargetSignal = Self.Instance[Signal]
-                if TargetSignal and typeof(TargetSignal) == "RBXScriptSignal" and type(Callback) == "function" then
-                    Connection = TargetSignal:Connect(Callback)
-                end
+        if IsClick and Self.Instance:IsA("GuiButton") then
+            Connection = Self.Instance.Activated:Connect(function(Input)
+                Callback(Input)
+            end)
+        else
+            local ok, TargetSignal = pcall(function() return Self.Instance[Signal] end)
+            if ok and TargetSignal and typeof(TargetSignal) == "RBXScriptSignal" and type(Callback) == "function" then
+                Connection = TargetSignal:Connect(Callback)
             end
         end
-
-        if Connection then
-            table.insert(Library.Connections, Connection)
-        end
-
-        return Connection
     end
+
+    if Connection then
+        table.insert(Library.Connections, Connection)
+    end
+
+    return Connection
+end
 
     Library.Thread = function(Self, Function)
         local NewThread = coroutine.create(Function)
@@ -813,14 +813,16 @@ local IsMobile = UserInputService.TouchEnabled
     end
 
     Library.MakeDraggable = function(Self, Handle)
-    local Gui = Self.Instance
-    Handle = Handle or Gui
-    Handle.Active = true
+    local Target = Handle or Self
+    local Gui = (type(Target) == "table" and Target.Instance) or Target
+
+    if not Gui or typeof(Gui) ~= "Instance" then return end
+    Gui.Active = true
 
     local Dragging = false
     local DragStart, StartPosition
 
-    Library:Connect(Handle.InputBegan, function(Input)
+    Library:Connect(Gui.InputBegan, function(Input)
         local IsClick = Input.UserInputType == Enum.UserInputType.MouseButton1
         local IsTouch = Input.UserInputType == Enum.UserInputType.Touch
 
@@ -831,7 +833,7 @@ local IsMobile = UserInputService.TouchEnabled
         DragStart = Input.Position
 
         local Scale = Library:GetScreenScale()
-        local ParentSize = Gui.Parent.AbsoluteSize / Scale
+        local ParentSize = Gui.Parent and Gui.Parent.AbsoluteSize / Scale or Vector2.new(1920, 1080)
 
         StartPosition = Vector2.new(
             Gui.Position.X.Scale * ParentSize.X + Gui.Position.X.Offset,
@@ -852,7 +854,7 @@ local IsMobile = UserInputService.TouchEnabled
         local IsMove = Input.UserInputType == Enum.UserInputType.MouseMovement
         local IsTouch = Input.UserInputType == Enum.UserInputType.Touch
 
-        if (IsMove or IsTouch) and Dragging then
+        if (IsMove or IsTouch) and Dragging and Gui.Parent then
             local Scale = Library:GetScreenScale()
             local DragDelta = (Input.Position - DragStart) / Scale
             local NewX = StartPosition.X + DragDelta.X
@@ -1172,10 +1174,12 @@ end
     end
 
     Library.CloseAllPopups = function(Self)
-        for _, Value in Library.OpenFrames do
-            if Value.SetOpen then Value:SetOpen(false) end
+    for _, Value in Library.OpenFrames do
+        if type(Value) == "table" and type(Value.SetOpen) == "function" then
+            Value:SetOpen(false)
         end
     end
+end
 
     local function UpdateScale()
         local Scale = Library.UserScale
@@ -1385,10 +1389,10 @@ end
                 Frame:Tween({ Position = Place(To) })
 
                 for _, Value in Library.OpenFrames do
-                    if not KeepOpen(Value) then
-                        Value:SetOpen(false)
-                    end
-                end
+    if not KeepOpen(Value) and type(Value) == "table" and type(Value.SetOpen) == "function" then
+        Value:SetOpen(false)
+    end
+end
 
                 Library.OpenFrames[Popup] = Popup
 
@@ -5247,10 +5251,12 @@ end
                 end,
                 HoldOpen = HasOpenChild,
                 OnClose = function()
-                    for _, Value in Library.OpenFrames do
-                        if Value.Host == Extra then Value:SetOpen(false) end
-                    end
-                end
+    for _, Value in Library.OpenFrames do
+        if Value.Host == Extra and type(Value) == "table" and type(Value.SetOpen) == "function" then
+            Value:SetOpen(false)
+        end
+    end
+end
             })
 
             ExtraHit:Connect("MouseButton1Down", function()
