@@ -2,7 +2,7 @@
 
 ##  Library
 ```lua
-local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/YourRepo/Zolar/main/source.lua"))()
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/0ko0/Gui2/refs/heads/main/test.txt"))()
 ```
 
 
