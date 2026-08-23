@@ -1530,128 +1530,144 @@ end
         }
 
         local Items = { }
-        local RowHeight = IsMobile and 38 or 32 
+        local RowHeight = IsMobile and 36 or 30
         local SearchHeight = IsMobile and 38 or 32
-        local ActionHeaderHeight = IsMobile and 34 or 28
+        local HeaderHeight = IsMobile and 32 or 28
 
+        -- Outer Modern Glass Panel
         Items.Frame = MakeFrame({
             Parent = Library.UnusedHolder.Instance,
-            Size = UDim2.fromOffset(150, 0),
+            Size = UDim2.fromOffset(180, 0),
             Color = "Section",
             Round = 8,
             Clip = true,
             Z = Level
         })
-
         Items.Frame.Instance.Visible = false
-        
+
         local PopupStroke = Instance.new("UIStroke")
-        PopupStroke.Thickness = 1
-        PopupStroke.Transparency = 0.6
+        PopupStroke.Thickness = 1.2
+        PopupStroke.Transparency = 0.5
         PopupStroke.Color = Library.Theme.Accent
         PopupStroke.Parent = Items.Frame.Instance
 
-        MakeShadow(Items.Frame.Instance, Color3.new(0,0,0), UDim2.fromOffset(0, 4), UDim.new(0, 12), 0.45)
+        MakeShadow(Items.Frame.Instance, Color3.fromRGB(0, 0, 0), UDim2.fromOffset(0, 8), UDim.new(0, 16), 0.35)
 
-        Items.SearchHolder = MakeFrame({
+        -- Modern Header Holder (Search + Action Chips)
+        Items.HeaderHolder = MakeFrame({
             Parent = Items.Frame.Instance,
-            Size = UDim2.new(1, 0, 0, SearchHeight),
+            Size = UDim2.new(1, 0, 0, 0),
             Color = "Section",
             Z = Level + 5
         })
-        Items.SearchHolder.Instance.Visible = false
 
-        local SearchBg = MakeFrame({
-            Parent = Items.SearchHolder.Instance,
-            Pos = UDim2.fromOffset(6, 4),
-            Size = UDim2.new(1, -12, 1, -8),
+        -- Compact Modern Search Bar
+        Items.SearchHolder = MakeFrame({
+            Parent = Items.HeaderHolder.Instance,
+            Pos = UDim2.fromOffset(6, 6),
+            Size = UDim2.new(1, -12, 0, SearchHeight - 4),
             Color = "Element",
             Round = 6,
+            Clip = true,
             Z = Level + 6
         })
+        Items.SearchHolder.Instance.Visible = false
+
+        local SearchStroke = Instance.new("UIStroke")
+        SearchStroke.Thickness = 1
+        SearchStroke.Transparency = 0.8
+        SearchStroke.Color = Library.Theme.Line
+        SearchStroke.Parent = Items.SearchHolder.Instance
 
         MakeImage({
-            Parent = SearchBg.Instance,
+            Parent = Items.SearchHolder.Instance,
             Icon = "search",
-            Pos = UDim2.fromOffset(8, (SearchHeight - 8 - 14) / 2),
-            Size = UDim2.fromOffset(14, 14),
+            Anchor = Vector2.new(0, 0.5),
+            Pos = UDim2.new(0, 8, 0.5, 0),
+            Size = UDim2.fromOffset(13, 13),
             Color = "DimText",
             Z = Level + 7
         })
 
         Items.Search = MakeInput({
-            Parent = SearchBg.Instance,
-            Placeholder = "Type to search...",
-            Pos = UDim2.fromOffset(28, 0),
-            Size = UDim2.new(1, -34, 1, 0),
-            TextSize = 13,
+            Parent = Items.SearchHolder.Instance,
+            Placeholder = "Search options...",
+            Pos = UDim2.fromOffset(26, 0),
+            Size = UDim2.new(1, -30, 1, 0),
+            TextSize = 12,
             Z = Level + 7
         })
 
+        -- Multi-Select Pill Actions (All / Reset)
         Items.ActionHolder = MakeFrame({
-            Parent = Items.Frame.Instance,
-            Size = UDim2.new(1, 0, 0, ActionHeaderHeight),
-            Color = "Section",
-            Z = Level + 5
+            Parent = Items.HeaderHolder.Instance,
+            Size = UDim2.new(1, -12, 0, HeaderHeight),
+            Pos = UDim2.fromOffset(6, 0),
+            Z = Level + 6
         })
         Items.ActionHolder.Instance.Visible = false
 
-        local SelectAllChip = MakeFrame({
-            Parent = Items.ActionHolder.Instance,
-            Pos = UDim2.fromOffset(6, 2),
-            Size = UDim2.new(0.5, -9, 1, -4),
-            Color = "Element",
-            Round = 5,
-            Z = Level + 6
-        })
+        local function MakeMiniChip(Text, IconName, PosX, AnchorX)
+            local Chip = MakeFrame({
+                Parent = Items.ActionHolder.Instance,
+                Anchor = Vector2.new(AnchorX, 0.5),
+                Pos = UDim2.new(PosX, 0, 0.5, 0),
+                Size = UDim2.new(0.5, -4, 0, 22),
+                Color = "Element",
+                Round = 4,
+                Z = Level + 7
+            })
 
-        local SelectAllBtn = MakeText({
-            Parent = SelectAllChip.Instance,
-            Text = "Select All",
-            TextSize = 11,
-            Bold = true,
-            Size = UDim2.new(1, 0, 1, 0),
-            Color = "DimText",
-            Align = Enum.TextXAlignment.Center,
-            Z = Level + 7
-        })
-        local SelectAllHit = MakeButton({ Parent = SelectAllChip.Instance, Z = Level + 8 })
+            local ChipStroke = Instance.new("UIStroke")
+            ChipStroke.Thickness = 1
+            ChipStroke.Transparency = 0.85
+            ChipStroke.Color = Library.Theme.Text
+            ChipStroke.Parent = Chip.Instance
 
-        local ClearChip = MakeFrame({
-            Parent = Items.ActionHolder.Instance,
-            Anchor = Vector2.new(1, 0),
-            Pos = UDim2.new(1, -6, 0, 2),
-            Size = UDim2.new(0.5, -9, 1, -4),
-            Color = "Element",
-            Round = 5,
-            Z = Level + 6
-        })
+            local Icon = MakeImage({
+                Parent = Chip.Instance,
+                Icon = IconName,
+                Anchor = Vector2.new(0, 0.5),
+                Pos = UDim2.new(0, 6, 0.5, 0),
+                Size = UDim2.fromOffset(11, 11),
+                Color = "DimText",
+                Z = Level + 8
+            })
 
-        local ClearBtn = MakeText({
-            Parent = ClearChip.Instance,
-            Text = "Clear All",
-            TextSize = 11,
-            Bold = true,
-            Size = UDim2.new(1, 0, 1, 0),
-            Color = "DimText",
-            Align = Enum.TextXAlignment.Center,
-            Z = Level + 7
-        })
-        local ClearHit = MakeButton({ Parent = ClearChip.Instance, Z = Level + 8 })
+            local Lbl = MakeText({
+                Parent = Chip.Instance,
+                Text = Text,
+                TextSize = 11,
+                Bold = true,
+                Pos = UDim2.new(0, 20, 0, 0),
+                Size = UDim2.new(1, -22, 1, 0),
+                Color = "DimText",
+                Align = Enum.TextXAlignment.Center,
+                Z = Level + 8
+            })
 
-        SelectAllHit:OnHover(
-            function() Library:Tween({ BackgroundColor3 = Library.Theme.Hover }, nil, SelectAllChip.Instance); SelectAllBtn:ChangeItemTheme({ TextColor3 = "Text" }) end,
-            function() Library:Tween({ BackgroundColor3 = Library.Theme.Element }, nil, SelectAllChip.Instance); SelectAllBtn:ChangeItemTheme({ TextColor3 = "DimText" }) end
-        )
+            local Hit = MakeButton({ Parent = Chip.Instance, Z = Level + 9 })
 
-        ClearHit:OnHover(
-            function() Library:Tween({ BackgroundColor3 = Library.Theme.Hover }, nil, ClearChip.Instance); ClearBtn:ChangeItemTheme({ TextColor3 = "Text" }) end,
-            function() Library:Tween({ BackgroundColor3 = Library.Theme.Element }, nil, ClearChip.Instance); ClearBtn:ChangeItemTheme({ TextColor3 = "DimText" }) end
-        )
+            Hit:OnHover(function()
+                Library:Tween({ BackgroundColor3 = Library.Theme.Hover }, nil, Chip.Instance)
+                Lbl:ChangeItemTheme({ TextColor3 = "Text" })
+                Icon:ChangeItemTheme({ ImageColor3 = "Text" })
+            end, function()
+                Library:Tween({ BackgroundColor3 = Library.Theme.Element }, nil, Chip.Instance)
+                Lbl:ChangeItemTheme({ TextColor3 = "DimText" })
+                Icon:ChangeItemTheme({ ImageColor3 = "DimText" })
+            end)
 
-        SelectAllHit:Connect("MouseButton1Down", function() if Popup.OnSelectAll then Popup.OnSelectAll() end end)
-        ClearHit:Connect("MouseButton1Down", function() if Popup.OnClear then Popup.OnClear() end end)
+            return Hit
+        end
 
+        local SelectAllHit = MakeMiniChip("Select All", "check-check", 0, 0)
+        local ClearHit = MakeMiniChip("Reset", "rotate-ccw", 1, 1)
+
+        SelectAllHit:Connect(function() if Popup.OnSelectAll then Popup.OnSelectAll() end end)
+        ClearHit:Connect(function() if Popup.OnClear then Popup.OnClear() end end)
+
+        -- Options Scroll Container
         Items.Scroll = Library:Create("ScrollingFrame", {
             Parent = Items.Frame.Instance,
             Name = "\0",
@@ -1670,15 +1686,15 @@ end
         Library:Create("UIListLayout", {
             Parent = Items.Scroll.Instance,
             SortOrder = Enum.SortOrder.LayoutOrder,
-            Padding = UDim.new(0, 3)
+            Padding = UDim.new(0, 2)
         })
 
         Library:Create("UIPadding", {
             Parent = Items.Scroll.Instance,
             PaddingTop = UDim.new(0, 4),
             PaddingBottom = UDim.new(0, 4),
-            PaddingLeft = UDim.new(0, 5),
-            PaddingRight = UDim.new(0, 5)
+            PaddingLeft = UDim.new(0, 4),
+            PaddingRight = UDim.new(0, 4)
         })
 
         Popup.Items = Items
@@ -1705,16 +1721,28 @@ end
             local Desc = type(OptionData) == "table" and OptionData.Desc or nil
 
             local HasIcon = Icon ~= nil and Icon ~= ""
-            local LeftPad = HasIcon and 28 or 10
+            local LeftPad = HasIcon and 26 or 10
 
+            -- Row Item Box
             local RowContainer = MakeFrame({
                 Parent = Items.Scroll.Instance,
                 Size = UDim2.new(1, 0, 0, RowHeight),
                 Color = "Element",
-                Round = 6,
+                Round = 5,
                 Z = Level + 2
             })
             SetRest(RowContainer.Instance, "BackgroundTransparency", 1)
+
+            -- Modern Left Accent Line Indicator (Discord / Linear Style)
+            local ActivePill = MakeFrame({
+                Parent = RowContainer.Instance,
+                Anchor = Vector2.new(0, 0.5),
+                Pos = UDim2.new(0, 2, 0.5, 0),
+                Size = UDim2.fromOffset(3, 0),
+                Color = "Accent",
+                Round = 2,
+                Z = Level + 4
+            })
 
             local OptionIcon
             if HasIcon then
@@ -1723,7 +1751,7 @@ end
                     Icon = Icon,
                     Anchor = Vector2.new(0, 0.5),
                     Pos = UDim2.new(0, 8, 0.5, 0),
-                    Size = UDim2.fromOffset(14, 14),
+                    Size = UDim2.fromOffset(13, 13),
                     Color = "DimIcon",
                     Z = Level + 3
                 })
@@ -1735,22 +1763,23 @@ end
                 TextSize = 13,
                 Anchor = Vector2.new(0, 0.5),
                 Pos = UDim2.new(0, LeftPad, 0.5, 0),
-                Size = UDim2.new(1, -(LeftPad + 28), 1, 0),
+                Size = UDim2.new(1, -(LeftPad + 26), 1, 0),
                 Color = "DimText",
                 Truncate = true,
                 Z = Level + 3
             })
 
-            local CheckIcon = MakeImage({
+            -- Modern Status Dot / Checkmark
+            local CheckDot = MakeFrame({
                 Parent = RowContainer.Instance,
-                Icon = "check",
                 Anchor = Vector2.new(1, 0.5),
                 Pos = UDim2.new(1, -8, 0.5, 0),
-                Size = UDim2.fromOffset(14, 14),
-                Raw = Library.Theme.Accent,
+                Size = UDim2.fromOffset(6, 6),
+                Color = "Accent",
+                Round = 6,
                 Z = Level + 3
             })
-            CheckIcon.Instance.ImageTransparency = 1
+            CheckDot.Instance.BackgroundTransparency = 1
 
             local Hit = MakeButton({
                 Parent = RowContainer.Instance,
@@ -1768,18 +1797,24 @@ end
 
             function Data:Set(Active, Instant)
                 Data.Selected = Active
-                local TargetBgAlpha = Active and 0.15 or 1
+                local TargetBgAlpha = Active and 0.2 or 1
                 local TargetTextColor = Active and "Text" or "DimText"
-                local TargetCheckAlpha = Active and 0 or 1
+                local TargetPillH = Active and (RowHeight - 12) or 0
+                local TargetDotAlpha = Active and 0 or 1
 
                 Library:StampResting(RowContainer.Instance, "BackgroundTransparency", TargetBgAlpha)
                 OptionLabel:ChangeItemTheme({ TextColor3 = TargetTextColor })
 
                 local Info = Instant and TweenInfo.new(0) or TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
-                Library:Tween({ BackgroundColor3 = Active and Library.Theme.Accent or Library.Theme.Element, BackgroundTransparency = TargetBgAlpha }, Info, RowContainer.Instance)
+                Library:Tween({ 
+                    BackgroundColor3 = Active and Library.Theme.Accent or Library.Theme.Element, 
+                    BackgroundTransparency = TargetBgAlpha 
+                }, Info, RowContainer.Instance)
+
                 Library:Tween({ TextColor3 = Active and Library.Theme.Text or Library.Theme.DimText }, Info, OptionLabel.Instance)
-                Library:Tween({ ImageTransparency = TargetCheckAlpha }, Info, CheckIcon.Instance)
+                Library:Tween({ Size = UDim2.fromOffset(3, TargetPillH) }, Info, ActivePill.Instance)
+                Library:Tween({ BackgroundTransparency = TargetDotAlpha }, Info, CheckDot.Instance)
 
                 if OptionIcon then
                     OptionIcon:ChangeItemTheme({ ImageColor3 = Active and "Accent" or "DimIcon" })
@@ -1789,7 +1824,7 @@ end
 
             RowContainer:OnHover(function()
                 if Data.Selected then return end
-                Library:Tween({ BackgroundTransparency = 0.5 }, nil, RowContainer.Instance)
+                Library:Tween({ BackgroundTransparency = 0.55 }, nil, RowContainer.Instance)
                 OptionLabel:ChangeItemTheme({ TextColor3 = "Text" })
             end, function()
                 if Data.Selected then return end
@@ -1821,28 +1856,29 @@ end
             OnOpen = function()
                 local Anchor = GetAnchor()
                 local Scale = Library:GetScreenScale()
-                local ShowSearch = Popup.ForceSearch == true or (Popup.ForceSearch == nil and #Popup.Order > 8)
+                local ShowSearch = Popup.ForceSearch == true or (Popup.ForceSearch == nil and #Popup.Order > 7)
                 local ShowActions = Popup.ShowActions == true
 
                 local Width = WidthOverride or (Anchor.AbsoluteSize.X / Scale)
-                local ListHeight = math.min(#Popup.Order * (RowHeight + 3) + 8, 180)
-                local TopOffsetY = 0
+                local ListHeight = math.min(#Popup.Order * (RowHeight + 2) + 8, 175)
+                local TopOffsetY = 4
 
                 Items.Search.Instance.Text = ""
                 ApplySearch("")
 
                 Items.SearchHolder.Instance.Visible = ShowSearch
                 if ShowSearch then
-                    Items.SearchHolder.Instance.Position = UDim2.fromOffset(0, TopOffsetY)
-                    TopOffsetY += SearchHeight
+                    Items.SearchHolder.Instance.Position = UDim2.fromOffset(6, TopOffsetY)
+                    TopOffsetY += SearchHeight + 2
                 end
 
                 Items.ActionHolder.Instance.Visible = ShowActions
                 if ShowActions then
-                    Items.ActionHolder.Instance.Position = UDim2.fromOffset(0, TopOffsetY)
-                    TopOffsetY += ActionHeaderHeight
+                    Items.ActionHolder.Instance.Position = UDim2.fromOffset(6, TopOffsetY)
+                    TopOffsetY += HeaderHeight + 2
                 end
 
+                Items.HeaderHolder.Instance.Size = UDim2.new(1, 0, 0, TopOffsetY)
                 Items.Scroll.Instance.Position = UDim2.fromOffset(0, TopOffsetY)
                 Items.Scroll.Instance.Size = UDim2.new(1, 0, 1, -TopOffsetY)
                 Items.Frame.Instance.Size = UDim2.fromOffset(Width, ListHeight + TopOffsetY)
@@ -5987,17 +6023,18 @@ end
         end
 
         local HasDesc = Dropdown.Description ~= ""
-        local RowHeight = HasDesc and 62 or 54
+        local RowHeight = HasDesc and 60 or 52
 
         local Row = Section:AddRow(RowHeight, Dropdown.Name)
         local Items = { Row = Row }
 
+        -- Title Label
         Items.Label = MakeText({
             Parent = Row.Instance,
             Text = Dropdown.Name,
             TextSize = 14,
             Bold = true,
-            Pos = UDim2.fromOffset(15, 4),
+            Pos = UDim2.fromOffset(15, 3),
             Size = UDim2.fromOffset(Section.Width - 30, 18),
             Color = "Text",
             Truncate = true,
@@ -6009,7 +6046,7 @@ end
                 Parent = Row.Instance,
                 Text = Dropdown.Description,
                 TextSize = 12,
-                Pos = UDim2.fromOffset(15, 22),
+                Pos = UDim2.fromOffset(15, 20),
                 Size = UDim2.fromOffset(Section.Width - 30, 14),
                 Color = "DimText",
                 Truncate = true,
@@ -6018,24 +6055,37 @@ end
             Items.DescLabel.Instance.TextTransparency = 0.4
         end
 
-        local BoxY = HasDesc and 38 or 24
+        local BoxY = HasDesc and 36 or 22
 
+        -- Modern Rounded Input Box
         Items.Box = MakeFrame({
             Parent = Row.Instance,
-            Pos = UDim2.fromOffset(15, BoxY),
-            Size = UDim2.fromOffset(Section.Width - 30, 30),
+            Pos = UDim2.fromOffset(14, BoxY),
+            Size = UDim2.fromOffset(Section.Width - 28, 28),
             Color = "Element",
             Round = 6,
             Clip = true,
             Z = 5
         })
 
+        -- Responsive Dynamic Glow UIStroke
         local BoxStroke = Instance.new("UIStroke")
         BoxStroke.Thickness = 1
         BoxStroke.Transparency = 0.8
         BoxStroke.Color = Library.Theme.Accent
         BoxStroke.Parent = Items.Box.Instance
 
+        -- Left Accent Micro-Glow Line
+        local BoxActiveIndicator = MakeFrame({
+            Parent = Items.Box.Instance,
+            Pos = UDim2.fromOffset(0, 0),
+            Size = UDim2.fromOffset(2, 28),
+            Color = "Accent",
+            Z = 6
+        })
+        BoxActiveIndicator.Instance.BackgroundTransparency = 1
+
+        -- Selection text display
         Items.Selected = MakeText({
             Parent = Items.Box.Instance,
             Text = Dropdown.Placeholder,
@@ -6047,34 +6097,42 @@ end
             Z = 6
         })
 
+        -- Modern Pill Tag for Multi-select Counter
         Items.Badge = MakeFrame({
             Parent = Items.Box.Instance,
             Anchor = Vector2.new(1, 0.5),
-            Pos = UDim2.new(1, -28, 0.5, 0),
-            Size = UDim2.fromOffset(24, 16),
-            Color = "Accent",
-            Round = 10,
+            Pos = UDim2.new(1, -26, 0.5, 0),
+            Size = UDim2.fromOffset(22, 16),
+            Color = "Light",
+            Round = 4,
             Z = 6
         })
         Items.Badge.Instance.Visible = false
 
+        local BadgeStroke = Instance.new("UIStroke")
+        BadgeStroke.Thickness = 1
+        BadgeStroke.Transparency = 0.7
+        BadgeStroke.Color = Library.Theme.Accent
+        BadgeStroke.Parent = Items.Badge.Instance
+
         Items.BadgeText = MakeText({
             Parent = Items.Badge.Instance,
             Text = "0",
-            TextSize = 10,
+            TextSize = 11,
             Bold = true,
             Size = UDim2.new(1, 0, 1, 0),
-            Color = "Background",
+            Color = "Accent",
             Align = Enum.TextXAlignment.Center,
             Z = 7
         })
 
+        -- Smooth rotating chevron icon
         Items.Arrow = MakeImage({
             Parent = Items.Box.Instance,
             Icon = "chevron-down",
             Anchor = Vector2.new(1, 0.5),
-            Pos = UDim2.new(1, -8, 0.5, 0),
-            Size = UDim2.fromOffset(14, 14),
+            Pos = UDim2.new(1, -7, 0.5, 0),
+            Size = UDim2.fromOffset(13, 13),
             Color = "DimText",
             Z = 6
         })
@@ -6094,8 +6152,11 @@ end
         Popup.ShowActions = Dropdown.Multi
 
         Popup.OnState = function(Open)
-            Library:Tween({ Rotation = Open and 180 or 0 }, nil, Items.Arrow.Instance)
-            Library:Tween({ Transparency = Open and 0.2 or 0.8 }, nil, BoxStroke)
+            local AnimInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
+            Library:Tween({ Rotation = Open and 180 or 0 }, AnimInfo, Items.Arrow.Instance)
+            Library:Tween({ Transparency = Open and 0.2 or 0.8 }, AnimInfo, BoxStroke)
+            Library:Tween({ BackgroundTransparency = Open and 0 or 1 }, AnimInfo, BoxActiveIndicator.Instance)
+            
             Items.Arrow:ChangeItemTheme({ ImageColor3 = Open and "Accent" or "DimText" })
         end
 
