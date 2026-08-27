@@ -3811,11 +3811,12 @@ end
             Library:Tween({ Position = Base }, Rise, Items.Root.Instance)
         end
 
-        task.defer(function()
-            Window:PlayIntro()
-        end)
+    task.defer(function()
+        task.wait(0.2)
+        Library:CheckAutoload()
+    end)
 
-        return setmetatable(Window, Library)
+    return setmetatable(Window, Library)
     end
 
     Library.Tab = function(Self, Params)
@@ -8207,25 +8208,45 @@ end
                 Hit:Connect("MouseButton1Down", Callback)
             end
 
-            IconButton(-92, "zap", function()
-                local CurrentAuto = Library:GetAutoload()
-                if CurrentAuto == Name then
-                    Library:SetAutoload("")
-                    Library:Notification({
-                        Name = "Autoload Disabled",
-                        Description = "\"" .. Name .. "\" is no longer set to autoload.",
-                        Icon = "zap-off"
-                    })
-                else
-                    Library:SetAutoload(Name)
-                    Library:Notification({
-                        Name = "Autoload Enabled",
-                        Description = "\"" .. Name .. "\" will now load on script startup.",
-                        Icon = "zap"
-                    })
-                end
-                RefreshList()
-            end)
+            local IsAuto = (Library:GetAutoload() == Name)
+
+local ZapImage = MakeImage({
+    Parent = Row.Instance,
+    Icon = "zap",
+    Anchor = Vector2.new(1, 0.5),
+    Pos = UDim2.new(1, -92, 0.5, 0),
+    Size = UDim2.fromOffset(15, 15),
+    Raw = IsAuto and Library.Theme.Accent or Library.Theme.DimIcon,
+    Z = 5
+})
+
+local ZapHit = MakeButton({
+    Parent = Row.Instance,
+    Anchor = Vector2.new(1, 0.5),
+    Pos = UDim2.new(1, IsMobile and -96 or -90, 0.5, 0),
+    Size = UDim2.fromOffset(IsMobile and 34 or 22, IsMobile and 34 or 22),
+    Z = 9
+})
+
+ZapHit:Connect("MouseButton1Down", function()
+    local CurrentAuto = Library:GetAutoload()
+    if CurrentAuto == Name then
+        Library:SetAutoload("")
+        Library:Notification({
+            Name = "Autoload Disabled",
+            Description = "\"" .. Name .. "\" is no longer set to autoload.",
+            Icon = "zap-off"
+        })
+    else
+        Library:SetAutoload(Name)
+        Library:Notification({
+            Name = "Autoload Enabled",
+            Description = "\"" .. Name .. "\" will now load on script startup.",
+            Icon = "zap"
+        })
+    end
+    RefreshList()
+end)
 
             IconButton(-66, "download", function()
                 local Created
@@ -8356,42 +8377,42 @@ end
         end
 
         Items.CreateHit:Connect("MouseButton1Down", function()
-            PlaySweep(Items.CreateSweep.Instance)
+    PlaySweep(Items.CreateSweep.Instance)
 
-            local Name = string.gsub(Items.NameInput.Instance.Text, "[^%w _%-]", "")
+    local Name = string.gsub(Items.NameInput.Instance.Text, "[^%w _%-]", "")
 
-            if Name == "" then
-                Library:Notification({
-                    Name = "Config name required",
-                    Description = "Type a name into the box before creating.",
-                    Icon = "triangle-alert"
-                })
+    if Name == "" then
+        Library:Notification({
+            Name = "Config name required",
+            Description = "Type a name into the box before creating.",
+            Icon = "triangle-alert"
+        })
+        return
+    end
 
-                return
-            end
+    if isfile and isfile(ConfigPath(Name)) then
+        Library:Notification({
+            Name = "Name already used",
+            Description = "A config called \"" .. Name .. "\" already exists.",
+            Icon = "triangle-alert"
+        })
+        return
+    end
 
-            if isfile and isfile(ConfigPath(Name)) then
-                Library:Notification({
-                    Name = "Name already used",
-                    Description = "A config called \"" .. Name .. "\" already exists.",
-                    Icon = "triangle-alert"
-                })
+    local Saved = Library:SaveConfigFile(Name)
+    if Saved then
+        Items.NameInput.Instance.Text = ""
+        Config.Selected = Name
+        RefreshList()
+        ShowInfo(Name)
 
-                return
-            end
-
-            writefile(ConfigPath(Name), Library:GetConfig())
-            Items.NameInput.Instance.Text = ""
-            Config.Selected = Name
-            RefreshList()
-            ShowInfo(Name)
-
-            Library:Notification({
-                Name = "Config created",
-                Description = "\"" .. Name .. "\" now holds your current values.",
-                Icon = "plus"
-            })
-        end)
+        Library:Notification({
+            Name = "Config created",
+            Description = "\"" .. Name .. "\" now holds your current values.",
+            Icon = "plus"
+        })
+    end
+end)
 
         local Blocks = {
             { Frame = Items.CreateBox, Home = UDim2.fromOffset(0, 0) },
@@ -8633,51 +8654,51 @@ end
         return HttpService:JSONEncode(Config)
     end
 
-    Library.LoadConfig = function(Self, ConfigRaw)
-        if type(ConfigRaw) ~= "string" or ConfigRaw == "" then return false end
+    Library.LoadConfig = function(Self, ConfigRaw, Silent)
+    if type(ConfigRaw) ~= "string" or ConfigRaw == "" then return false end
 
-        local Ok, Decoded = pcall(function()
-            return HttpService:JSONDecode(ConfigRaw)
-        end)
+    local Ok, Decoded = pcall(function()
+        return HttpService:JSONDecode(ConfigRaw)
+    end)
 
-        if not Ok or type(Decoded) ~= "table" then return false end
+    if not Ok or type(Decoded) ~= "table" then return false end
 
-        Library.Silent = true
+    Library.Silent = Silent or false
 
-        for Index, Value in Decoded do
-            if string.sub(Index, 1, 2) == "__" then continue end
-            
-            local SetFunction = Library.SetFlags[Index]
-            if SetFunction then
-                pcall(function()
-                    if type(Value) == "table" and Value.__color then
-                        SetFunction(Color3.fromHex(Value.__color), Value.__alpha or 0, Value.__rainbow or false)
-                    else
-                        SetFunction(Value)
-                    end
-                end)
-            end
-        end
-
-        if type(Decoded.__theme) == "table" then
-            for Key, Hex in Decoded.__theme do
-                pcall(function()
-                    Library.Theme[Key] = Color3.fromHex(Hex)
-                end)
-            end
-            DeriveTheme()
-            Library.ThemeDirty = true
-        end
-
-        if type(Decoded.__accent) == "string" then
+    for Index, Value in Decoded do
+        if string.sub(Index, 1, 2) == "__" then continue end
+        
+        local SetFunction = Library.SetFlags[Index]
+        if SetFunction then
             pcall(function()
-                Library:SetAccent(Color3.fromHex(Decoded.__accent))
+                if type(Value) == "table" and Value.__color then
+                    SetFunction(Color3.fromHex(Value.__color), Value.__alpha or 0, Value.__rainbow or false)
+                else
+                    SetFunction(Value)
+                end
             end)
         end
-
-        Library.Silent = false
-        return true
     end
+
+    if type(Decoded.__theme) == "table" then
+        for Key, Hex in Decoded.__theme do
+            pcall(function()
+                Library.Theme[Key] = Color3.fromHex(Hex)
+            end)
+        end
+        DeriveTheme()
+        Library.ThemeDirty = true
+    end
+
+    if type(Decoded.__accent) == "string" then
+        pcall(function()
+            Library:SetAccent(Color3.fromHex(Decoded.__accent))
+        end)
+    end
+
+    Library.Silent = false
+    return true
+end
 
     Library.SaveConfigFile = function(Self, Name)
         if not writefile then return false end
@@ -8763,20 +8784,16 @@ end
     end
 
     Library.ResetConfig = function(Self)
-        Library.Silent = true
-        for FlagName, SetFunc in Library.SetFlags do
-            pcall(function()
-                
-                SetFunc(false) 
-            end)
-        end
-        Library.Silent = false
-        Library:Notification({
-            Name = "Reset Complete",
-            Description = "All settings have been restored to defaults.",
-            Icon = "refresh-cw"
-        })
+    for FlagName, _ in Library.Flags do
+        Library.Flags[FlagName] = nil
     end
+
+    Library:Notification({
+        Name = "Reset Complete",
+        Description = "Flags have been reset. Reload your default config if needed.",
+        Icon = "refresh-cw"
+    })
+end
 
     Library:Connect(RunService.Heartbeat, function(Delta)
         if Library.ThemeDirty then
