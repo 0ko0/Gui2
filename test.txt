@@ -1529,9 +1529,9 @@ end
         }
 
         local Items = { }
-        local RowHeight = IsMobile and 38 or 32 
-        local SearchHeight = IsMobile and 38 or 32
-        local ActionHeaderHeight = IsMobile and 34 or 28
+        local RowHeight = 40 
+local SearchHeight = 40
+local ActionHeaderHeight = 36
 
         Items.Frame = MakeFrame({
             Parent = Library.UnusedHolder.Instance,
@@ -1858,26 +1858,26 @@ end
         local Base = Z or 3
 
         Swatch.Halo = MakeFrame({
-            Parent = Parent,
-            Anchor = Vector2.new(1, 0.5),
-            Pos = UDim2.new(1, RightOffset, 0.5, 0),
-            Size = UDim2.fromOffset(22, 22),
-            Round = 20,
-            Z = Base
-        })
+    Parent = Parent,
+    Anchor = Vector2.new(1, 0.5),
+    Pos = UDim2.new(1, RightOffset, 0.5, 0),
+    Size = UDim2.fromOffset(28, 28),
+    Round = 20,
+    Z = Base
+})
 
-        Swatch.Halo.Instance.BackgroundColor3 = Default
-        SetRest(Swatch.Halo.Instance, "BackgroundTransparency", 0.72)
+Swatch.Halo.Instance.BackgroundColor3 = Default
+SetRest(Swatch.Halo.Instance, "BackgroundTransparency", 0.72)
 
-        Swatch.Core = MakeFrame({
-            Parent = Swatch.Halo.Instance,
-            Anchor = Vector2.new(0.5, 0.5),
-            Pos = UDim2.new(0.5, 0, 0.5, 0),
-            Size = UDim2.fromOffset(12, 12),
-            Raw = Default,
-            Round = 20,
-            Z = Base + 1
-        })
+Swatch.Core = MakeFrame({
+    Parent = Swatch.Halo.Instance,
+    Anchor = Vector2.new(0.5, 0.5),
+    Pos = UDim2.new(0.5, 0, 0.5, 0),
+    Size = UDim2.fromOffset(16, 16),
+    Raw = Default,
+    Round = 20,
+    Z = Base + 1
+})
 
         Swatch.Shadow = MakeShadow(
             Swatch.Core.Instance,
@@ -4600,8 +4600,8 @@ end
             Items = { }
         }
       
-        local HasDesc = Toggle.Description ~= ""
-        local RowHeight = HasDesc and 44 or 32
+      local HasDesc = Toggle.Description ~= ""
+local RowHeight = HasDesc and 50 or 38
 
         local Row = Section:AddRow(RowHeight, Toggle.Name)
         local Items = { Row = Row }
@@ -4647,25 +4647,25 @@ end
         end
 
         Items.Box = MakeFrame({
-            Parent = Row.Instance,
-            Anchor = Vector2.new(1, 0.5),
-            Pos = UDim2.new(1, -15, 0.5, 0),
-            Size = UDim2.fromOffset(IsMobile and 42 or 35, IsMobile and 24 or 21), 
-            Color = "Element",
-            Round = 12,
-            Clip = true,
-            Z = 5
-        })
+    Parent = Row.Instance,
+    Anchor = Vector2.new(1, 0.5),
+    Pos = UDim2.new(1, -15, 0.5, 0),
+    Size = UDim2.fromOffset(44, 24), 
+    Color = "Element",
+    Round = 12,
+    Clip = true,
+    Z = 5
+})
 
-        Items.Circle = MakeFrame({
-            Parent = Items.Box.Instance,
-            Anchor = Vector2.new(0, 0.5),
-            Pos = UDim2.new(0, 4, 0.5, 0),
-            Size = UDim2.fromOffset(13, 13),
-            Color = "DimText",
-            Round = 20,
-            Z = 6
-        })
+Items.Circle = MakeFrame({
+    Parent = Items.Box.Instance,
+    Anchor = Vector2.new(0, 0.5),
+    Pos = UDim2.new(0, 4, 0.5, 0),
+    Size = UDim2.fromOffset(16, 16),
+    Color = "DimText",
+    Round = 20,
+    Z = 6
+})
 
         MakeAccentShadow(
             Items.Circle.Instance,
@@ -4683,10 +4683,10 @@ end
         Toggle.Items = Items
 
         local Pad = 4
-        local InnerW = 35 - Pad * 2
-        local LeftPos = UDim2.new(0, Pad, 0.5, 0)
-        local RightPos = UDim2.new(1, -Pad, 0.5, 0)
-        local Small = UDim2.fromOffset(13, 13)
+local InnerW = 44 - Pad * 2
+local LeftPos = UDim2.new(0, Pad, 0.5, 0)
+local RightPos = UDim2.new(1, -Pad, 0.5, 0)
+local Small = UDim2.fromOffset(16, 16)
 
         function Toggle.SetVisual(State, Instant)
             State = State and true or false
@@ -5315,22 +5315,22 @@ end
     local KnobColor = Color3.fromRGB(197, 197, 197)
 
     local function MakeKnob(Parent)
-        local Knob = MakeFrame({
-            Parent = Parent,
-            Anchor = Vector2.new(0.5, 0.5),
-            Pos = UDim2.new(0, 0, 0.5, 0),
-            Size = UDim2.fromOffset(13, 13),
-            Raw = KnobColor,
-            Round = 20,
-            Z = 7
-        })
+    local Knob = MakeFrame({
+        Parent = Parent,
+        Anchor = Vector2.new(0.5, 0.5),
+        Pos = UDim2.new(0, 0, 0.5, 0),
+        Size = UDim2.fromOffset(18, 18),
+        Raw = KnobColor,
+        Round = 20,
+        Z = 7
+    })
 
         MakeShadow(Knob.Instance, KnobColor, UDim2.fromOffset(0, 0), UDim.new(0, 5), 0.5)
         return Knob
     end
 
     local function BuildSliderRow(Section, Name, SearchName)
-        local Row = Section:AddRow(44, SearchName or Name)
+        local Row = Section:AddRow(50, SearchName or Name)
         local Width = Section.Width
         local TrackW = Width - 30
         local Items = { Row = Row }
@@ -5364,18 +5364,18 @@ end
         }):AddToTheme({ TextColor3 = "DimText" })
 
         Items.Track = MakeFrame({
-            Parent = Row.Instance,
-            Anchor = Vector2.new(0, 0.5),
-            Pos = UDim2.new(0, 15, 0, 32),
-            Size = UDim2.fromOffset(TrackW, 10),
+        Parent = Row.Instance,
+        Anchor = Vector2.new(0, 0.5),
+        Pos = UDim2.new(0, 15, 0, 34),
+        Size = UDim2.fromOffset(TrackW, 12),
             Color = "Element",
             Round = 20,
             Z = 5
         })
 
         Items.Fill = MakeFrame({
-            Parent = Items.Track.Instance,
-            Size = UDim2.fromOffset(0, 10),
+        Parent = Items.Track.Instance,
+        Size = UDim2.fromOffset(0, 12),
             Raw = Color3.new(1, 1, 1),
             Round = 20,
             Z = 6
@@ -5385,15 +5385,15 @@ end
             Parent = Items.Fill.Instance
         }).Instance)
 
-        local TouchHitH = IsMobile and 36 or 22
-        local TouchHitY = IsMobile and 14 or 22
-        
-        Items.Hit = MakeButton({
-            Parent = Row.Instance,
-            Pos = UDim2.fromOffset(IsMobile and 0 or 9, TouchHitY),
-            Size = UDim2.fromOffset(TrackW + (IsMobile and 30 or 12), TouchHitH),
-            Z = 8
-        })
+        local TouchHitH = 42
+    local TouchHitY = 14
+    
+    Items.Hit = MakeButton({
+        Parent = Row.Instance,
+        Pos = UDim2.fromOffset(0, TouchHitY),
+        Size = UDim2.fromOffset(TrackW + 30, TouchHitH),
+        Z = 8
+    })
 
         Items.TrackWidth = TrackW
         return Items
@@ -5987,7 +5987,7 @@ end
         end
 
         local HasDesc = Dropdown.Description ~= ""
-        local RowHeight = HasDesc and 62 or 54
+local RowHeight = HasDesc and 68 or 60
 
         local Row = Section:AddRow(RowHeight, Dropdown.Name)
         local Items = { Row = Row }
@@ -6018,17 +6018,17 @@ end
             Items.DescLabel.Instance.TextTransparency = 0.4
         end
 
-        local BoxY = HasDesc and 38 or 24
+        local BoxY = HasDesc and 40 or 24
 
-        Items.Box = MakeFrame({
-            Parent = Row.Instance,
-            Pos = UDim2.fromOffset(15, BoxY),
-            Size = UDim2.fromOffset(Section.Width - 30, 30),
-            Color = "Element",
-            Round = 6,
-            Clip = true,
-            Z = 5
-        })
+Items.Box = MakeFrame({
+    Parent = Row.Instance,
+    Pos = UDim2.fromOffset(15, BoxY),
+    Size = UDim2.fromOffset(Section.Width - 30, 36),
+    Color = "Element",
+    Round = 6,
+    Clip = true,
+    Z = 5
+})
 
         local BoxStroke = Instance.new("UIStroke")
         BoxStroke.Thickness = 1
@@ -6343,7 +6343,7 @@ end
         }
 
         local HasDesc = Button.Description ~= ""
-        local RowHeight = HasDesc and 54 or 38
+local RowHeight = HasDesc and 58 or 44
 
         local Row, Data = Section:AddRow(RowHeight, Button.Name)
         local Items = { Row = Row }
@@ -6719,7 +6719,7 @@ end
         }
 
         local HasDesc = Textbox.Description ~= ""
-        local RowHeight = HasDesc and 62 or 54
+local RowHeight = HasDesc and 68 or 60
 
         local Row = Section:AddRow(RowHeight, Textbox.Name)
         local Items = { Row = Row }
@@ -6749,17 +6749,17 @@ end
             Items.DescLabel.Instance.TextTransparency = 0.4
         end
 
-        local BoxY = HasDesc and 38 or 24
+        local BoxY = HasDesc and 40 or 24
 
-        Items.Box = MakeFrame({
-            Parent = Row.Instance,
-            Pos = UDim2.fromOffset(15, BoxY),
-            Size = UDim2.fromOffset(Section.Width - 30, 30),
-            Color = "Element",
-            Round = 6,
-            Clip = true,
-            Z = 5
-        })
+Items.Box = MakeFrame({
+    Parent = Row.Instance,
+    Pos = UDim2.fromOffset(15, BoxY),
+    Size = UDim2.fromOffset(Section.Width - 30, 36),
+    Color = "Element",
+    Round = 6,
+    Clip = true,
+    Z = 5
+})
 
         local LeftOffset = 11
         local RightOffset = 11
