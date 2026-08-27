@@ -15,6 +15,7 @@ local writefile = writefile or function() end
 local delfile = delfile or function() end
 local isfolder = isfolder or function() return false end
 local makefolder = makefolder or function() end
+local listfiles = listfiles or list_files or function() return {} end
 local getcustomasset = getcustomasset or getcustomassetid or function() return "" end
 local setclipboard = setclipboard or toclipboard or function() end
 
@@ -37,13 +38,11 @@ local IsMobile = UserInputService.TouchEnabled
     Library.ConfigFolder = "Zolar/Configs"
     Library.AssetsFolder = "Zolar/Assets"
 
-    if isfolder then
-        for _, Folder in { Library.Directory, Library.ConfigFolder, Library.AssetsFolder } do
-            if not isfolder(Folder) then
-                makefolder(Folder)
-            end
-        end
-    end
+    pcall(function()
+        if not isfolder(Library.Directory) then makefolder(Library.Directory) end
+        if not isfolder(Library.ConfigFolder) then makefolder(Library.ConfigFolder) end
+        if not isfolder(Library.AssetsFolder) then makefolder(Library.AssetsFolder) end
+    end)
 
     local UiFont
     local UiFontBold
@@ -1530,144 +1529,128 @@ end
         }
 
         local Items = { }
-        local RowHeight = IsMobile and 36 or 30
+        local RowHeight = IsMobile and 38 or 32 
         local SearchHeight = IsMobile and 38 or 32
-        local HeaderHeight = IsMobile and 32 or 28
+        local ActionHeaderHeight = IsMobile and 34 or 28
 
-        -- Outer Modern Glass Panel
         Items.Frame = MakeFrame({
             Parent = Library.UnusedHolder.Instance,
-            Size = UDim2.fromOffset(180, 0),
+            Size = UDim2.fromOffset(150, 0),
             Color = "Section",
             Round = 8,
             Clip = true,
             Z = Level
         })
-        Items.Frame.Instance.Visible = false
 
+        Items.Frame.Instance.Visible = false
+        
         local PopupStroke = Instance.new("UIStroke")
-        PopupStroke.Thickness = 1.2
-        PopupStroke.Transparency = 0.5
+        PopupStroke.Thickness = 1
+        PopupStroke.Transparency = 0.6
         PopupStroke.Color = Library.Theme.Accent
         PopupStroke.Parent = Items.Frame.Instance
 
-        MakeShadow(Items.Frame.Instance, Color3.fromRGB(0, 0, 0), UDim2.fromOffset(0, 8), UDim.new(0, 16), 0.35)
+        MakeShadow(Items.Frame.Instance, Color3.new(0,0,0), UDim2.fromOffset(0, 4), UDim.new(0, 12), 0.45)
 
-        -- Modern Header Holder (Search + Action Chips)
-        Items.HeaderHolder = MakeFrame({
+        Items.SearchHolder = MakeFrame({
             Parent = Items.Frame.Instance,
-            Size = UDim2.new(1, 0, 0, 0),
+            Size = UDim2.new(1, 0, 0, SearchHeight),
             Color = "Section",
             Z = Level + 5
         })
-
-        -- Compact Modern Search Bar
-        Items.SearchHolder = MakeFrame({
-            Parent = Items.HeaderHolder.Instance,
-            Pos = UDim2.fromOffset(6, 6),
-            Size = UDim2.new(1, -12, 0, SearchHeight - 4),
-            Color = "Element",
-            Round = 6,
-            Clip = true,
-            Z = Level + 6
-        })
         Items.SearchHolder.Instance.Visible = false
 
-        local SearchStroke = Instance.new("UIStroke")
-        SearchStroke.Thickness = 1
-        SearchStroke.Transparency = 0.8
-        SearchStroke.Color = Library.Theme.Line
-        SearchStroke.Parent = Items.SearchHolder.Instance
+        local SearchBg = MakeFrame({
+            Parent = Items.SearchHolder.Instance,
+            Pos = UDim2.fromOffset(6, 4),
+            Size = UDim2.new(1, -12, 1, -8),
+            Color = "Element",
+            Round = 6,
+            Z = Level + 6
+        })
 
         MakeImage({
-            Parent = Items.SearchHolder.Instance,
+            Parent = SearchBg.Instance,
             Icon = "search",
-            Anchor = Vector2.new(0, 0.5),
-            Pos = UDim2.new(0, 8, 0.5, 0),
-            Size = UDim2.fromOffset(13, 13),
+            Pos = UDim2.fromOffset(8, (SearchHeight - 8 - 14) / 2),
+            Size = UDim2.fromOffset(14, 14),
             Color = "DimText",
             Z = Level + 7
         })
 
         Items.Search = MakeInput({
-            Parent = Items.SearchHolder.Instance,
-            Placeholder = "Search options...",
-            Pos = UDim2.fromOffset(26, 0),
-            Size = UDim2.new(1, -30, 1, 0),
-            TextSize = 12,
+            Parent = SearchBg.Instance,
+            Placeholder = "Type to search...",
+            Pos = UDim2.fromOffset(28, 0),
+            Size = UDim2.new(1, -34, 1, 0),
+            TextSize = 13,
             Z = Level + 7
         })
 
-        -- Multi-Select Pill Actions (All / Reset)
         Items.ActionHolder = MakeFrame({
-            Parent = Items.HeaderHolder.Instance,
-            Size = UDim2.new(1, -12, 0, HeaderHeight),
-            Pos = UDim2.fromOffset(6, 0),
-            Z = Level + 6
+            Parent = Items.Frame.Instance,
+            Size = UDim2.new(1, 0, 0, ActionHeaderHeight),
+            Color = "Section",
+            Z = Level + 5
         })
         Items.ActionHolder.Instance.Visible = false
 
-        local function MakeMiniChip(Text, IconName, PosX, AnchorX)
-            local Chip = MakeFrame({
-                Parent = Items.ActionHolder.Instance,
-                Anchor = Vector2.new(AnchorX, 0.5),
-                Pos = UDim2.new(PosX, 0, 0.5, 0),
-                Size = UDim2.new(0.5, -4, 0, 22),
-                Color = "Element",
-                Round = 4,
-                Z = Level + 7
-            })
+        local SelectAllChip = MakeFrame({
+            Parent = Items.ActionHolder.Instance,
+            Pos = UDim2.fromOffset(6, 2),
+            Size = UDim2.new(0.5, -9, 1, -4),
+            Color = "Element",
+            Round = 5,
+            Z = Level + 6
+        })
 
-            local ChipStroke = Instance.new("UIStroke")
-            ChipStroke.Thickness = 1
-            ChipStroke.Transparency = 0.85
-            ChipStroke.Color = Library.Theme.Text
-            ChipStroke.Parent = Chip.Instance
+        local SelectAllBtn = MakeText({
+            Parent = SelectAllChip.Instance,
+            Text = "Select All",
+            TextSize = 11,
+            Bold = true,
+            Size = UDim2.new(1, 0, 1, 0),
+            Color = "DimText",
+            Align = Enum.TextXAlignment.Center,
+            Z = Level + 7
+        })
+        local SelectAllHit = MakeButton({ Parent = SelectAllChip.Instance, Z = Level + 8 })
 
-            local Icon = MakeImage({
-                Parent = Chip.Instance,
-                Icon = IconName,
-                Anchor = Vector2.new(0, 0.5),
-                Pos = UDim2.new(0, 6, 0.5, 0),
-                Size = UDim2.fromOffset(11, 11),
-                Color = "DimText",
-                Z = Level + 8
-            })
+        local ClearChip = MakeFrame({
+            Parent = Items.ActionHolder.Instance,
+            Anchor = Vector2.new(1, 0),
+            Pos = UDim2.new(1, -6, 0, 2),
+            Size = UDim2.new(0.5, -9, 1, -4),
+            Color = "Element",
+            Round = 5,
+            Z = Level + 6
+        })
 
-            local Lbl = MakeText({
-                Parent = Chip.Instance,
-                Text = Text,
-                TextSize = 11,
-                Bold = true,
-                Pos = UDim2.new(0, 20, 0, 0),
-                Size = UDim2.new(1, -22, 1, 0),
-                Color = "DimText",
-                Align = Enum.TextXAlignment.Center,
-                Z = Level + 8
-            })
+        local ClearBtn = MakeText({
+            Parent = ClearChip.Instance,
+            Text = "Clear All",
+            TextSize = 11,
+            Bold = true,
+            Size = UDim2.new(1, 0, 1, 0),
+            Color = "DimText",
+            Align = Enum.TextXAlignment.Center,
+            Z = Level + 7
+        })
+        local ClearHit = MakeButton({ Parent = ClearChip.Instance, Z = Level + 8 })
 
-            local Hit = MakeButton({ Parent = Chip.Instance, Z = Level + 9 })
+        SelectAllHit:OnHover(
+            function() Library:Tween({ BackgroundColor3 = Library.Theme.Hover }, nil, SelectAllChip.Instance); SelectAllBtn:ChangeItemTheme({ TextColor3 = "Text" }) end,
+            function() Library:Tween({ BackgroundColor3 = Library.Theme.Element }, nil, SelectAllChip.Instance); SelectAllBtn:ChangeItemTheme({ TextColor3 = "DimText" }) end
+        )
 
-            Hit:OnHover(function()
-                Library:Tween({ BackgroundColor3 = Library.Theme.Hover }, nil, Chip.Instance)
-                Lbl:ChangeItemTheme({ TextColor3 = "Text" })
-                Icon:ChangeItemTheme({ ImageColor3 = "Text" })
-            end, function()
-                Library:Tween({ BackgroundColor3 = Library.Theme.Element }, nil, Chip.Instance)
-                Lbl:ChangeItemTheme({ TextColor3 = "DimText" })
-                Icon:ChangeItemTheme({ ImageColor3 = "DimText" })
-            end)
+        ClearHit:OnHover(
+            function() Library:Tween({ BackgroundColor3 = Library.Theme.Hover }, nil, ClearChip.Instance); ClearBtn:ChangeItemTheme({ TextColor3 = "Text" }) end,
+            function() Library:Tween({ BackgroundColor3 = Library.Theme.Element }, nil, ClearChip.Instance); ClearBtn:ChangeItemTheme({ TextColor3 = "DimText" }) end
+        )
 
-            return Hit
-        end
+        SelectAllHit:Connect("MouseButton1Down", function() if Popup.OnSelectAll then Popup.OnSelectAll() end end)
+        ClearHit:Connect("MouseButton1Down", function() if Popup.OnClear then Popup.OnClear() end end)
 
-        local SelectAllHit = MakeMiniChip("Select All", "check-check", 0, 0)
-        local ClearHit = MakeMiniChip("Reset", "rotate-ccw", 1, 1)
-
-        SelectAllHit:Connect(function() if Popup.OnSelectAll then Popup.OnSelectAll() end end)
-        ClearHit:Connect(function() if Popup.OnClear then Popup.OnClear() end end)
-
-        -- Options Scroll Container
         Items.Scroll = Library:Create("ScrollingFrame", {
             Parent = Items.Frame.Instance,
             Name = "\0",
@@ -1686,15 +1669,15 @@ end
         Library:Create("UIListLayout", {
             Parent = Items.Scroll.Instance,
             SortOrder = Enum.SortOrder.LayoutOrder,
-            Padding = UDim.new(0, 2)
+            Padding = UDim.new(0, 3)
         })
 
         Library:Create("UIPadding", {
             Parent = Items.Scroll.Instance,
             PaddingTop = UDim.new(0, 4),
             PaddingBottom = UDim.new(0, 4),
-            PaddingLeft = UDim.new(0, 4),
-            PaddingRight = UDim.new(0, 4)
+            PaddingLeft = UDim.new(0, 5),
+            PaddingRight = UDim.new(0, 5)
         })
 
         Popup.Items = Items
@@ -1721,28 +1704,16 @@ end
             local Desc = type(OptionData) == "table" and OptionData.Desc or nil
 
             local HasIcon = Icon ~= nil and Icon ~= ""
-            local LeftPad = HasIcon and 26 or 10
+            local LeftPad = HasIcon and 28 or 10
 
-            -- Row Item Box
             local RowContainer = MakeFrame({
                 Parent = Items.Scroll.Instance,
                 Size = UDim2.new(1, 0, 0, RowHeight),
                 Color = "Element",
-                Round = 5,
+                Round = 6,
                 Z = Level + 2
             })
             SetRest(RowContainer.Instance, "BackgroundTransparency", 1)
-
-            -- Modern Left Accent Line Indicator (Discord / Linear Style)
-            local ActivePill = MakeFrame({
-                Parent = RowContainer.Instance,
-                Anchor = Vector2.new(0, 0.5),
-                Pos = UDim2.new(0, 2, 0.5, 0),
-                Size = UDim2.fromOffset(3, 0),
-                Color = "Accent",
-                Round = 2,
-                Z = Level + 4
-            })
 
             local OptionIcon
             if HasIcon then
@@ -1751,7 +1722,7 @@ end
                     Icon = Icon,
                     Anchor = Vector2.new(0, 0.5),
                     Pos = UDim2.new(0, 8, 0.5, 0),
-                    Size = UDim2.fromOffset(13, 13),
+                    Size = UDim2.fromOffset(14, 14),
                     Color = "DimIcon",
                     Z = Level + 3
                 })
@@ -1763,23 +1734,22 @@ end
                 TextSize = 13,
                 Anchor = Vector2.new(0, 0.5),
                 Pos = UDim2.new(0, LeftPad, 0.5, 0),
-                Size = UDim2.new(1, -(LeftPad + 26), 1, 0),
+                Size = UDim2.new(1, -(LeftPad + 28), 1, 0),
                 Color = "DimText",
                 Truncate = true,
                 Z = Level + 3
             })
 
-            -- Modern Status Dot / Checkmark
-            local CheckDot = MakeFrame({
+            local CheckIcon = MakeImage({
                 Parent = RowContainer.Instance,
+                Icon = "check",
                 Anchor = Vector2.new(1, 0.5),
                 Pos = UDim2.new(1, -8, 0.5, 0),
-                Size = UDim2.fromOffset(6, 6),
-                Color = "Accent",
-                Round = 6,
+                Size = UDim2.fromOffset(14, 14),
+                Raw = Library.Theme.Accent,
                 Z = Level + 3
             })
-            CheckDot.Instance.BackgroundTransparency = 1
+            CheckIcon.Instance.ImageTransparency = 1
 
             local Hit = MakeButton({
                 Parent = RowContainer.Instance,
@@ -1797,24 +1767,18 @@ end
 
             function Data:Set(Active, Instant)
                 Data.Selected = Active
-                local TargetBgAlpha = Active and 0.2 or 1
+                local TargetBgAlpha = Active and 0.15 or 1
                 local TargetTextColor = Active and "Text" or "DimText"
-                local TargetPillH = Active and (RowHeight - 12) or 0
-                local TargetDotAlpha = Active and 0 or 1
+                local TargetCheckAlpha = Active and 0 or 1
 
                 Library:StampResting(RowContainer.Instance, "BackgroundTransparency", TargetBgAlpha)
                 OptionLabel:ChangeItemTheme({ TextColor3 = TargetTextColor })
 
                 local Info = Instant and TweenInfo.new(0) or TweenInfo.new(0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
 
-                Library:Tween({ 
-                    BackgroundColor3 = Active and Library.Theme.Accent or Library.Theme.Element, 
-                    BackgroundTransparency = TargetBgAlpha 
-                }, Info, RowContainer.Instance)
-
+                Library:Tween({ BackgroundColor3 = Active and Library.Theme.Accent or Library.Theme.Element, BackgroundTransparency = TargetBgAlpha }, Info, RowContainer.Instance)
                 Library:Tween({ TextColor3 = Active and Library.Theme.Text or Library.Theme.DimText }, Info, OptionLabel.Instance)
-                Library:Tween({ Size = UDim2.fromOffset(3, TargetPillH) }, Info, ActivePill.Instance)
-                Library:Tween({ BackgroundTransparency = TargetDotAlpha }, Info, CheckDot.Instance)
+                Library:Tween({ ImageTransparency = TargetCheckAlpha }, Info, CheckIcon.Instance)
 
                 if OptionIcon then
                     OptionIcon:ChangeItemTheme({ ImageColor3 = Active and "Accent" or "DimIcon" })
@@ -1824,7 +1788,7 @@ end
 
             RowContainer:OnHover(function()
                 if Data.Selected then return end
-                Library:Tween({ BackgroundTransparency = 0.55 }, nil, RowContainer.Instance)
+                Library:Tween({ BackgroundTransparency = 0.5 }, nil, RowContainer.Instance)
                 OptionLabel:ChangeItemTheme({ TextColor3 = "Text" })
             end, function()
                 if Data.Selected then return end
@@ -1856,29 +1820,28 @@ end
             OnOpen = function()
                 local Anchor = GetAnchor()
                 local Scale = Library:GetScreenScale()
-                local ShowSearch = Popup.ForceSearch == true or (Popup.ForceSearch == nil and #Popup.Order > 7)
+                local ShowSearch = Popup.ForceSearch == true or (Popup.ForceSearch == nil and #Popup.Order > 8)
                 local ShowActions = Popup.ShowActions == true
 
                 local Width = WidthOverride or (Anchor.AbsoluteSize.X / Scale)
-                local ListHeight = math.min(#Popup.Order * (RowHeight + 2) + 8, 175)
-                local TopOffsetY = 4
+                local ListHeight = math.min(#Popup.Order * (RowHeight + 3) + 8, 180)
+                local TopOffsetY = 0
 
                 Items.Search.Instance.Text = ""
                 ApplySearch("")
 
                 Items.SearchHolder.Instance.Visible = ShowSearch
                 if ShowSearch then
-                    Items.SearchHolder.Instance.Position = UDim2.fromOffset(6, TopOffsetY)
-                    TopOffsetY += SearchHeight + 2
+                    Items.SearchHolder.Instance.Position = UDim2.fromOffset(0, TopOffsetY)
+                    TopOffsetY += SearchHeight
                 end
 
                 Items.ActionHolder.Instance.Visible = ShowActions
                 if ShowActions then
-                    Items.ActionHolder.Instance.Position = UDim2.fromOffset(6, TopOffsetY)
-                    TopOffsetY += HeaderHeight + 2
+                    Items.ActionHolder.Instance.Position = UDim2.fromOffset(0, TopOffsetY)
+                    TopOffsetY += ActionHeaderHeight
                 end
 
-                Items.HeaderHolder.Instance.Size = UDim2.new(1, 0, 0, TopOffsetY)
                 Items.Scroll.Instance.Position = UDim2.fromOffset(0, TopOffsetY)
                 Items.Scroll.Instance.Size = UDim2.new(1, 0, 1, -TopOffsetY)
                 Items.Frame.Instance.Size = UDim2.fromOffset(Width, ListHeight + TopOffsetY)
@@ -4800,9 +4763,9 @@ end
 
             Toggle.SetVisual(Toggle.Value, false)
 
-            if not Silent then
-                Library:SafeCall(Toggle.Callback, Toggle.Value)
-            end
+            if not Silent and not Library.Silent then
+    Library:SafeCall(Toggle.Callback, Toggle.Value)
+end
         end
 
         function Toggle:Get()
@@ -5531,9 +5494,9 @@ end
                 Items.ValueInput.Instance.Text = FormatDisplay(Val)
             end
 
-            if not Silent then
-                Library:SafeCall(Slider.Callback, Slider.Value)
-            end
+            if not Silent and not Library.Silent then
+    Library:SafeCall(Toggle.Callback, Slider.Value)
+end
         end
 
         function Slider:Get()
@@ -5746,9 +5709,9 @@ end
                 Items.ValueInput.Instance.Text = FormatDisplay(LowVal, HighVal)
             end
 
-            if not Silent then
-                Library:SafeCall(RangeSlider.Callback, RangeSlider.Value)
-            end
+            if not Silent and not Library.Silent then
+    Library:SafeCall(Toggle.Callback, RangeSlider.Value)
+end
         end
 
         function RangeSlider:Get()
@@ -6023,18 +5986,17 @@ end
         end
 
         local HasDesc = Dropdown.Description ~= ""
-        local RowHeight = HasDesc and 60 or 52
+        local RowHeight = HasDesc and 62 or 54
 
         local Row = Section:AddRow(RowHeight, Dropdown.Name)
         local Items = { Row = Row }
 
-        -- Title Label
         Items.Label = MakeText({
             Parent = Row.Instance,
             Text = Dropdown.Name,
             TextSize = 14,
             Bold = true,
-            Pos = UDim2.fromOffset(15, 3),
+            Pos = UDim2.fromOffset(15, 4),
             Size = UDim2.fromOffset(Section.Width - 30, 18),
             Color = "Text",
             Truncate = true,
@@ -6046,7 +6008,7 @@ end
                 Parent = Row.Instance,
                 Text = Dropdown.Description,
                 TextSize = 12,
-                Pos = UDim2.fromOffset(15, 20),
+                Pos = UDim2.fromOffset(15, 22),
                 Size = UDim2.fromOffset(Section.Width - 30, 14),
                 Color = "DimText",
                 Truncate = true,
@@ -6055,37 +6017,24 @@ end
             Items.DescLabel.Instance.TextTransparency = 0.4
         end
 
-        local BoxY = HasDesc and 36 or 22
+        local BoxY = HasDesc and 38 or 24
 
-        -- Modern Rounded Input Box
         Items.Box = MakeFrame({
             Parent = Row.Instance,
-            Pos = UDim2.fromOffset(14, BoxY),
-            Size = UDim2.fromOffset(Section.Width - 28, 28),
+            Pos = UDim2.fromOffset(15, BoxY),
+            Size = UDim2.fromOffset(Section.Width - 30, 30),
             Color = "Element",
             Round = 6,
             Clip = true,
             Z = 5
         })
 
-        -- Responsive Dynamic Glow UIStroke
         local BoxStroke = Instance.new("UIStroke")
         BoxStroke.Thickness = 1
         BoxStroke.Transparency = 0.8
         BoxStroke.Color = Library.Theme.Accent
         BoxStroke.Parent = Items.Box.Instance
 
-        -- Left Accent Micro-Glow Line
-        local BoxActiveIndicator = MakeFrame({
-            Parent = Items.Box.Instance,
-            Pos = UDim2.fromOffset(0, 0),
-            Size = UDim2.fromOffset(2, 28),
-            Color = "Accent",
-            Z = 6
-        })
-        BoxActiveIndicator.Instance.BackgroundTransparency = 1
-
-        -- Selection text display
         Items.Selected = MakeText({
             Parent = Items.Box.Instance,
             Text = Dropdown.Placeholder,
@@ -6097,42 +6046,34 @@ end
             Z = 6
         })
 
-        -- Modern Pill Tag for Multi-select Counter
         Items.Badge = MakeFrame({
             Parent = Items.Box.Instance,
             Anchor = Vector2.new(1, 0.5),
-            Pos = UDim2.new(1, -26, 0.5, 0),
-            Size = UDim2.fromOffset(22, 16),
-            Color = "Light",
-            Round = 4,
+            Pos = UDim2.new(1, -28, 0.5, 0),
+            Size = UDim2.fromOffset(24, 16),
+            Color = "Accent",
+            Round = 10,
             Z = 6
         })
         Items.Badge.Instance.Visible = false
 
-        local BadgeStroke = Instance.new("UIStroke")
-        BadgeStroke.Thickness = 1
-        BadgeStroke.Transparency = 0.7
-        BadgeStroke.Color = Library.Theme.Accent
-        BadgeStroke.Parent = Items.Badge.Instance
-
         Items.BadgeText = MakeText({
             Parent = Items.Badge.Instance,
             Text = "0",
-            TextSize = 11,
+            TextSize = 10,
             Bold = true,
             Size = UDim2.new(1, 0, 1, 0),
-            Color = "Accent",
+            Color = "Background",
             Align = Enum.TextXAlignment.Center,
             Z = 7
         })
 
-        -- Smooth rotating chevron icon
         Items.Arrow = MakeImage({
             Parent = Items.Box.Instance,
             Icon = "chevron-down",
             Anchor = Vector2.new(1, 0.5),
-            Pos = UDim2.new(1, -7, 0.5, 0),
-            Size = UDim2.fromOffset(13, 13),
+            Pos = UDim2.new(1, -8, 0.5, 0),
+            Size = UDim2.fromOffset(14, 14),
             Color = "DimText",
             Z = 6
         })
@@ -6152,11 +6093,8 @@ end
         Popup.ShowActions = Dropdown.Multi
 
         Popup.OnState = function(Open)
-            local AnimInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
-            Library:Tween({ Rotation = Open and 180 or 0 }, AnimInfo, Items.Arrow.Instance)
-            Library:Tween({ Transparency = Open and 0.2 or 0.8 }, AnimInfo, BoxStroke)
-            Library:Tween({ BackgroundTransparency = Open and 0 or 1 }, AnimInfo, BoxActiveIndicator.Instance)
-            
+            Library:Tween({ Rotation = Open and 180 or 0 }, nil, Items.Arrow.Instance)
+            Library:Tween({ Transparency = Open and 0.2 or 0.8 }, nil, BoxStroke)
             Items.Arrow:ChangeItemTheme({ ImageColor3 = Open and "Accent" or "DimText" })
         end
 
@@ -6734,6 +6672,12 @@ end
                 end
             end)
 
+            if Keybind.Flag then
+                Library.SetFlags[Keybind.Flag] = function(Value)
+                    Keybind:Set(ParseKey(Value))
+                end
+            end
+
             Keybind:Set(Keybind.Key)
             return Keybind
         end
@@ -6954,9 +6898,9 @@ end
                 Library.Flags[Textbox.Flag] = Textbox.Value
             end
 
-            if not Silent then
-                Library:SafeCall(Textbox.Callback, Textbox.Value)
-            end
+            if not Silent and not Library.Silent then
+    Library:SafeCall(Toggle.Callback, Textbox.Value)
+end
         end
 
         function Textbox:Get()
@@ -7290,14 +7234,14 @@ end
 
         Library:SafeCall(Keybind.Callback, Keybind.Key)
     end)
-
-    Keybind:Set(Keybind.Key)
-
+    
     if Keybind.Flag then
         Library.SetFlags[Keybind.Flag] = function(Value)
             Keybind:Set(ParseKey(Value))
         end
     end
+
+    Keybind:Set(Keybind.Key)
 
     return setmetatable(Keybind, Library)
 end
@@ -8666,6 +8610,8 @@ end
                 Config[Index] = { __color = Value:ToHex() }
             elseif typeof(Value) == "EnumItem" then
                 Config[Index] = tostring(Value)
+            elseif type(Value) == "table" and Value.__color then
+                Config[Index] = Value
             else
                 Config[Index] = Value
             end
@@ -8699,16 +8645,18 @@ end
         Library.Silent = true
 
         for Index, Value in Decoded do
+            if string.sub(Index, 1, 2) == "__" then continue end
+            
             local SetFunction = Library.SetFlags[Index]
-            if not SetFunction then continue end
-
-            pcall(function()
-                if type(Value) == "table" and Value.__color then
-                    SetFunction(Color3.fromHex(Value.__color), Value.__alpha or 0, Value.__rainbow or false)
-                else
-                    SetFunction(Value)
-                end
-            end)
+            if SetFunction then
+                pcall(function()
+                    if type(Value) == "table" and Value.__color then
+                        SetFunction(Color3.fromHex(Value.__color), Value.__alpha or 0, Value.__rainbow or false)
+                    else
+                        SetFunction(Value)
+                    end
+                end)
+            end
         end
 
         if type(Decoded.__theme) == "table" then
@@ -8733,28 +8681,28 @@ end
 
     Library.SaveConfigFile = function(Self, Name)
         if not writefile then return false end
-        local Success, Err = pcall(function()
-            writefile(Library.ConfigFolder .. "/" .. Name .. ".json", Library:GetConfig())
+        local Path = Library.ConfigFolder .. "/" .. Name .. ".json"
+        local OldCreated = nil
+        if isfile and isfile(Path) then
+            pcall(function()
+                OldCreated = HttpService:JSONDecode(readfile(Path)).__created
+            end)
+        end
+
+        local Success, _ = pcall(function()
+            writefile(Path, Library:GetConfig(OldCreated))
         end)
         return Success
     end
 
-    Library.LoadConfigFile = function(Self, Name)
-        if not isfile or not readfile then return false end
-        local Path = Library.ConfigFolder .. "/" .. Name .. ".json"
-        if not isfile(Path) then return false end
-
-        return Library:LoadConfig(readfile(Path))
-    end
-   
     Library.ListConfigs = function(Self)
         local Result = { }
-        if not listfiles or not isfolder(Library.ConfigFolder) then return Result end
+        if not isfolder(Library.ConfigFolder) then return Result end
 
         pcall(function()
             for _, File in listfiles(Library.ConfigFolder) do
-                
-                local Name = string.match(File, "([^/\\]+)%.json$")
+                local CleanPath = string.gsub(File, "\\", "/")
+                local Name = string.match(CleanPath, "([^/]+)%.json$")
                 if Name and Name ~= "autoload_config" then 
                     table.insert(Result, Name) 
                 end
