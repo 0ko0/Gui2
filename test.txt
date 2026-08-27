@@ -8694,6 +8694,23 @@ end
         end)
         return Success
     end
+    
+    Library.LoadConfigFile = function(Self, Name)
+        if not isfile or not readfile then return false end
+        local Path = Library.ConfigFolder .. "/" .. Name .. ".json"
+        if not isfile(Path) then return false end
+
+        local Content = ""
+        local Success = pcall(function()
+            Content = readfile(Path)
+        end)
+
+        if Success and Content ~= "" then
+            return Library:LoadConfig(Content)
+        end
+
+        return false
+    end
 
     Library.ListConfigs = function(Self)
         local Result = { }
