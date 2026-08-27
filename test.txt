@@ -5495,7 +5495,7 @@ end
             end
 
             if not Silent and not Library.Silent then
-    Library:SafeCall(Toggle.Callback, Slider.Value)
+    Library:SafeCall(Slider.Callback, Slider.Value)
 end
         end
 
@@ -5710,7 +5710,7 @@ end
             end
 
             if not Silent and not Library.Silent then
-    Library:SafeCall(Toggle.Callback, RangeSlider.Value)
+    Library:SafeCall(RangeSlider.Callback, RangeSlider.Value)
 end
         end
 
@@ -6899,7 +6899,7 @@ end
             end
 
             if not Silent and not Library.Silent then
-    Library:SafeCall(Toggle.Callback, Textbox.Value)
+    Library:SafeCall(Textbox.Callback, Textbox.Value)
 end
         end
 
