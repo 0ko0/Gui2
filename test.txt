@@ -2784,9 +2784,9 @@ end
         local H = Library.WindowHeight
         local TopH = 51
         local Gap = 10
-        local RailW = 60
-        local RailH = 340
-        local SubW = 260
+        local RailW = 140 
+local RailH = 340
+local SubW = 260
         local SubH = 50
         local MainX = RailW + Gap
         local RailY = math.floor((H - RailH) / 2)
@@ -3836,12 +3836,12 @@ end
 
         local Items = { }
         local Index = #Window.Tabs
-        local RowY = 10 + Index * 50
+        local RowY = 10 + Index * 48 
 
         Items.Row = MakeFrame({
             Parent = Window.Items.Rail.Instance,
-            Pos = UDim2.fromOffset(10, RowY),
-            Size = UDim2.fromOffset(40, 40),
+            Pos = UDim2.fromOffset(8, RowY),
+            Size = UDim2.new(1, -16, 0, 38),
             Color = "Element",
             Round = 8,
             Clip = true,
@@ -3853,7 +3853,7 @@ end
         Items.Bar = MakeFrame({
             Parent = Window.Items.Rail.Instance,
             Anchor = Vector2.new(0, 0.5),
-            Pos = UDim2.new(0, 0, 0, RowY + 20),
+            Pos = UDim2.new(0, 0, 0, RowY + 19),
             Size = UDim2.fromOffset(3, 0),
             Color = "Accent",
             Round = 4,
@@ -3874,9 +3874,22 @@ end
         Items.Icon = MakeImage({
             Parent = Items.Row.Instance,
             Icon = Tab.Icon,
-            Pos = UDim2.fromOffset(10, 10),
-            Size = UDim2.fromOffset(20, 20),
+            Anchor = Vector2.new(0, 0.5),
+            Pos = UDim2.new(0, 10, 0.5, 0),
+            Size = UDim2.fromOffset(18, 18),
             Color = "DimIcon",
+            Z = 4
+        })
+
+        Items.Label = MakeText({
+            Parent = Items.Row.Instance,
+            Text = Tab.Name,
+            TextSize = 14,
+            Anchor = Vector2.new(0, 0.5),
+            Pos = UDim2.new(0, 34, 0.5, 0),
+            Size = UDim2.new(1, -40, 0, 20),
+            Color = "DimText",
+            Truncate = true,
             Z = 4
         })
 
@@ -3946,6 +3959,11 @@ end
                 ImageColor3 = Active and Library.Theme.Accent or Library.Theme.DimIcon
             })
 
+            Items.Label:ChangeItemTheme({ TextColor3 = Active and "Text" or "DimText" })
+            Items.Label:Tween({
+                TextColor3 = Active and Library.Theme.Text or Library.Theme.DimText
+            })
+
             Items.Row:Tween({ BackgroundTransparency = Active and 0 or 1 })
             Items.Bar:Tween({ Size = UDim2.fromOffset(3, Active and 16 or 0) })
         end
@@ -3953,9 +3971,11 @@ end
         Items.Row:OnHover(function()
             if Tab.Active then return end
             Items.Icon:Tween({ ImageColor3 = Library.Theme.Text })
+            Items.Label:Tween({ TextColor3 = Library.Theme.Text })
         end, function()
             if Tab.Active then return end
             Items.Icon:Tween({ ImageColor3 = Library.Theme.DimIcon })
+            Items.Label:Tween({ TextColor3 = Library.Theme.DimText })
         end)
 
         local function EnterFirstSub()
