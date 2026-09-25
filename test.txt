@@ -5350,10 +5350,10 @@ end
     end
 
     local function BuildSliderRow(Section, Name, SearchName)
-        local Row = Section:AddRow(50, SearchName or Name)
-        local Width = Section.Width
-        local TrackW = Width - 30
-        local Items = { Row = Row }
+    local Row, RowData = Section:AddRow(50, SearchName or Name)
+    local Width = Section.Width
+    local TrackW = Width - 30
+    local Items = { Row = Row, RowData = RowData }
 
         Items.Label = MakeText({
             Parent = Row.Instance,
@@ -5554,9 +5554,12 @@ end
         end
 
         function Slider:SetVisible(Bool)
-            Items.Row.Instance.Visible = Bool
-            Section:Reflow()
-        end
+    Items.Row.Instance.Visible = Bool
+    if Items.RowData then
+        Items.RowData.Visible = Bool
+    end
+    Section:Reflow()
+end
 
         function Slider:SetCallback(NewCallback)
             Slider.Callback = NewCallback or function() end
@@ -5770,9 +5773,12 @@ end
         end
 
         function RangeSlider:SetVisible(Bool)
-            Items.Row.Instance.Visible = Bool
-            Section:Reflow()
-        end
+    Items.Row.Instance.Visible = Bool
+    if Items.RowData then
+        Items.RowData.Visible = Bool
+    end
+    Section:Reflow()
+end
 
         function RangeSlider:SetCallback(NewCallback)
             RangeSlider.Callback = NewCallback or function() end
@@ -6009,8 +6015,8 @@ end
         local HasDesc = Dropdown.Description ~= ""
 local RowHeight = HasDesc and 68 or 60
 
-        local Row = Section:AddRow(RowHeight, Dropdown.Name)
-        local Items = { Row = Row }
+        local Row, RowData = Section:AddRow(RowHeight, Dropdown.Name)
+local Items = { Row = Row, RowData = RowData }
 
         Items.Label = MakeText({
             Parent = Row.Instance,
@@ -6303,9 +6309,12 @@ Items.Box = MakeFrame({
         end
 
         function Dropdown:SetVisible(Bool)
-            Row.Instance.Visible = Bool
-            Section:Reflow()
-        end
+    Row.Instance.Visible = Bool
+    if RowData then
+        RowData.Visible = Bool
+    end
+    Section:Reflow()
+end
 
         function Dropdown:SetCallback(NewCallback)
             Dropdown.Callback = NewCallback or function() end
