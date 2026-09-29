@@ -126,11 +126,22 @@ local IsMobile = UserInputService.TouchEnabled
 
     local IconPack
 
-    pcall(function()
-        local Url = "https://raw.githubusercontent.com/Footagesus/Icons/main/Main-v2.lua"
-        IconPack = loadstring(game:HttpGetAsync(Url))()
-        IconPack.SetIconsType("lucide")
-    end)
+pcall(function()
+    local CachePath = Library.AssetsFolder .. "/LucideIcons.lua"
+    local Source = ""
+
+    if isfile and isfile(CachePath) then
+        Source = readfile(CachePath)
+    else
+        Source = game:HttpGetAsync("https://raw.githubusercontent.com/Footagesus/Icons/main/Main-v2.lua")
+        if writefile and Source and #Source > 100 then
+            writefile(CachePath, Source)
+        end
+    end
+
+    IconPack = loadstring(Source)()
+    IconPack.SetIconsType("lucide")
+end)
 
     local function ResolveIcon(Icon)
         if type(Icon) == "number" then
@@ -320,14 +331,16 @@ local IsMobile = UserInputService.TouchEnabled
     Library.Connections = { }
     Library.Threads = { }
     Library.ThemingStuff = { }
-    Library.ThemeMap = { }
-    Library.AccentGradients = { }
-    Library.AccentShadows = { }
-    Library.OpenFrames = { }
+    Library.ThemeMap = setmetatable({ }, { __mode = "k" }) 
+    Library.TouchShields = setmetatable({ }, { __mode = "k" })
+    Library.OpenFrames = setmetatable({ }, { __mode = "k" })
+
+    Library.AccentGradients = setmetatable({ }, { __mode = "v" })
+    Library.AccentShadows = setmetatable({ }, { __mode = "v" })
+
     Library.Windows = { }
     Library.Notifs = { }
     Library.TouchButtons = { }
-    Library.TouchShields = { }
     Library.Searchables = { }
     Library.MenuKeybind = Enum.KeyCode.G
     Library.Binding = false
@@ -459,15 +472,15 @@ end)
         return Success, Result
     end
 
-    Library.Round = function(Self, Number, Float)
-        Number = tonumber(Number) or 0
-        Float = (tonumber(Float) and tonumber(Float) > 0) and tonumber(Float) or 1
+Library.Round = function(Self, Number, Float)
+    Number = tonumber(Number) or 0
+    Float = tonumber(Float)
+    if not Float or Float <= 0 then return math.floor(Number + 0.5) end
 
-        local Result = math.floor(Number / Float + 0.5) * Float
-        local Places = math.max(0, math.ceil(-math.log(Float, 10)))
-
-        return tonumber(string.format("%." .. Places .. "f", Result)) or Number
-    end
+    local Result = math.floor(Number / Float + 0.5) * Float
+    local Places = math.max(0, math.ceil(-math.log(Float, 10)))
+    return tonumber(string.format("%." .. Places .. "f", Result)) or Number
+end
 
     Library.Tween = function(Self, Properties, Info, RawItem)
         local Object = RawItem or Self.Instance
@@ -719,37 +732,42 @@ end)
         table.insert(Library.AccentGradients, Gradient)
     end
 
-    Library.ApplyThemeInstant = function(Self)
-        for _, Item in Library.ThemingStuff do
-            if Item.Item and Item.Item.Parent then
-                for Property, Value in Item.Properties do
-                    pcall(function()
-                        if type(Value) == "string" then
-                            Item.Item[Property] = Library.Theme[Value]
-                        elseif type(Value) == "function" then
-                            Item.Item[Property] = Value()
-                        end
-                    end)
-                end
+Library.ApplyThemeInstant = function(Self)
+    local ValidTheme = {}
+    for _, Item in ipairs(Library.ThemingStuff) do
+        if Item.Item and Item.Item.Parent then
+            table.insert(ValidTheme, Item)
+            for Property, Value in pairs(Item.Properties) do
+                pcall(function()
+                    if type(Value) == "string" then
+                        Item.Item[Property] = Library.Theme[Value]
+                    elseif type(Value) == "function" then
+                        Item.Item[Property] = Value()
+                    end
+                end)
             end
         end
+    end
+    Library.ThemingStuff = ValidTheme
 
-        for _, Gradient in Library.AccentGradients do
-            pcall(function()
-                if Gradient and Gradient.Parent then
-                    Gradient.Color = AccentSequence()
-                end
-            end)
-        end
-
-        for _, Shadow in Library.AccentShadows do
-            pcall(function()
-                if Shadow and Shadow.Parent then
-                    Shadow.Color = Library.Theme.Accent
-                end
-            end)
+    for i = #Library.AccentGradients, 1, -1 do
+        local Gradient = Library.AccentGradients[i]
+        if Gradient and Gradient.Parent then
+            Gradient.Color = AccentSequence()
+        else
+            table.remove(Library.AccentGradients, i)
         end
     end
+
+    for i = #Library.AccentShadows, 1, -1 do
+        local Shadow = Library.AccentShadows[i]
+        if Shadow and Shadow.Parent then
+            Shadow.Color = Library.Theme.Accent
+        else
+            table.remove(Library.AccentShadows, i)
+        end
+    end
+end
 
     Library.SetAccent = function(Self, Color)
         Library.Theme.Accent = Color
@@ -1201,11 +1219,14 @@ end
         local Scale = Library.UserScale
 
         if IsMobile and workspace.CurrentCamera then
-            local Viewport = workspace.CurrentCamera.ViewportSize
-            local FitX = (Viewport.X * 0.94) / Library.WindowWidth
-            local FitY = (Viewport.Y * 0.9) / Library.WindowHeight
-            Scale = Scale * math.clamp(math.min(FitX, FitY), 0.3, 1)
-        end
+    local Viewport = workspace.CurrentCamera.ViewportSize
+    
+    local ActualTotalW = Library.WindowWidth + 150
+    local ActualTotalH = Library.WindowHeight + 25
+    local FitX = (Viewport.X * 0.92) / ActualTotalW
+    local FitY = (Viewport.Y * 0.88) / ActualTotalH
+    Scale = Scale * math.clamp(math.min(FitX, FitY), 0.3, 1)
+end
 
         local Old = Library.UIScale.Instance.Scale
         local Centers = { }
@@ -1333,33 +1354,49 @@ Hit:Connect("InputBegan", function(Input)
         end)
     end
 
-    local function PlaceBelow(GetAnchor)
-        return function(Extra)
-            local Anchor = GetAnchor()
-            local Scale = Library:GetScreenScale()
-            local Viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920, 1080)
+local function PlaceBelow(GetAnchor)
+    return function(Extra)
+        local Anchor = GetAnchor()
+        local Scale = Library:GetScreenScale()
+        local Viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920, 1080)
+        
+        local X = Anchor.AbsolutePosition.X / Scale
+        local AnchorY = Anchor.AbsolutePosition.Y / Scale
+        local AnchorH = Anchor.AbsoluteSize.Y / Scale
+        local ViewportH = Viewport.Y / Scale
+
+        if (ViewportH - (AnchorY + AnchorH)) < 220 then
             
-            local X = Anchor.AbsolutePosition.X / Scale
-            local Y = (Anchor.AbsolutePosition.Y + Anchor.AbsoluteSize.Y + GuiInset) / Scale + (Extra or 0)
-                       
-            local MaxX = (Viewport.X / Scale) - 160
-            X = math.clamp(X, 10, math.max(10, MaxX))
-
-            return UDim2.fromOffset(X, Y)
+            return UDim2.new(0, math.clamp(X, 10, (Viewport.X / Scale) - 170), 0, AnchorY - (Extra or 4)), true
+        else
+            
+            return UDim2.new(0, math.clamp(X, 10, (Viewport.X / Scale) - 170), 0, AnchorY + AnchorH + (Extra or 0)), false
         end
     end
+end
 
-    local function PlaceBeside(GetAnchor)
-        return function(Extra)
-            local Anchor = GetAnchor()
-            local Scale = Library:GetScreenScale()
-            local Right = Anchor.AbsolutePosition.X + Anchor.AbsoluteSize.X
-            local X = Right / Scale + 8
-            local Y = (Anchor.AbsolutePosition.Y + GuiInset) / Scale
+local function PlaceBeside(GetAnchor)
+    return function(Extra)
+        local Anchor = GetAnchor()
+        local Scale = Library:GetScreenScale()
+        local Viewport = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920, 1080)
+        
+        local AnchorX = Anchor.AbsolutePosition.X / Scale
+        local AnchorW = Anchor.AbsoluteSize.X / Scale
+        local Y = Anchor.AbsolutePosition.Y / Scale
 
-            return UDim2.fromOffset(X, Y + (Extra or 0))
+        local X
+        
+        if (AnchorX + AnchorW + 190) > (Viewport.X / Scale) then
+            X = AnchorX - 190 - 8 - (Extra or 0)
+        else
+            X = AnchorX + AnchorW + 8 + (Extra or 0)
         end
+
+        local MaxY = (Viewport.Y / Scale) - 340
+        return UDim2.fromOffset(X, math.clamp(Y + (Extra or 0), 10, math.max(10, MaxY)))
     end
+end
 
     local function RetreatUp(Current)
         return UDim2.fromOffset(Current.X.Offset, Current.Y.Offset - 8)
@@ -1400,11 +1437,19 @@ Hit:Connect("InputBegan", function(Input)
                 if Config.OnOpen then Config.OnOpen() end
 
                 Frame.Instance.Parent = Library.PopupHolder.Instance
-                Frame.Instance.Position = Place(From)
+                
+                local StartPos, IsFlipped = Place(From)
+                if IsFlipped ~= nil then
+                    Frame.Instance.AnchorPoint = Vector2.new(0, IsFlipped and 1 or 0)
+                end
+                
+                Frame.Instance.Position = StartPos
                 Frame.Instance.Visible = true
                 Library.TouchShields[Frame.Instance] = Level
                 Library:SetDim(true)
-                Frame:Tween({ Position = Place(To) })
+                
+                local EndPos = Place(To)
+                Frame:Tween({ Position = EndPos })
 
                 for _, Value in Library.OpenFrames do
                     if not KeepOpen(Value) then
@@ -3052,7 +3097,7 @@ local SubW = 260
         local DynamicIsland = MakeFrame({
             Parent = Library.Holder.Instance,
             Anchor = Vector2.new(0.5, 0),
-            Pos = UDim2.new(0.5, 0, 0, 12),
+            Pos = UDim2.new(0.5, 0, 0, math.max(GuiInset + 6, 20)),
             Size = UDim2.fromOffset(160, 36),
             Color = "Section",
             Round = 18,
@@ -3761,14 +3806,18 @@ Library:Create("TextButton", {
             else
                 Items.Root:FadeDescendants(Bool)
             end
+
+            if Window.MobileToggleButton and Window.MobileToggleButton.UpdateState then
+                Window.MobileToggleButton.UpdateState(Bool)
+            end
         end
 
         Library:Connect(UserInputService.InputBegan, function(Input, Processed)
             if Processed or Library.Binding then return end
 
-            if Input.KeyCode == Library.MenuKeybind then
-                Window:SetOpen(not Window.IsOpen)
-            end
+            if KeyMatches(Input, Library.MenuKeybind) then
+    Window:SetOpen(not Window.IsOpen)
+end
         end)
 
         local function RunSearch(Query)
@@ -3784,7 +3833,7 @@ Library:Create("TextButton", {
                     Match = string.find(string.lower(Data.Section.Name), Query, 1, true) ~= nil
                 end
 
-                Data.Visible = Match
+                Data.SearchMatch = Match
 
                 if Data.Section then
                     Data.Section.Dirty = true
@@ -3809,10 +3858,11 @@ Library:Create("TextButton", {
                 local Sig = tostring(Sub)
 
                 for _, Section in Sub.Sections do
-                    for _, Data in Section.Rows do
-                        Sig ..= Data.Visible ~= false and "1" or "0"
-                    end
-                end
+    for _, Data in Section.Rows do
+        local Shown = (Data.Visible ~= false) and (Data.SearchMatch ~= false)
+        Sig ..= Shown and "1" or "0"
+    end
+end
 
                 if Sig ~= Window.SearchSig then
                     Window.SearchSig = Sig
@@ -3845,6 +3895,112 @@ Library:Create("TextButton", {
 
             Items.Root:FadeDescendants(true)
             Library:Tween({ Position = Base }, Rise, Items.Root.Instance)
+        end
+
+        if IsMobile then
+            
+            local MobileBtn = Library:Create("TextButton", {
+                Parent = Library.Holder.Instance,
+                Name = "Zolar_MobileToggle",
+                Size = UDim2.fromOffset(46, 46),
+                Position = UDim2.new(0, 15, 0.45, 0), 
+                BackgroundColor3 = Library.Theme.Section,
+                BackgroundTransparency = 0.2,
+                Text = "",
+                AutoButtonColor = false,
+                Active = true,
+                ZIndex = 5000
+            }):AddToTheme({ BackgroundColor3 = "Section" })
+
+            Corner(MobileBtn.Instance, 23) 
+
+            local MobileStroke = Library:Create("UIStroke", {
+                Parent = MobileBtn.Instance,
+                Color = Library.Theme.Accent,
+                Thickness = 1.5,
+                Transparency = 0.3
+            }):AddToTheme({ Color = "Accent" })
+
+            local MobileIcon = MakeImage({
+                Parent = MobileBtn.Instance,
+                Icon = Window.Icon or "layers",
+                Anchor = Vector2.new(0.5, 0.5),
+                Pos = UDim2.new(0.5, 0, 0.5, 0),
+                Size = UDim2.fromOffset(22, 22),
+                Color = "Accent",
+                Z = 5001
+            })
+
+            local Dragging = false
+            local DragStart = nil
+            local StartPos = nil
+            local HasMoved = false
+
+            MobileBtn:Connect("InputBegan", function(Input)
+                if Input.UserInputType == Enum.UserInputType.Touch or Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    Dragging = true
+                    HasMoved = false
+                    DragStart = Input.Position
+                    
+                    local Scale = Library:GetScreenScale()
+                    local ScreenSize = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920, 1080)
+                    local ParentSize = ScreenSize / Scale
+                   
+                    StartPos = Vector2.new(
+                        MobileBtn.Instance.Position.X.Scale * ParentSize.X + MobileBtn.Instance.Position.X.Offset,
+                        MobileBtn.Instance.Position.Y.Scale * ParentSize.Y + MobileBtn.Instance.Position.Y.Offset
+                    )
+                end
+            end)
+
+            Library:Connect(UserInputService.InputChanged, function(Input)
+                if Dragging and (Input.UserInputType == Enum.UserInputType.Touch or Input.UserInputType == Enum.UserInputType.MouseMovement) then
+                    local Delta = Input.Position - DragStart
+                    if Delta.Magnitude > 6 then
+                        HasMoved = true
+                        local Scale = Library:GetScreenScale()
+                        local ScreenSize = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize or Vector2.new(1920, 1080)
+                                                
+                        local NewX = math.clamp(StartPos.X + (Delta.X / Scale), 5, (ScreenSize.X / Scale) - 51)
+                        local NewY = math.clamp(StartPos.Y + (Delta.Y / Scale), 5 + GuiInset, (ScreenSize.Y / Scale) - 51)
+                        
+                        MobileBtn.Instance.Position = UDim2.fromOffset(NewX, NewY)
+                    end
+                end
+            end)
+
+            Library:Connect(UserInputService.InputEnded, function(Input)
+                if Input.UserInputType == Enum.UserInputType.Touch or Input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    if Dragging then
+                        Dragging = false
+                        
+                        if not HasMoved then
+                            
+                            Library:Tween({ Size = UDim2.fromOffset(40, 40) }, TweenInfo.new(0.08), MobileBtn.Instance)
+                            task.delay(0.08, function()
+                                Library:Tween({ Size = UDim2.fromOffset(46, 46) }, TweenInfo.new(0.12), MobileBtn.Instance)
+                            end)
+                            
+                            Window:SetOpen(not Window.IsOpen)
+                        end
+                        DragStart = nil
+                    end
+                end
+            end)
+
+            MobileBtn.UpdateState = function(IsOpen)
+                if IsOpen then
+                    
+                    Library:Tween({ BackgroundTransparency = 0.6 }, TweenInfo.new(0.2), MobileBtn.Instance)
+                    Library:Tween({ Transparency = 0.7 }, TweenInfo.new(0.2), MobileStroke.Instance)
+                else
+                    
+                    Library:Tween({ BackgroundTransparency = 0.1 }, TweenInfo.new(0.2), MobileBtn.Instance)
+                    Library:Tween({ Transparency = 0.2 }, TweenInfo.new(0.2), MobileStroke.Instance)
+                end
+            end
+
+            Window.MobileToggleButton = MobileBtn
         end
 
     task.defer(function()
@@ -4327,7 +4483,7 @@ Library:Create("TextButton", {
 
                     for _, Data in Section.Rows do
                         Data.Frame:CancelFade()
-                        Data.Frame.Instance.Visible = Data.Visible ~= false
+                        Data.Frame.Instance.Visible = (Data.Visible ~= false) and (Data.SearchMatch ~= false)
                     end
                 end
             end
@@ -4385,7 +4541,7 @@ Library:Create("TextButton", {
                         RevealParts(Section)
 
                         for RowIndex, Data in Section.Rows do
-                            if Data.Visible == false then continue end
+                            if Data.Visible == false or Data.SearchMatch == false then continue end
 
                             task.delay(RowIndex * RowStep, function()
                                 local Home = UDim2.fromOffset(0, Data.Y)
@@ -4584,7 +4740,7 @@ Library:Create("TextButton", {
             local Visible = 0
 
             for _, Data in Section.Rows do
-                local Shown = Data.Visible ~= false
+                local Shown = (Data.Visible ~= false) and (Data.SearchMatch ~= false)
 
                 Data.Frame.Instance.Visible = Shown
 
@@ -4607,28 +4763,29 @@ Library:Create("TextButton", {
         end
 
         function Section:AddRow(Height, SearchName)
-            local Frame = MakeFrame({
-                Parent = Items.Frame.Instance,
-                Size = UDim2.fromOffset(Section.Width, Height),
-                Z = 4
-            })
+    local Frame = MakeFrame({
+        Parent = Items.Frame.Instance,
+        Size = UDim2.fromOffset(Section.Width, Height),
+        Z = 4
+    })
 
-            local Data = {
-                Frame = Frame,
-                Height = Height,
-                Y = 0,
-                Visible = true,
-                Name = SearchName or Section.Name,
-                Section = Section,
-                Window = SubTab.Window
-            }
+    local Data = {
+        Frame = Frame,
+        Height = Height,
+        Y = 0,
+        Visible = true,
+        SearchMatch = true, 
+        Name = SearchName or Section.Name,
+        Section = Section,
+        Window = SubTab.Window
+    }
 
-            table.insert(Section.Rows, Data)
-            table.insert(Library.Searchables, Data)
+    table.insert(Section.Rows, Data)
+    table.insert(Library.Searchables, Data)
 
-            Section:Reflow()
-            return Frame, Data
-        end
+    Section:Reflow()
+    return Frame, Data
+end
 
         table.insert(SubTab.Sections, Section)
         table.insert(Column.Sections, Section)
@@ -4638,7 +4795,7 @@ Library:Create("TextButton", {
     end
 
     Library.Toggle = function(Self, Params)
-        Params = Params or { }
+        Params = Params or { }               
 
         local Section = Self
 
@@ -4659,7 +4816,7 @@ Library:Create("TextButton", {
       local HasDesc = Toggle.Description ~= ""
 local RowHeight = HasDesc and 50 or 38
 
-        local Row = Section:AddRow(RowHeight, Toggle.Name)
+local Row, RowData = Section:AddRow(RowHeight, Toggle.Name)
         local Items = { Row = Row }
 
         if Toggle.Risky then
@@ -4845,6 +5002,14 @@ end
         end)
 
         Toggle.SlotX = -58
+
+function Toggle:SetVisible(Bool)
+    Row.Instance.Visible = Bool
+    if RowData then
+        RowData.Visible = Bool
+    end
+    Section:Reflow()
+end
 
         local function TakeSlot(Width)
             local X = Toggle.SlotX
@@ -5142,23 +5307,23 @@ end
         end)
     end)
 
-    Library:Connect(UserInputService.InputBegan, function(Input, Processed)
-        if Processed or Keybind.Picking or Keybind.Mode == "Always" then return end
-        if not KeyMatches(Input, Keybind.Key) then return end
+Library:Connect(UserInputService.InputBegan, function(Input, Processed)
+    if Processed or Keybind.Picking or Keybind.Mode == "Always" then return end
+    if not KeyMatches(Input, Keybind.Key) then return end
 
-        if Keybind.Mode == "Hold" then
-            Toggle:Set(true)
-        elseif Keybind.Mode == "Toggle" then
-            Toggle:Set(not Toggle.Value)
-        end
-    end)
+    if Keybind.Mode == "Hold" then
+        Toggle:Set(true)
+    elseif Keybind.Mode == "Toggle" then
+        Toggle:Set(not Toggle.Value)
+    end
+end)
 
-    Library:Connect(UserInputService.InputEnded, function(Input)
-        if Keybind.Mode ~= "Hold" or not Keybind.Key then return end
-        if not KeyMatches(Input, Keybind.Key) then return end
+Library:Connect(UserInputService.InputEnded, function(Input)
+    if Keybind.Mode ~= "Hold" or not Keybind.Key then return end
+    if not KeyMatches(Input, Keybind.Key) then return end
 
-        Toggle:Set(false)
-    end)
+    Toggle:Set(false)
+end)
 
     if Keybind.Flag then
         Library.SetFlags[Keybind.Flag] = function(Value)
@@ -5249,6 +5414,21 @@ end
                     if not DimShown then ChildDim.Instance.Visible = false end
                 end)
             end
+                  
+function Extra:Reflow()
+    local CurrentY = 30
+    for _, RowData in ipairs(Extra.Rows or {}) do
+        if RowData.Visible ~= false then
+            RowData.Frame.Instance.Visible = true
+            RowData.Frame.Instance.Position = UDim2.fromOffset(0, CurrentY)
+            CurrentY = CurrentY + RowData.Height
+        else
+            RowData.Frame.Instance.Visible = false
+        end
+    end
+    Extra.NextY = CurrentY
+    Frame.Instance.Size = UDim2.fromOffset(Extra.Width, math.max(CurrentY + 8, 38))
+end
 
             function Extra:AddRow(Height, SearchName)
                 local RowFrame = MakeFrame({
@@ -5265,6 +5445,9 @@ end
                     Visible = true,
                     Name = SearchName or Toggle.Name
                 }
+                
+                Extra.Rows = Extra.Rows or {}
+                table.insert(Extra.Rows, Data)
 
                 Extra.NextY += Height
                 Frame.Instance.Size = UDim2.fromOffset(Extra.Width, Extra.NextY + 8)
@@ -5526,7 +5709,9 @@ end
                 RawVal = Min + (Steps * Slider.Step)
             end
             RawVal = math.clamp(RawVal, Min, Max)
-            return Library:Round(RawVal, Slider.Decimals) or Min
+            
+local Precision = Slider.Step or (1 / (10 ^ (Slider.Decimals or 0)))
+return Library:Round(RawVal, Precision) or Min
         end
 
         function Slider:Set(Val, Instant, Silent)
@@ -5646,19 +5831,27 @@ end
             end
         end)
 
-        Library:Connect(Items.Hit.Instance.MouseEnter, function()
-            Slider.Hovered = true
-            if not Slider.Disabled then
-                Library:Tween({ BackgroundColor3 = Library.Theme.Hover }, nil, Items.Track.Instance)
-            end
-        end)
+Library:Connect(Items.Hit.Instance.MouseEnter, function()
+    Slider.Hovered = true
+    if not Slider.Disabled then
+        Library:Tween({ BackgroundColor3 = Library.Theme.Hover }, nil, Items.Track.Instance)
+    end
+    
+    if Section.Column and Section.Column.Scroll then
+        Section.Column.Scroll.Instance.ScrollingEnabled = false
+    end
+end)
 
-        Library:Connect(Items.Hit.Instance.MouseLeave, function()
-            Slider.Hovered = false
-            if not Slider.Disabled then
-                Library:Tween({ BackgroundColor3 = Library.Theme.Element }, nil, Items.Track.Instance)
-            end
-        end)
+Library:Connect(Items.Hit.Instance.MouseLeave, function()
+    Slider.Hovered = false
+    if not Slider.Disabled then
+        Library:Tween({ BackgroundColor3 = Library.Theme.Element }, nil, Items.Track.Instance)
+    end
+
+    if Section.Column and Section.Column.Scroll then
+        Section.Column.Scroll.Instance.ScrollingEnabled = true
+    end
+end)
 
         Slider:Set(Slider.Default, true)
 
@@ -5725,7 +5918,8 @@ end
                 RawVal = Min + (Steps * RangeSlider.Step)
             end
             RawVal = math.clamp(RawVal, Min, Max)
-            return Library:Round(RawVal, RangeSlider.Decimals) or Min
+            local Precision = RangeSlider.Step or (1 / (10 ^ (RangeSlider.Decimals or 0)))
+return Library:Round(RawVal, Precision) or Min
         end
 
         function RangeSlider:Set(LowVal, HighVal, Instant, Silent)
@@ -5926,12 +6120,20 @@ end
             if not RangeSlider.Disabled then
                 Library:Tween({ BackgroundColor3 = Library.Theme.Hover }, nil, Items.Track.Instance)
             end
+            
+            if Section.Column and Section.Column.Scroll then
+                Section.Column.Scroll.Instance.ScrollingEnabled = false
+            end
         end)
 
         Library:Connect(Items.Hit.Instance.MouseLeave, function()
             RangeSlider.Hovered = false
             if not RangeSlider.Disabled then
                 Library:Tween({ BackgroundColor3 = Library.Theme.Element }, nil, Items.Track.Instance)
+            end
+            
+            if Section.Column and Section.Column.Scroll then
+                Section.Column.Scroll.Instance.ScrollingEnabled = true
             end
         end)
 
@@ -6579,9 +6781,12 @@ local RowHeight = HasDesc and 58 or 44
         end
 
         function Button:SetVisible(Bool)
-            Row.Instance.Visible = Bool
-            Section:Reflow()
-        end
+    Row.Instance.Visible = Bool
+    if Data then
+        Data.Visible = Bool
+    end
+    Section:Reflow()
+end
 
         if Button.HoldTime > 0 then
             local HoldTween
@@ -6767,7 +6972,7 @@ local RowHeight = HasDesc and 58 or 44
 
         return setmetatable(Button, Library)
     end
-
+    
     Library.Textbox = function(Self, Params)
         Params = Params or { }
 
@@ -6799,7 +7004,7 @@ local RowHeight = HasDesc and 58 or 44
         local HasDesc = Textbox.Description ~= ""
 local RowHeight = HasDesc and 68 or 60
 
-        local Row = Section:AddRow(RowHeight, Textbox.Name)
+        local Row, RowData = Section:AddRow(RowHeight, Textbox.Name)
         local Items = { Row = Row }
 
         Items.Label = MakeText({
@@ -7023,9 +7228,12 @@ end
         end
 
         function Textbox:SetVisible(Bool)
-            Row.Instance.Visible = Bool
-            Section:Reflow()
-        end
+    Row.Instance.Visible = Bool
+    if RowData then
+        RowData.Visible = Bool
+    end
+    Section:Reflow()
+end
 
         HoverSwap(Items.Box)
 
@@ -7314,13 +7522,24 @@ end
         end)
     end)
 
-    Library:Connect(UserInputService.InputBegan, function(Input, Processed)
-        if Processed or Keybind.Picking or not Keybind.Key then return end
-        if not KeyMatches(Input, Keybind.Key) then return end
+Library:Connect(UserInputService.InputBegan, function(Input, Processed)
+    if Processed or Keybind.Picking or not Keybind.Key then return end
+    if not KeyMatches(Input, Keybind.Key) then return end
 
+    if Keybind.Mode == "Hold" then
+        Library:SafeCall(Keybind.Callback, true)
+    else
         Library:SafeCall(Keybind.Callback, Keybind.Key)
-    end)
-    
+    end
+end)
+
+Library:Connect(UserInputService.InputEnded, function(Input)
+    if Keybind.Mode ~= "Hold" or not Keybind.Key or Keybind.Picking then return end
+    if not KeyMatches(Input, Keybind.Key) then return end
+
+    Library:SafeCall(Keybind.Callback, false)
+end)
+
     if Keybind.Flag then
         Library.SetFlags[Keybind.Flag] = function(Value)
             Keybind:Set(ParseKey(Value))
@@ -7446,7 +7665,7 @@ end
             RowHeight = HasDesc and 44 or 28
         end
 
-        local Row = Section:AddRow(RowHeight, Label.Name)
+        local Row, RowData = Section:AddRow(RowHeight, Label.Name)
         local Items = { Row = Row }
 
         if HasIcon then
@@ -7552,9 +7771,12 @@ end
         end
 
         function Label:SetVisible(Bool)
-            Row.Instance.Visible = Bool
-            Section:Reflow()
-        end
+    Row.Instance.Visible = Bool
+    if RowData then
+        RowData.Visible = Bool
+    end
+    Section:Reflow()
+end
 
         return setmetatable(Label, Library)
     end
@@ -8767,30 +8989,28 @@ end)
             GameStat.Instance.Text = (Ok and Info and Info.Name) or "Unknown"
         end)
 
-        local Frames = 0
+local FrameCount = 0
+local LastTime = os.clock()
 
-        Library:Connect(RunService.RenderStepped, function()
-            Frames += 1
+Library:Connect(RunService.RenderStepped, function()
+    FrameCount = FrameCount + 1
+    local CurrentTime = os.clock()
+    
+    if CurrentTime - LastTime >= 1 then
+        local ExactFps = math.round(FrameCount / (CurrentTime - LastTime))
+        FpsStat.Instance.Text = tostring(ExactFps) .. " fps"
+        FrameCount = 0
+        LastTime = CurrentTime
+
+        local Ping = 0
+        pcall(function()
+            local Stat = StatsService.Network.ServerStatsItem["Data Ping"]
+            Ping = math.floor(Stat:GetValue())
         end)
-
-        Library:Thread(function()
-            while task.wait(0.5) do
-                if not Items.Bar.Instance.Parent then break end
-
-                FpsStat.Instance.Text = tostring(Frames * 2) .. " fps"
-                Frames = 0
-
-                local Ping = 0
-
-                pcall(function()
-                    local Stat = StatsService.Network.ServerStatsItem["Data Ping"]
-                    Ping = math.floor(Stat:GetValue())
-                end)
-
-                PingStat.Instance.Text = tostring(Ping) .. " ms"
-                TimeStat.Instance.Text = os.date("%I:%M %p")
-            end
-        end)
+        PingStat.Instance.Text = tostring(Ping) .. " ms"
+        TimeStat.Instance.Text = os.date("%I:%M %p")
+    end
+end)
 
         Items.Bar:MakeDraggable()
         Library.WatermarkBar = Items.Bar
@@ -8973,15 +9193,28 @@ end
         end
     end
 
-    Library.ResetConfig = function(Self)
-    for FlagName, _ in Library.Flags do
-        Library.Flags[FlagName] = nil
+Library.ResetConfig = function(Self)
+    for FlagName, SetFunc in pairs(Library.SetFlags) do
+        pcall(function()
+            local Val = Library.Flags[FlagName]
+            if type(Val) == "boolean" then
+                SetFunc(false)
+            elseif type(Val) == "number" then
+                SetFunc(0)
+            elseif type(Val) == "string" then
+                SetFunc("")
+            elseif type(Val) == "table" and not Val.__color then
+                
+                SetFunc({})
+            end
+        end)
     end
 
     Library:Notification({
         Name = "Reset Complete",
-        Description = "Flags have been reset. Reload your default config if needed.",
-        Icon = "refresh-cw"
+        Description = "All flags and UI controls have been reset to defaults.",
+        Icon = "refresh-cw",
+        Duration = 3
     })
 end
 
