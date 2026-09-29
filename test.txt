@@ -17,7 +17,8 @@ local isfolder = isfolder or function() return false end
 local makefolder = makefolder or function() end
 local listfiles = listfiles or list_files or function() return {} end
 local getcustomasset = getcustomasset or getcustomassetid or function() return "" end
-local setclipboard = setclipboard or toclipboard or function() end
+local setclipboard = setclipboard or toclipboard or set_clipboard or (Clipboard and Clipboard.set) or function(...) end
+local getclipboard = getclipboard or get_clipboard or (Clipboard and Clipboard.get) or function() return "" end
 
 local Players = cloneref(game:GetService("Players"))
 local UserInputService = cloneref(game:GetService("UserInputService"))
@@ -312,6 +313,7 @@ local IsMobile = UserInputService.TouchEnabled
     end
 
     DeriveTheme()
+    local IsOverAnyPopup 
 
     Library.Flags = { }
     Library.SetFlags = { }
@@ -416,10 +418,16 @@ local IsMobile = UserInputService.TouchEnabled
         elseif type(Signal) == "string" and type(Self) == "table" and Self.Instance then
             local IsClick = Signal == "MouseButton1Down" or Signal == "MouseButton1Click" or Signal == "Activated"
 
-            if IsClick and Self.Instance:IsA("GuiButton") then
-                Connection = Self.Instance.Activated:Connect(function(Input)
-                    Callback(Input)
-                end)
+if IsClick and Self.Instance:IsA("GuiButton") then
+    Connection = Self.Instance.Activated:Connect(function(Input)
+        
+        if IsOverAnyPopup and Input and IsOverAnyPopup(Input.Position) then
+            if not Self.Instance:IsDescendantOf(Library.PopupHolder.Instance) then
+                return
+            end
+        end
+        Callback(Input)
+    end)
             else
                 local TargetSignal = Self.Instance[Signal]
                 if TargetSignal and typeof(TargetSignal) == "RBXScriptSignal" and type(Callback) == "function" then
@@ -1112,22 +1120,25 @@ end
     Library.DimCount = 0
     Library.Dims = { }
 
-    for Index = 1, 3 do
-        local Dim = Library:Create("Frame", {
-            Parent = Library.UnusedHolder.Instance,
-            Name = "\0",
-            BackgroundColor3 = Color3.new(0, 0, 0),
-            BackgroundTransparency = 1,
-            Visible = false,
-            Position = UDim2.fromOffset(0, 0),
-            Size = UDim2.new(1, 0, 1, 0),
-            ZIndex = Index == 3 and 28 or 15,
-            BorderSizePixel = 0
-        })
+for Index = 1, 3 do
+    local Dim = Library:Create("TextButton", {
+        Parent = Library.UnusedHolder.Instance,
+        Name = "\0",
+        Text = "",
+        AutoButtonColor = false,
+        BackgroundColor3 = Color3.new(0, 0, 0),
+        BackgroundTransparency = 1,
+        Visible = false,
+        Position = UDim2.fromOffset(0, 0),
+        Size = UDim2.new(1, 0, 1, 0),
+        ZIndex = Index == 3 and 28 or 15,
+        BorderSizePixel = 0,
+        Active = true 
+    })
 
-        Corner(Dim.Instance, 10)
-        Library.Dims[Index] = Dim
-    end
+    Corner(Dim.Instance, 10)
+    Library.Dims[Index] = Dim
+end
 
     Library.Dim = Library.Dims[1]
 
@@ -1270,13 +1281,15 @@ end
         local Watcher
         local Active = false
 
-        Hit:Connect("InputBegan", function(Input)
-            local IsClick = Input.UserInputType == Enum.UserInputType.MouseButton1
-            local IsTouch = Input.UserInputType == Enum.UserInputType.Touch
+Hit:Connect("InputBegan", function(Input)
+    local IsClick = Input.UserInputType == Enum.UserInputType.MouseButton1
+    local IsTouch = Input.UserInputType == Enum.UserInputType.Touch
 
-            if not IsClick and not IsTouch then return end
+    if not IsClick and not IsTouch then return end
+    
+    if IsOverAnyPopup(Input.Position) or Library.DimCount > 0 then return end
 
-            Active = true
+    Active = true
                        
             if Handlers and type(Handlers.OnGrab) == "function" then
                 Handlers.OnGrab(Input)
@@ -1824,8 +1837,11 @@ local ActionHeaderHeight = 36
                 local ShowActions = Popup.ShowActions == true
 
                 local Width = WidthOverride or (Anchor.AbsoluteSize.X / Scale)
-                local ListHeight = math.min(#Popup.Order * (RowHeight + 3) + 8, 180)
-                local TopOffsetY = 0
+local ViewportY = (workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize.Y or 1080) / Scale
+local SpaceBelow = ViewportY - ((Anchor.AbsolutePosition.Y + Anchor.AbsoluteSize.Y + GuiInset) / Scale) - 20
+local MaxAvailableH = math.clamp(SpaceBelow, 120, 240)
+local ListHeight = math.min(#Popup.Order * (RowHeight + 3) + 8, MaxAvailableH)
+local TopOffsetY = 0
 
                 Items.Search.Instance.Text = ""
                 ApplySearch("")
@@ -3034,11 +3050,12 @@ local SubW = 260
         })
         DynamicIsland.Instance.Visible = false
 
-        local IslandStroke = Instance.new("UIStroke")
-        IslandStroke.Thickness = 1.5
-        IslandStroke.Transparency = 0.4
-        IslandStroke.Color = Library.Theme.Accent
-        IslandStroke.Parent = DynamicIsland.Instance
+        local IslandStroke = Library:Create("UIStroke", {
+    Parent = DynamicIsland.Instance,
+    Thickness = 1.5,
+    Transparency = 0.4,
+    Color = Library.Theme.Accent
+}):AddToTheme({ Color = "Accent" })
 
         local StatusDot = MakeFrame({
             Parent = DynamicIsland.Instance,
@@ -3082,12 +3099,6 @@ local SubW = 260
 
         Library:MakeDraggable(DynamicIsland, FullIslandHit)
 
-        Library:Connect(RunService.Heartbeat, function()
-            if DynamicIsland.Instance.Visible and IslandStroke then
-                IslandStroke.Color = Library.Theme.Accent
-            end
-        end)
-
         local IsMinimized = false
 
         local function ToggleMinimize()
@@ -3130,15 +3141,17 @@ local SubW = 260
         end)
 
         FullIslandHit:Connect("InputEnded", function(Input)
-            local IsClick = Input.UserInputType == Enum.UserInputType.MouseButton1
-            local IsTouch = Input.UserInputType == Enum.UserInputType.Touch
-            if IsClick or IsTouch then
-                if not WasDragged then
-                    ToggleMinimize()
-                end
-                DragStartPos = nil
-            end
-        end)
+    local IsClick = Input.UserInputType == Enum.UserInputType.MouseButton1
+    local IsTouch = Input.UserInputType == Enum.UserInputType.Touch
+    if (IsClick or IsTouch) and DragStartPos then
+        local MovedDist = (Input.Position - DragStartPos).Magnitude
+        if MovedDist < 5 and not WasDragged then
+            ToggleMinimize()
+        end
+        DragStartPos = nil
+        WasDragged = false
+    end
+end)
 
         local Profile = {
             IsOpen = false,
@@ -3156,6 +3169,19 @@ local SubW = 260
         })
 
         ProfilePanel.Instance.Visible = false
+        
+        ProfilePanel.Instance.Active = true 
+
+Library:Create("TextButton", {
+    Parent = ProfilePanel.Instance,
+    Name = "\0",
+    Text = "",
+    AutoButtonColor = false,
+    BackgroundTransparency = 1,
+    Size = UDim2.new(1, 0, 1, 0),
+    ZIndex = 45,
+    Active = true
+})
        
         local ProfileAvatar = MakeAvatar(ProfilePanel.Instance, {
             Pos = UDim2.fromOffset(14, 14),
@@ -3380,12 +3406,12 @@ local SubW = 260
         })
 
         local KeyIconHit = MakeButton({
-            Parent = ProfilePanel.Instance,
-            Anchor = Vector2.new(1, 0.5),
-            Pos = UDim2.new(1, -8, 0, 205),
-            Size = UDim2.fromOffset(26, 26),
-            Z = 48
-        })
+    Parent = ProfilePanel.Instance,
+    Anchor = Vector2.new(0, 0.5),
+    Pos = UDim2.new(0, 10, 0, 205),
+    Size = UDim2.new(1, -20, 0, 26),
+    Z = 48
+})
 
         KeyIconHit:OnHover(function()
             KeyIcon:Tween({ ImageColor3 = Library.Theme.Text })
@@ -3544,12 +3570,12 @@ local SubW = 260
         })
 
         local HideEyeHit = MakeButton({
-            Parent = ProfilePanel.Instance,
-            Anchor = Vector2.new(1, 0.5),
-            Pos = UDim2.new(1, -8, 0, 235),
-            Size = UDim2.fromOffset(26, 26),
-            Z = 48
-        })
+    Parent = ProfilePanel.Instance,
+    Anchor = Vector2.new(0, 0.5),
+    Pos = UDim2.new(0, 10, 0, 235),
+    Size = UDim2.new(1, -20, 0, 26),
+    Z = 48
+})
 
         HideEyeHit:OnHover(function()
             if not IsInfoHidden then
@@ -5033,37 +5059,43 @@ end
     end
 
     function Keybind:Set(Key)
-        Keybind.Key = Key
-        PanelKey.Instance.Text = KeyName(Key)
-        Keybind.Picking = false
-        
-if IsMobile and Key and Key ~= "None" then
+    Keybind.Key = Key
+    PanelKey.Instance.Text = KeyName(Key)
+    Keybind.Picking = false
+    
     if Keybind.TouchWidget then
-        Keybind.TouchWidget:Destroy()
+        pcall(function() Keybind.TouchWidget:Destroy() end)
         Keybind.TouchWidget = nil
     end
 
-    local Widget = Instance.new("TextButton")
-    Widget.Name = "Zolar_KeybindWidget"
-    Widget.Size = UDim2.fromOffset(40, 40)
-    Widget.Position = UDim2.new(0.8, 0, 0.3, 0)
-    Widget.BackgroundColor3 = Library.Theme.Section
-    Widget.TextColor3 = Library.Theme.Accent
-    Widget.Text = KeyName(Key)
-    Widget.TextSize = 12
-    Widget.FontFace = UiFontBold
-    Widget.ZIndex = 2500
-    Widget.Parent = Library.Holder.Instance
+    if IsMobile and Key and Key ~= "None" then
+    local Widget = Library:Create("TextButton", {
+        Parent = Library.Holder.Instance,
+        Name = "Zolar_KeybindWidget",
+        Size = UDim2.fromOffset(40, 40),
+        Position = UDim2.new(0.8, 0, 0.3, 0),
+        BackgroundColor3 = Library.Theme.Section,
+        TextColor3 = Library.Theme.Accent,
+        Text = KeyName(Key),
+        TextSize = 12,
+        FontFace = UiFontBold,
+        ZIndex = 2500
+    }):AddToTheme({
+        BackgroundColor3 = "Section",
+        TextColor3 = "Accent"
+    })
 
-    local Corner = Instance.new("UICorner", Widget)
-    Corner.CornerRadius = UDim.new(0, 20)
-    local Stroke = Instance.new("UIStroke", Widget)
-    Stroke.Color = Library.Theme.Accent
-    Stroke.Thickness = 1.5
+    Corner(Widget.Instance, 20)
+    
+    Library:Create("UIStroke", {
+        Parent = Widget.Instance,
+        Color = Library.Theme.Accent,
+        Thickness = 1.5
+    }):AddToTheme({ Color = "Accent" })
 
-    Library.MakeDraggable({ Instance = Widget })
+    Library.MakeDraggable({ Instance = Widget.Instance })
 
-    Widget.Activated:Connect(function()
+    Widget.Instance.Activated:Connect(function()
         if Keybind.Mode == "Toggle" then
             Toggle:Set(not Toggle.Value)
         elseif Keybind.Mode == "Hold" or Keybind.Callback then
@@ -5071,7 +5103,7 @@ if IsMobile and Key and Key ~= "None" then
         end
     end)
 
-    Keybind.TouchWidget = Widget
+    Keybind.TouchWidget = Widget.Instance
 end
 
         SaveFlag()
@@ -5591,8 +5623,12 @@ end
         end)
 
         Library:Connect(UserInputService.InputChanged, function(Input)
-            if Slider.Disabled or not Slider.Hovered then return end
-            if Input.UserInputType == Enum.UserInputType.MouseWheel then
+   local IsWinOpen = (Section.SubTab and Section.SubTab.Window and Section.SubTab.Window.IsOpen) or (Library.Windows[1] and Library.Windows[1].IsOpen)
+if Slider.Disabled or not Slider.Hovered or not IsWinOpen or not Items.Row.Instance.Visible then 
+    Slider.Hovered = false 
+    return 
+end
+    if Input.UserInputType == Enum.UserInputType.MouseWheel then
                 local Delta = Input.Position.Z
                 local Multiplier = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) and 5 or 1
                 local Change = (Slider.Step or 1) * Multiplier
@@ -5858,8 +5894,11 @@ end
         end)
 
         Library:Connect(UserInputService.InputChanged, function(Input)
-            if RangeSlider.Disabled or not RangeSlider.Hovered then return end
-            if Input.UserInputType == Enum.UserInputType.MouseWheel then
+    if RangeSlider.Disabled or not RangeSlider.Hovered or not Section.SubTab.Window.IsOpen or not Items.Row.Instance.Visible then 
+        RangeSlider.Hovered = false 
+        return 
+    end
+    if Input.UserInputType == Enum.UserInputType.MouseWheel then
                 local Delta = Input.Position.Z
                 local Multiplier = UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) and 5 or 1
                 local Change = (RangeSlider.Step or 1) * Multiplier
@@ -7183,38 +7222,45 @@ end
         Keybind.Picking = false
         
         if IsMobile then
+            -- Dọn dẹp an toàn nút widget cũ
             if Keybind.TouchWidget then
-                Keybind.TouchWidget:Destroy()
+                pcall(function() Keybind.TouchWidget:Destroy() end)
                 Keybind.TouchWidget = nil
             end
 
+            -- Chỉ tạo nút nổi khi có gán phím hợp lệ
             if Keybind.Key and Keybind.Key ~= Enum.KeyCode.Unknown then
-                local Widget = Instance.new("TextButton")
-                Widget.Name = "\0"
-                Widget.Size = UDim2.fromOffset(42, 42)
-                Widget.Position = UDim2.new(0.8, 0, 0.35, 0)
-                Widget.BackgroundColor3 = Library.Theme.Section
-                Widget.TextColor3 = Library.Theme.Accent
-                Widget.Text = Formatted
-                Widget.TextSize = 13
-                Widget.FontFace = UiFontBold
-                Widget.ZIndex = 2500
-                Widget.Parent = Library.Holder.Instance
+                local Widget = Library:Create("TextButton", {
+                    Parent = Library.Holder.Instance,
+                    Name = "\0",
+                    Size = UDim2.fromOffset(42, 42),
+                    Position = UDim2.new(0.8, 0, 0.35, 0),
+                    BackgroundColor3 = Library.Theme.Section,
+                    TextColor3 = Library.Theme.Accent,
+                    Text = Formatted,
+                    TextSize = 13,
+                    FontFace = UiFontBold,
+                    ZIndex = 2500
+                }):AddToTheme({
+                    BackgroundColor3 = "Section",
+                    TextColor3 = "Accent"
+                })
 
-                Corner(Widget, 21)
+                Corner(Widget.Instance, 21)
                 
-                local Stroke = Instance.new("UIStroke")
-                Stroke.Color = Library.Theme.Accent
-                Stroke.Thickness = 1.5
-                Stroke.Parent = Widget
+                Library:Create("UIStroke", {
+                    Parent = Widget.Instance,
+                    Color = Library.Theme.Accent,
+                    Thickness = 1.5
+                }):AddToTheme({ Color = "Accent" })
 
-                Library.MakeDraggable({ Instance = Widget })
+                Library.MakeDraggable({ Instance = Widget.Instance })
 
-                Widget.Activated:Connect(function()
+                Widget.Instance.Activated:Connect(function()
                     Library:SafeCall(Keybind.Callback, Keybind.Key)
                 end)
 
-                Keybind.TouchWidget = Widget
+                Keybind.TouchWidget = Widget.Instance
             end
         end
 
@@ -7712,6 +7758,110 @@ end
 
         Paragraph.Items = Items
         return setmetatable(Paragraph, Library)
+    end
+    
+    Library.Divider = function(Self, Text)
+        local Section = Self
+        local HasText = Text and Text ~= ""
+        local RowHeight = HasText and 26 or 12
+        local Row, RowData = Section:AddRow(RowHeight, Text or "Divider")
+        
+        if HasText then
+            MakeText({
+                Parent = Row.Instance,
+                Text = string.upper(tostring(Text)),
+                TextSize = 11,
+                Bold = true,
+                Anchor = Vector2.new(0, 0.5),
+                Pos = UDim2.new(0, 14, 0.5, 0),
+                Size = UDim2.new(1, -28, 0, 16),
+                Color = "DimText",
+                Align = Enum.TextXAlignment.Center,
+                Z = 5
+            })
+        else
+            MakeFrame({
+                Parent = Row.Instance,
+                Anchor = Vector2.new(0.5, 0.5),
+                Pos = UDim2.new(0.5, 0, 0.5, 0),
+                Size = UDim2.new(1, -28, 0, 1),
+                Color = "Element",
+                Z = 5
+            })
+        end
+
+        local Divider = { Row = Row, RowData = RowData }
+function Divider:SetVisible(Bool)
+    Row.Instance.Visible = Bool
+    if RowData then
+        RowData.Visible = Bool
+    end
+    Section:Reflow()
+end
+return Divider
+
+    Library.ProgressBar = function(Self, Params)
+        Params = Params or {}
+        local Section = Self
+        local Name = Params.Name or "Progress"
+        local Percent = math.clamp(Params.Default or 0, 0, 100)
+        
+        local Row, RowData = Section:AddRow(46, Name)
+        local Width = Section.Width - 30
+        
+        local Label = MakeText({
+            Parent = Row.Instance,
+            Text = Name,
+            TextSize = 14,
+            Pos = UDim2.fromOffset(15, 4),
+            Size = UDim2.fromOffset(Width - 60, 18),
+            Color = "Text",
+            Z = 5
+        })
+        
+        local ValLabel = MakeText({
+            Parent = Row.Instance,
+            Text = tostring(Percent) .. "%",
+            TextSize = 13,
+            Anchor = Vector2.new(1, 0),
+            Pos = UDim2.new(1, -15, 0, 4),
+            Size = UDim2.fromOffset(50, 18),
+            Color = "DimText",
+            Align = Enum.TextXAlignment.Right,
+            Z = 5
+        })
+        
+        local Track = MakeFrame({
+            Parent = Row.Instance,
+            Pos = UDim2.fromOffset(15, 26),
+            Size = UDim2.fromOffset(Width, 10),
+            Color = "Element",
+            Round = 5,
+            Z = 5
+        })
+        
+        local Fill = MakeFrame({
+            Parent = Track.Instance,
+            Size = UDim2.new(Percent / 100, 0, 1, 0),
+            Color = "Accent",
+            Round = 5,
+            Z = 6
+        })
+        
+        local Bar = { Row = Row, RowData = RowData }
+        function Bar:Set(NewPercent)
+            NewPercent = math.clamp(math.floor(NewPercent + 0.5), 0, 100)
+            ValLabel.Instance.Text = tostring(NewPercent) .. "%"
+            Library:Tween({ Size = UDim2.new(NewPercent / 100, 0, 1, 0) }, TweenInfo.new(0.25), Fill.Instance)
+        end
+        
+        function Bar:SetVisible(Bool)
+            Row.Instance.Visible = Bool
+            RowData.Visible = Bool
+            Section:Reflow()
+        end
+        
+        return Bar
     end
 
     Library.ThemeConfig = function(Self, Params)
