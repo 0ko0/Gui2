@@ -1,662 +1,726 @@
-# Zolar Library
+# Zolar Library v1.1 Documentation
 
-##  Library
+---
+
+## 🚀 Loading the Library
+
 ```lua
 local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/0ko0/Gui2/refs/heads/main/test.txt"))()
 ```
 
+---
 
+## 🪟 Creating a Window
 
-## Creating a Window
 ```lua
 local Window = Library:Window({
-    Name = "Zolar",
+    Name = "Zolar Hub",
     Icon = "layers",
     Accent = Color3.fromRGB(179, 165, 255)
 })
-
---[[
-Name = <string> - The name of the UI.
-Icon = <string | number> - Lucide icon name or rbxassetid.
-Accent = <color3> - The accent color of the UI.
-]]
 ```
+
+### Parameters
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `Name` | `string` | `"ZOLAR"` | The title text displayed in the header and Dynamic Island. |
+| `Icon` | `string \| number` | `"layers"` | Lucide icon name or Roblox asset ID (`rbxassetid://...`). |
+| `Accent` | `Color3` | `Color3.fromRGB(179, 165, 255)` | Overrides the primary global accent color. |
+
+### Built-in Window Features
+- **Universal Search Bar:** Type into the header search input to filter items across all tabs and sections in real-time.
+- **Dynamic Island (Minimize):** Clicking the minimize icon collapses the window into an iOS-style Dynamic Island pill at the top of the screen. Dragging or clicking it restores the window.
+- **Profile Popover:** Clicking the user avatar opens an interactive profile card featuring:
+  - Account info, Avatar, DisplayName, Username.
+  - One-click User ID copy to clipboard.
+  - **Interface Scale:** Live interactive slider from 50% to 150%.
+  - **Menu Keybind Picker:** Quick toggle keybind change.
+  - **Hide Info Switch:** Anonymizes the user's name, ID, and avatar in the UI.
+  - **Unload Button:** Safely tears down and unloads the library.
+- **Mobile Touch Support:** On mobile devices, a floating draggable toggle button (`Zolar_MobileToggle`) appears automatically. Viewport scaling is adjusted to avoid screen clipping.
 
 ### Window Methods
 ```lua
-Window:SetOpen(false) -- Toggles visibility of the window
-Window:Center()       -- Centers the window on the screen
-Window:PlayIntro()    -- Plays the opening transition animation
+Window:SetOpen(true)    -- Toggles window visibility (true/false)
+Window:Center()         -- Recalculates and centers the window on screen
+Window:PlayIntro()      -- Replays the smooth opening transition
 ```
 
+---
 
+## 📑 Tabs and SubTabs
 
-## Creating a Tab
+The window layout is split into primary vertical **Rail Tabs** (left) and horizontal **SubTabs** (bottom bar).
+
+### Creating a Tab
 ```lua
-local Tab = Window:Tab({
-    Name = "Main",
-    Icon = "home"
-})
-
---[[
-Name = <string> - The name of the tab.
-Icon = <string | number> - Lucide icon name or rbxassetid displayed on the rail.
-]]
-```
-
-### Selecting a Tab
-```lua
-Tab:Select()
-```
-
-
-
-## Creating a SubTab
-```lua
-local SubTab = Tab:SubTab({
+local MainTab = Window:Tab({
     Name = "Combat",
     Icon = "swords"
 })
 
---[[
-Name = <string> - The name of the sub-tab.
-Icon = <string | number> - The icon of the sub-tab.
-]]
+-- Selecting a tab programmatically
+MainTab:Select()
 ```
 
-
-
-## Creating a Section
+### Creating a SubTab
 ```lua
-local Section = SubTab:Section({
-    Name = "Section",
-    Side = "Left"
-})
-
---[[
-Name = <string> - The name of the section.
-Side = <string | number> - The column side of the section ("Left" / 1 or "Right" / 2).
-]]
-```
-
-
-
-## Notifying the user
-```lua
-Library:Notification({
-    Name = "Title!",
-    Description = "Notification content... what will it say??",
-    Icon = "bell",
-    Duration = 5,
-    Type = "Info",
-    SoundId = 4590662766,
-    SoundVolume = 0.5,
-    RichText = false,
-    Buttons = {
-        {
-            Text = "Okay",
-            Primary = true,
-            CloseOnClick = true,
-            Callback = function()
-                print("pressed okay")
-            end
-        }
-    }
-})
-
---[[
-Name = <string> - The title of the notification.
-Description = <string> - The content of the notification.
-Icon = <string | number> - The icon of the notification.
-Duration = <number> - The duration of the notification in seconds (0 = never closes).
-Type = <string> - Preset style ("Info", "Success", "Warning", "Error").
-SoundId = <number | string> - Sound to play when the notification appears.
-SoundVolume = <number> - Volume of the notification sound (0 to 1).
-RichText = <bool> - Enables RichText formatting.
-Buttons = <table> - Table containing interactive action buttons.
-]]
-```
-
-### Clearing all active notifications
-```lua
-Library:ClearNotifications()
-```
-
-
-
-## Creating a Button
-```lua
-local CoolButton = Section:Button({
-    Name = "Button!",
-    Description = "This is a button description",
-    Icon = "mouse-pointer",
-    Risky = false,
-    Disabled = false,
-    Confirm = false,
-    ConfirmText = "Are you sure?",
-    HoldTime = 0,
-    Callback = function()
-        print("button pressed")
-    end    
-})
-
---[[
-Name = <string> - The name of the button.
-Description = <string> - Additional description text below the title.
-Icon = <string | number> - Lucide icon or rbxassetid.
-Risky = <bool> - Adds a red warning icon.
-Disabled = <bool> - Disables user interaction if true.
-Confirm = <bool> - Requires double click to confirm before executing.
-ConfirmText = <string> - Confirmation prompt text if Confirm is true.
-HoldTime = <number> - Seconds to hold before executing (0 = instant click).
-Callback = <function> - The function of the button.
-]]
-```
-
-### Button Methods
-```lua
-CoolButton:Press()                       -- Programmatically activates the button
-CoolButton:SetText("New Button Name")    -- Updates button title
-CoolButton:SetDescription("New desc")    -- Updates button description
-CoolButton:SetIcon("zap")                -- Updates button icon
-CoolButton:SetDisabled(true)             -- Disables or enables button
-CoolButton:SetVisible(false)             -- Toggles button visibility
-```
-
-### Adding a Keybind to a Button
-```lua
-CoolButton:Keybind({
-    Default = Enum.KeyCode.F,
-    Flag = "ButtonBind"
+local AimbotSub = MainTab:SubTab({
+    Name = "Aimbot",
+    Icon = "crosshair"
 })
 ```
 
+---
 
+## 📦 Sections
 
-## Creating a Checkbox toggle
+Sections group elements inside a SubTab. Each SubTab has a dual-column layout (`Left` / `1` or `Right` / `2`).
+
 ```lua
-local CoolToggle = Section:Toggle({
-    Name = "This is a toggle!",
-    Description = "Toggle description",
+local LeftSection = AimbotSub:Section({
+    Name = "Legit Aimbot",
+    Side = "Left" -- "Left" (1) or "Right" (2)
+})
+```
+
+---
+
+## 🔘 Checkbox Toggle
+
+A toggle switch with smooth pill-knob animations.
+
+```lua
+local MyToggle = LeftSection:Toggle({
+    Name = "Enable Aimbot",
+    Description = "Automatically locks onto target heads",
     Default = false,
     Risky = false,
     Disabled = false,
-    Flag = "MyToggle",
+    Flag = "Aimbot_Enabled",
     Callback = function(Value)
-        print(Value)
-    end    
+        print("Toggle state:", Value)
+    end
 })
-
---[[
-Name = <string> - The name of the toggle.
-Description = <string> - Additional description text below the title.
-Default = <bool> - The default value of the toggle.
-Risky = <bool> - Adds a red warning icon.
-Disabled = <bool> - Disables user interaction if true.
-Flag = <string> - The identifier used for configs and script access.
-Callback = <function> - The function of the toggle.
-]]
 ```
+
+### Toggle Parameters
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `Name` | `string` | `"Toggle"` | Title of the toggle. |
+| `Description` | `string` | `""` | Optional subtitle description below the title. |
+| `Default` | `bool` | `false` | Initial boolean state. |
+| `Risky` | `bool` | `false` | Displays a warning alert badge before the label. |
+| `Disabled` | `bool` | `false` | Prevents user interaction when true. |
+| `Flag` | `string` | `nil` | Identifier used for saving/loading configs. |
+| `Callback` | `function` | `function(Value) end` | Executed when state changes. |
 
 ### Toggle Methods
 ```lua
-CoolToggle:Set(true)            -- Changes toggle value
-local value = CoolToggle:Get()  -- Returns current boolean state
-CoolToggle:SetDisabled(true)    -- Disables or enables toggle
+MyToggle:Set(true)            -- Sets toggle value (triggers callback unless silent)
+local state = MyToggle:Get()  -- Returns current boolean state
+MyToggle:SetDisabled(true)    -- Enables or disables the toggle control
+MyToggle:SetVisible(false)    -- Shows or hides the toggle row
 ```
 
-### Adding nested components to a Toggle
+### Attaching Nested Sub-Components to a Toggle
+You can nest inline pickers and flyout panels directly beside the toggle:
+
 ```lua
--- Add a Colorpicker next to the Toggle
-CoolToggle:Colorpicker({
-    Default = Color3.fromRGB(255, 0, 0),
+-- 1. Attach an inline Colorpicker
+MyToggle:Colorpicker({
+    Default = Color3.fromRGB(255, 60, 60),
     Transparency = 0,
     Rainbow = false,
-    Flag = "ToggleColor",
+    Flag = "Aimbot_Color",
     Callback = function(Color, Alpha, Rainbow)
         print(Color, Alpha, Rainbow)
     end
 })
 
--- Add a Keybind next to the Toggle
-CoolToggle:Keybind({
+-- 2. Attach an inline Keybind with activation mode selection
+MyToggle:Keybind({
     Default = Enum.KeyCode.E,
-    Mode = "Toggle", -- "Toggle" | "Hold" | "Always"
-    Flag = "ToggleBind"
+    Mode = "Hold", -- "Toggle" | "Hold" | "Always"
+    Flag = "Aimbot_Key"
 })
 
--- Add an Extra flyout panel next to the Toggle
-local Extra = CoolToggle:Extra({ Width = 220 })
-Extra:Slider({ Name = "Hit Chance", Min = 0, Max = 100, Default = 100, Suffix = "%" })
-Extra:Dropdown({ Name = "Target Hitbox", Options = {"Head", "Torso"}, Default = "Head" })
+-- 3. Attach a Flyout Extra Panel
+local Extra = MyToggle:Extra({ Width = 220 })
+Extra:Slider({ Name = "Smoothness", Min = 1, Max = 10, Default = 5 })
+
+-- 4. Direct Shorthands (Automatically mounts into the Toggle's Extra panel)
+MyToggle:Slider({ Name = "FOV Radius", Min = 10, Max = 500, Default = 90 })
+MyToggle:Dropdown({ Name = "Target Part", Options = {"Head", "Torso"}, Default = "Head" })
+MyToggle:Textbox({ Name = "Custom Priority", Placeholder = "Player..." })
+MyToggle:RangeSlider({ Name = "Distance Range", Min = 0, Max = 1000, Default = {50, 400} })
+MyToggle:Toggle({ Name = "Check Visibility", Default = true })
 ```
 
+---
 
+## 🎚️ Sliders
 
-## Creating a Slider
+Supports drag-to-adjust, direct text input, mouse-wheel scrolling (`Shift` accelerates by 5x), and mobile touch tooltips.
+
 ```lua
-local CoolSlider = Section:Slider({
-    Name = "Slider",
+local MySlider = LeftSection:Slider({
+    Name = "Target FOV",
     Min = 0,
-    Max = 100,
-    Default = 20,
+    Max = 360,
+    Default = 90,
     Step = 1,
     Decimals = 0,
     Prefix = "",
-    Suffix = " studs",
+    Suffix = "°",
     DisplayFormat = nil,
     Disabled = false,
-    Flag = "MySlider",
+    Flag = "Aimbot_FOV",
     Callback = function(Value)
-        print(Value)
-    end    
+        print("FOV:", Value)
+    end
 })
-
---[[
-Name = <string> - The name of the slider.
-Min = <number> - The minimum value of the slider.
-Max = <number> - The maximum value of the slider.
-Default = <number> - The default value of the slider.
-Step = <number> - The increment step when dragging or scrolling.
-Decimals = <number> - Number of decimal places to round to.
-Prefix = <string> - Text placed before the value number.
-Suffix = <string> - Text placed after the value number.
-DisplayFormat = <function> - Custom formatting function (e.g. function(v) return "Val: "..v end).
-Disabled = <bool> - Disables user interaction if true.
-Flag = <string> - The identifier used for configs.
-Callback = <function> - The function of the slider.
-]]
 ```
+
+### Slider Parameters
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `Name` | `string` | `"Slider"` | Title of the slider. |
+| `Min` | `number` | `0` | Minimum allowed value. |
+| `Max` | `number` | `100` | Maximum allowed value. |
+| `Default` | `number` | `Min` | Starting value. |
+| `Step` | `number` | `1 / (10 ^ Decimals)` | Precision increment when sliding. |
+| `Decimals` | `number` | `0` | Number of decimal places to round to. |
+| `Prefix` | `string` | `""` | Text prepended to the value display. |
+| `Suffix` | `string` | `""` | Text appended to the value display. |
+| `DisplayFormat` | `function` | `nil` | Custom formatter function `function(v) return "Val: "..v end`. |
+| `Disabled` | `bool` | `false` | Disables interaction if true. |
+| `Flag` | `string` | `nil` | Identifier for config saving. |
+| `Callback` | `function` | `function(Value) end` | Fires when the value changes. |
 
 ### Slider Methods
 ```lua
-CoolSlider:Set(50)            -- Changes slider value
-local value = CoolSlider:Get()-- Returns current value
-CoolSlider:SetMin(10)         -- Updates minimum boundary
-CoolSlider:SetMax(200)        -- Updates maximum boundary
-CoolSlider:SetStep(5)         -- Updates step increment
-CoolSlider:SetDisabled(true)  -- Disables or enables slider
-CoolSlider:SetVisible(false)  -- Toggles slider visibility
+MySlider:Set(120)                       -- Sets value
+local val = MySlider:Get()              -- Returns current value
+MySlider:SetMin(20)                     -- Changes minimum limit
+MySlider:SetMax(500)                    -- Changes maximum limit
+MySlider:SetStep(5)                     -- Changes step precision
+MySlider:SetDisabled(true)              -- Enables/disables slider
+MySlider:SetVisible(false)              -- Shows/hides slider
+MySlider:SetCallback(function(v) end)   -- Updates callback function
 ```
 
+---
 
+## 📏 Range Slider
 
-## Creating a Range Slider
+A dual-knob slider designed for intervals and min/max ranges.
+
 ```lua
-local CoolRange = Section:RangeSlider({
-    Name = "Range Slider",
+local MyRange = LeftSection:RangeSlider({
+    Name = "Distance Range",
     Min = 0,
-    Max = 100,
-    Default = {20, 80},
-    MinDistance = 5,
-    Step = 1,
+    Max = 1000,
+    Default = {100, 600},
+    MinDistance = 50,
+    Step = 5,
     Decimals = 0,
     Prefix = "",
-    Suffix = "s",
+    Suffix = " studs",
     Disabled = false,
-    Flag = "MyRange",
+    Flag = "Target_Distance",
     Callback = function(Value)
-        print(Value.Min, Value.Max)
+        print("Min:", Value.Min, "Max:", Value.Max)
     end
 })
-
---[[
-Name = <string> - The name of the range slider.
-Min = <number> - The minimum boundary.
-Max = <number> - The maximum boundary.
-Default = <table> - Table containing {Min, Max} initial values.
-MinDistance = <number> - Minimum distance maintained between the two knobs.
-Step = <number> - Increment step when dragging or scrolling.
-Decimals = <number> - Number of decimal places to round to.
-Prefix = <string> - Text placed before the value numbers.
-Suffix = <string> - Text placed after the value numbers.
-Disabled = <bool> - Disables user interaction if true.
-Flag = <string> - The identifier used for configs.
-Callback = <function> - The function of the range slider.
-]]
 ```
+
+### Range Slider Controls
+- **Mouse Drag:** Dragging picks the closest knob automatically.
+- **Mouse Wheel:** Wheel adjusts `Min`; holding `Ctrl` + Wheel adjusts `Max`; `Shift` accelerates.
+- **Text Box Input:** You can type ranges directly into the text box (e.g. `100 600` or `100 - 600`).
 
 ### Range Slider Methods
 ```lua
-CoolRange:Set(10, 60)           -- Changes range slider value (or pass {10, 60})
-local value = CoolRange:Get()   -- Returns table { Min = 10, Max = 60, Low = 10, High = 60 }
-CoolRange:SetMin(0)             -- Updates minimum boundary
-CoolRange:SetMax(200)           -- Updates maximum boundary
-CoolRange:SetDisabled(true)     -- Disables or enables range slider
-CoolRange:SetVisible(false)     -- Toggles range slider visibility
+MyRange:Set(50, 450)                 -- Sets range via two numbers or a table {50, 450}
+local range = MyRange:Get()          -- Returns table: { Min = 50, Max = 450, Low = 50, High = 450 }
+MyRange:SetMin(0)                    -- Updates minimum limit
+MyRange:SetMax(2000)                 -- Updates maximum limit
+MyRange:SetDisabled(true)            -- Enables/disables control
+MyRange:SetVisible(false)            -- Shows/hides row
+MyRange:SetCallback(function(v) end) -- Updates callback
 ```
 
+---
 
+## 🔽 Dropdown Menu
 
-## Creating a Dropdown menu
+Interactive dropdown supporting single/multi selection, quick search filtering, icons, and action headers.
+
 ```lua
-local CoolDropdown = Section:Dropdown({
-    Name = "Dropdown",
-    Description = "Dropdown description",
+local MyDropdown = LeftSection:Dropdown({
+    Name = "Target Priority",
+    Description = "Select parts in priority order",
     Options = {
-        "Option 1",
-        "Option 2",
-        { Name = "Option 3", Value = "CustomVal", Icon = "sparkles" }
+        "Head",
+        "Torso",
+        { Name = "HumanoidRootPart", Value = "HRP", Icon = "box", Desc = "Center root part" }
     },
-    Default = "Option 1",
+    Default = "Head",
     Multi = false,
     Max = nil,
     Search = true,
-    Placeholder = "Select option...",
+    Placeholder = "Select a target...",
     Disabled = false,
-    Flag = "MyDropdown",
-    Callback = function(Value)
-        print(Value)
-    end    
+    Flag = "Target_Priority",
+    Callback = function(Selected)
+        print("Selected:", Selected)
+    end
 })
-
---[[
-Name = <string> - The name of the dropdown.
-Description = <string> - Additional description text.
-Options = <table> - Array of selectable options (strings or tables with Name, Value, Icon).
-Default = <string | table> - The default selected value (table if Multi = true).
-Multi = <bool> - Allows selecting multiple options.
-Max = <number> - Maximum allowed selections if Multi is true.
-Search = <bool> - Enables search bar inside dropdown menu.
-Placeholder = <string> - Text displayed when no option is selected.
-Disabled = <bool> - Disables user interaction if true.
-Flag = <string> - The identifier used for configs.
-Callback = <function> - The function of the dropdown.
-]]
 ```
+
+### Dropdown Parameters
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `Name` | `string` | `"Dropdown"` | Label text. |
+| `Description` | `string` | `""` | Description text. |
+| `Options` | `table` | `{}` | Array of strings or tables `{ Name, Value, Icon, Desc }`. |
+| `Default` | `string \| table` | `nil` | Default selected value (table if `Multi = true`). |
+| `Multi` | `bool` | `false` | Enables multiple selections. |
+| `Max` | `number` | `nil` | Selection count limit when `Multi = true`. |
+| `Search` | `bool` | `auto` | Forces the search bar on (auto-enabled if options > 8). |
+| `Placeholder` | `string` | `"Select option..."`| Placeholder when nothing is selected. |
+| `Disabled` | `bool` | `false` | Disables dropdown interaction. |
+| `Flag` | `string` | `nil` | Config identifier. |
+| `Callback` | `function` | `function(Selected) end` | Fires on selection update. |
 
 ### Dropdown Methods
 ```lua
-CoolDropdown:Set("Option 2")                       -- Selects an option
-CoolDropdown:Refresh({"New 1", "New 2"}, false)    -- Refreshes options (false = clear selection)
-CoolDropdown:AddOption("New Option")               -- Adds a single option
-CoolDropdown:RemoveOption("New Option")            -- Removes a single option
-CoolDropdown:SelectAll()                           -- Selects all items (Multi = true)
-CoolDropdown:Clear()                               -- Clears all selections
-local selected = CoolDropdown:Get()                -- Returns selected value(s)
-CoolDropdown:SetDisabled(true)                     -- Disables or enables dropdown
-CoolDropdown:SetVisible(false)                     -- Toggles dropdown visibility
+MyDropdown:Set("Torso")                     -- Sets current value
+local current = MyDropdown:Get()            -- Returns selected value(s)
+MyDropdown:Refresh({"Option A", "Option B"}, false) -- Refreshes options list (false = clear selection)
+MyDropdown:AddOption("Legs")                -- Adds a new option
+MyDropdown:RemoveOption("Legs")             -- Removes an existing option
+MyDropdown:SelectAll()                      -- Selects all items (Multi = true)
+MyDropdown:Clear()                          -- Deselects everything
+MyDropdown:SetDisabled(true)                -- Disables/enables dropdown
+MyDropdown:SetVisible(false)                -- Shows/hides row
+MyDropdown:SetCallback(function(v) end)     -- Updates callback
 ```
 
+---
 
+## 🖱️ Button
 
-## Creating an Adaptive Input
+Action buttons with ripple sweeps, confirmation dialogs, hold timers, and optional keybind slots.
+
 ```lua
-local CoolTextbox = Section:Textbox({
-    Name = "Textbox",
-    Description = "Textbox description",
-    Default = "default text",
-    Placeholder = "Type here...",
+local MyButton = LeftSection:Button({
+    Name = "Crash Server",
+    Description = "Attempts to overload network traffic",
+    Icon = "flame",
+    Risky = true,
+    Disabled = false,
+    Confirm = true,
+    ConfirmText = "Click again to confirm!",
+    HoldTime = 0,
+    Callback = function()
+        print("Action confirmed!")
+    end
+})
+
+-- Attach a keybind trigger to the button
+MyButton:Keybind({
+    Default = Enum.KeyCode.K,
+    Flag = "Crash_Bind"
+})
+```
+
+### Button Parameters
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `Name` | `string` | `"Button"` | Button label. |
+| `Description` | `string` | `""` | Description subtitle. |
+| `Icon` | `string \| number` | `nil` | Lucide icon name or asset ID. |
+| `Risky` | `bool` | `false` | Displays a red hazard warning badge. |
+| `Disabled` | `bool` | `false` | Disables button interactions. |
+| `Confirm` | `bool` | `false` | Requires a second click within 3s before executing. |
+| `ConfirmText` | `string` | `"Are you sure?"` | Warning label during confirmation. |
+| `HoldTime` | `number` | `0` | Seconds to hold down before executing (0 = instant). |
+| `Callback` | `function` | `function() end` | Callback function executed on click. |
+
+### Button Methods
+```lua
+MyButton:Press()                            -- Triggers the button programmatically
+MyButton:SetText("New Label")               -- Updates label text
+MyButton:SetDescription("New description")  -- Updates subtitle
+MyButton:SetIcon("zap")                     -- Updates icon
+MyButton:SetDisabled(true)                  -- Disables or enables button
+MyButton:SetVisible(false)                  -- Shows or hides button
+MyButton:SetCallback(function() end)        -- Updates callback
+```
+
+---
+
+## ⌨️ Textbox
+
+Adaptive input box supporting numeric constraints, min/max limits, clipboard actions, and custom triggers.
+
+```lua
+local MyTextbox = LeftSection:Textbox({
+    Name = "Teleport Coordinates",
+    Description = "Enter target X Y Z vector",
+    Default = "0, 50, 0",
+    Placeholder = "e.g. 100, 20, -50",
     Finished = false,
     ClearOnFocus = false,
     Numeric = false,
     Min = nil,
     Max = nil,
-    MaxCharacters = nil,
-    Icon = "pencil",
+    MaxCharacters = 64,
+    Icon = "map-pin",
     ClearButton = true,
     CopyButton = true,
     Disabled = false,
-    Flag = "MyTextbox",
-    Callback = function(Value)
-        print(Value)
+    Flag = "TP_Coords",
+    Callback = function(Text)
+        print("Text changed:", Text)
     end,
     OnFocus = function()
-        print("Focused")
+        print("Input focused")
     end,
     OnFocusLost = function(EnterPressed)
         print("Focus lost. Enter pressed:", EnterPressed)
     end
 })
-
---[[
-Name = <string> - The name of the textbox.
-Description = <string> - Additional description text.
-Default = <string> - The default value of the textbox.
-Placeholder = <string> - Placeholder text when the box is empty.
-Finished = <bool> - Only triggers callback on enter/focus lost if true.
-ClearOnFocus = <bool> - Clears input field when clicked.
-Numeric = <bool> - Restricts inputs to numbers and decimal points only.
-Min = <number> - Minimum allowed number (if Numeric = true).
-Max = <number> - Maximum allowed number (if Numeric = true).
-MaxCharacters = <number> - Maximum character limit.
-Icon = <string | number> - Icon displayed on the left side of the input box.
-ClearButton = <bool> - Shows a quick clear button.
-CopyButton = <bool> - Shows a quick copy button.
-Disabled = <bool> - Disables user interaction if true.
-Flag = <string> - The identifier used for configs.
-Callback = <function> - The function of the textbox.
-OnFocus = <function> - Triggered when input field is focused.
-OnFocusLost = <function> - Triggered when focus is lost.
-]]
 ```
+
+### Textbox Parameters
+| Parameter | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `Name` | `string` | `"Textbox"` | Label text. |
+| `Description` | `string` | `""` | Subtitle text. |
+| `Default` | `string` | `""` | Initial input value. |
+| `Placeholder` | `string` | `"..."` | Placeholder text. |
+| `Finished` | `bool` | `false` | If true, only triggers callback when Enter is pressed or focus is lost. |
+| `ClearOnFocus` | `bool` | `false` | Clears text when user clicks inside. |
+| `Numeric` | `bool` | `false` | Restricts characters to numbers and decimal points. |
+| `Min` / `Max` | `number` | `nil` | Enforces minimum/maximum numerical limits if `Numeric = true`. |
+| `MaxCharacters` | `number` | `nil` | Maximum text character length limit. |
+| `Icon` | `string \| number` | `nil` | Leading icon inside the textbox. |
+| `ClearButton` | `bool` | `false` | Adds a quick clear (`x`) button. |
+| `CopyButton` | `bool` | `false` | Adds a quick copy button to clipboard. |
+| `Disabled` | `bool` | `false` | Disables editing. |
+| `Flag` | `string` | `nil` | Config identifier. |
+| `Callback` | `function` | `function(Text) end` | Fires when input changes. |
+| `OnFocus` | `function` | `function() end` | Fires when input is clicked. |
+| `OnFocusLost` | `function` | `function(EnterPressed) end` | Fires when focus is released. |
 
 ### Textbox Methods
 ```lua
-CoolTextbox:Set("New Text")              -- Changes textbox value
-CoolTextbox:Clear()                      -- Clears textbox text
-local text = CoolTextbox:Get()           -- Returns current text
-CoolTextbox:SetPlaceholder("Search...")  -- Updates placeholder text
-CoolTextbox:SetTitle("New Textbox Name") -- Updates textbox title
-CoolTextbox:SetDescription("New desc")   -- Updates textbox description
-CoolTextbox:SetDisabled(true)            -- Disables or enables textbox
-CoolTextbox:SetVisible(false)            -- Toggles textbox visibility
+MyTextbox:Set("New Vector")                 -- Sets text programmatically
+MyTextbox:Clear()                           -- Clears text
+local val = MyTextbox:Get()                 -- Returns current string value
+MyTextbox:SetPlaceholder("Search...")       -- Changes placeholder
+MyTextbox:SetTitle("Coordinates")           -- Updates label
+MyTextbox:SetDescription("World position")  -- Updates description
+MyTextbox:SetDisabled(true)                 -- Disables/enables control
+MyTextbox:SetVisible(false)                 -- Shows/hides row
+MyTextbox:SetCallback(function(txt) end)    -- Updates callback
 ```
 
+---
 
+## 🎮 Keybind
 
-## Creating a Keybind
+Dedicated keybinding row that supports Keyboard keys, Mouse buttons (`MB1`, `MB2`, `MB3`), hold/toggle states, and **floating touch widgets on mobile**.
+
 ```lua
-local CoolBind = Section:Keybind({
-    Name = "Bind",
-    Default = Enum.KeyCode.E,
-    Mode = "Toggle",
-    Flag = "MyBind",
-    Callback = function(Key)
-        print("Pressed:", Key)
-    end    
+local MyBind = LeftSection:Keybind({
+    Name = "Fly Toggle",
+    Default = Enum.KeyCode.F,
+    Mode = "Toggle", -- "Toggle" | "Hold" | "Always"
+    Flag = "Fly_Keybind",
+    Callback = function(KeyOrState)
+        print("Keybind triggered:", KeyOrState)
+    end
 })
-
---[[
-Name = <string> - The name of the bind.
-Default = <KeyCode | UserInputType> - The default key or mouse button.
-Mode = <string> - Activation mode: "Toggle", "Hold", or "Always".
-Flag = <string> - The identifier used for configs.
-Callback = <function> - The function of the bind.
-]]
 ```
 
 ### Keybind Methods
 ```lua
-CoolBind:Set(Enum.KeyCode.F)   -- Changes keybind key
-local key = CoolBind:Get()     -- Returns current key
+MyBind:Set(Enum.KeyCode.X)  -- Sets bound key programmatically
+local key = MyBind:Get()    -- Returns current bound KeyCode / UserInputType
 ```
 
+> **📱 Mobile Behavior:** When bound on a touch device, Zolar automatically spawns a draggable floating button on the screen (`Zolar_KeybindWidget`) displaying the bound key name. Tapping it activates the keybind callback directly.
 
+---
 
-## Creating a Color Picker
+## 🎨 Colorpicker
+
+Full-featured color editor with HSV field, alpha bar, hex input, copy/paste buttons, rainbow mode, and quick palette swatches.
+
 ```lua
-local CoolColor = Section:Colorpicker({
-    Name = "Colorpicker",
-    Default = Color3.fromRGB(255, 0, 0),
-    Transparency = 0,
+local MyColor = LeftSection:Colorpicker({
+    Name = "ESP Color",
+    Default = Color3.fromRGB(120, 132, 255),
+    Transparency = 0.2,
     Rainbow = false,
-    Flag = "MyColor",
+    Flag = "ESP_Color",
     Callback = function(Color, Alpha, Rainbow)
-        print(Color, Alpha, Rainbow)
-    end	  
+        print("Color:", Color, "Alpha:", Alpha, "Rainbow:", Rainbow)
+    end
 })
-
---[[
-Name = <string> - The name of the colorpicker.
-Default = <color3> - The default color value.
-Transparency = <number> - Default transparency value (0 to 1).
-Rainbow = <bool> - Enables rainbow mode cycle by default.
-Flag = <string> - The identifier used for configs.
-Callback = <function> - The function of the colorpicker.
-]]
 ```
 
-### Color Picker Methods
+### Colorpicker Methods
 ```lua
-CoolColor:Set(Color3.fromRGB(255, 255, 255), 0, false) -- Sets Color, Alpha, Rainbow
-local color, alpha, rainbow = CoolColor:Get()          -- Returns current color values
+MyColor:Set(Color3.fromRGB(255, 0, 0), 0, false) -- Updates Color, Alpha (0-1), Rainbow (bool)
+local color, alpha, rainbow = MyColor:Get()     -- Returns Color3, Alpha, Rainbow
 ```
 
+---
 
+## 🏷️ Label
 
-## Creating a Label
+Informative text row with multi-line wrap, icons, and right-aligned tags.
+
 ```lua
-local CoolLabel = Section:Label({
-    Name = "Label",
-    Description = "Label Description",
-    Icon = "info",
+local MyLabel = LeftSection:Label({
+    Name = "Player Status",
+    Description = "Connected to Frankfurt Server",
+    Icon = "shield-check",
     Color = "Text",
     DescColor = "DimText",
-    RightText = "Status: OK",
+    RightText = "SECURE",
     RightColor = "Accent",
     RichText = false,
     Align = Enum.TextXAlignment.Left,
     Wrap = false
 })
-
---[[
-Name = <string> - The title text of the label.
-Description = <string> - Subtitle description text.
-Icon = <string | number> - Icon displayed on the label.
-Color = <string | Color3> - Title color (Theme key or Color3).
-DescColor = <string | Color3> - Description color.
-RightText = <string> - Text aligned to the right side.
-RightColor = <string | Color3> - Color of the right-aligned text.
-RichText = <bool> - Enables RichText formatting.
-Align = <TextXAlignment> - Text alignment.
-Wrap = <bool> - Wraps long text across multiple lines.
-]]
 ```
 
 ### Label Methods
 ```lua
-CoolLabel:SetText("New Label Title")      -- Updates label title
-CoolLabel:SetDescription("New Subtitle")  -- Updates description
-CoolLabel:SetRightText("Active")          -- Updates right text
-CoolLabel:SetColor("Accent")              -- Updates label color
-CoolLabel:SetIcon("shield")               -- Updates label icon
-CoolLabel:SetVisible(false)               -- Toggles visibility
+MyLabel:SetText("Connection Status")  -- Updates label text
+MyLabel:SetDescription("Ping: 24ms")  -- Updates description text
+MyLabel:SetRightText("ONLINE")        -- Updates right tag text
+MyLabel:SetColor("Accent")            -- Updates color ("Accent", "Text", or Color3)
+MyLabel:SetIcon("wifi")               -- Updates icon
+MyLabel:SetVisible(false)             -- Shows or hides label
 ```
 
+---
 
+## 📝 Paragraph
 
-## Creating a Paragraph
+Content block designed for documentation, multi-line changelogs, and copyable text.
+
 ```lua
-local CoolParagraph = Section:Paragraph({
-    Title = "Paragraph",
-    Content = "Paragraph Content",
+local MyParagraph = LeftSection:Paragraph({
+    Title = "Version 1.1 Changelog",
+    Content = "- Added Universal Search\n- Mobile floating widgets\n- New range slider\n- Config auto-load system",
     TitleColor = "Text",
     ContentColor = "DimText",
     TitleSize = 15,
-    ContentSize = 14,
+    ContentSize = 13,
     Icon = "info",
-    IconColor = "DimText",
+    IconColor = "Accent",
     RichText = false,
     Align = Enum.TextXAlignment.Left,
     CopyButton = true
 })
-
---[[
-Title = <string> - The title of the paragraph.
-Content = <string> - The body content of the paragraph.
-TitleColor = <string | Color3> - Title color.
-ContentColor = <string | Color3> - Body text color.
-TitleSize = <number> - Font size for the title.
-ContentSize = <number> - Font size for the body text.
-Icon = <string | number> - Icon displayed next to the paragraph.
-IconColor = <string | Color3> - Color of the icon.
-RichText = <bool> - Enables RichText formatting.
-Align = <TextXAlignment> - Text alignment.
-CopyButton = <bool> - Adds a button to copy content to clipboard.
-]]
 ```
 
 ### Paragraph Methods
 ```lua
-CoolParagraph:SetTitle("New Title")                     -- Updates title
-CoolParagraph:SetContent("New Content text")            -- Updates content
-CoolParagraph:SetText("New Title", "New Content")       -- Updates both title and content
-CoolParagraph:SetTitleColor("Accent")                   -- Updates title color
-CoolParagraph:SetContentColor("DimText")                -- Updates content color
-CoolParagraph:SetIcon("globe")                          -- Updates icon
-CoolParagraph:SetVisible(false)                         -- Toggles visibility
+MyParagraph:SetTitle("Patch Notes")                -- Updates title
+MyParagraph:SetContent("Bug fixes applied.")       -- Updates content
+MyParagraph:SetText("Title", "Content")            -- Updates both
+MyParagraph:SetTitleColor("Accent")                -- Updates title color
+MyParagraph:SetContentColor("DimText")             -- Updates content color
+MyParagraph:SetIcon("file-text")                   -- Updates icon
+MyParagraph:RecalculateHeight()                    -- Recalculates canvas layout
+MyParagraph:SetVisible(false)                      -- Shows or hides paragraph
 ```
 
+---
 
+## ➖ Divider
 
-## Creating a Watermark
+Visual separator that can be either an uppercase title divider or a simple thin line.
+
+```lua
+-- 1. Centered header divider
+local TextDivider = LeftSection:Divider("Extra Options")
+
+-- 2. Clean horizontal separator line
+local LineDivider = LeftSection:Divider()
+
+-- Visibility control
+TextDivider:SetVisible(false)
+```
+
+---
+
+## 📊 ProgressBar
+
+Live animated progress bar with percentage readout.
+
+```lua
+local MyBar = LeftSection:ProgressBar({
+    Name = "Download Progress",
+    Default = 35 -- Percentage (0 - 100)
+})
+
+-- Update progress
+MyBar:Set(80)
+
+-- Visibility control
+MyBar:SetVisible(false)
+```
+
+---
+
+## 🔔 Notifications
+
+Slide-in notification toasts featuring timers, sound effects, action buttons, and automatic stacking.
+
+```lua
+Library:Notification({
+    Name = "Update Available",
+    Description = "A new script revision is available. Would you like to update?",
+    Icon = "bell-ring",
+    Duration = 6, -- Seconds (0 = stays open until dismissed)
+    Type = "Info", -- "Info" | "Success" | "Warning" | "Error"
+    SoundId = 4590662766,
+    SoundVolume = 0.6,
+    RichText = false,
+    Width = 320,
+    Buttons = {
+        {
+            Text = "Update Now",
+            Primary = true,
+            CloseOnClick = true,
+            Callback = function()
+                print("Updating...")
+            end
+        },
+        {
+            Text = "Dismiss",
+            Primary = false,
+            CloseOnClick = true
+        }
+    },
+    OnClose = function()
+        print("Notification closed")
+    end
+})
+
+-- Clear all active notifications
+Library:ClearNotifications()
+```
+
+---
+
+## 🧭 Watermark
+
+Draggable on-screen HUD bar displaying Game title, real-time FPS counter, Ping (ms), and system clock.
+
 ```lua
 local Watermark = Library:Watermark({
-    Name = "Zolar Hub",
+    Name = "Zolar Hub v1.1",
     Icon = "layers"
 })
 
---[[
-Name = <string> - The title text displayed on the draggable watermark bar.
-Icon = <string | number> - Icon displayed on the watermark.
-]]
+-- Watermark Methods
+Watermark:SetName("Zolar Private")  -- Updates title text
+Watermark:SetVisible(false)         -- Toggles watermark visibility
 ```
 
-### Watermark Methods
-```lua
-Watermark:SetName("Zolar Hub v1.1")  -- Updates watermark title
-Watermark:SetVisible(false)          -- Toggles watermark visibility
-```
+---
 
+## 💾 Theme & Config System
 
-
-## Theme and Config System
-Zolar Library comes with a built-in interactive Config and Theme manager page.
+Zolar features a built-in interactive Config and Theme Manager page that can be mounted into any SubTab with a single call.
 
 ```lua
 local SettingsTab = Window:Tab({ Name = "Settings", Icon = "settings" })
-local ConfigSubTab = SettingsTab:SubTab({ Name = "Configs", Icon = "folder" })
+local ConfigSub = SettingsTab:SubTab({ Name = "Configurations", Icon = "folder" })
 
-ConfigSubTab:ThemeConfig()
+-- Mounts the full theme and configuration page
+ConfigSub:ThemeConfig()
 ```
 
+### Config Page Features
+- **Config Management:** Create, save, overwrite, delete, and copy raw config JSON to clipboard.
+- **Import from Clipboard:** Paste valid JSON from clipboard directly into the library.
+- **Autoload (⚡):** Clicking the Zap icon sets that config to automatically execute on script startup.
+- **Config Metadata Card:** Displays Config Version, Compatibility check, Creation date, Creator username, and Saved flag count.
+- **Theme Presets:** One-click presets: `Default`, `Azure`, `Emerald`, `Ocean`, and `Rose`.
+- **Palette Editor:** Interactive color pickers for `Background`, `Section`, `Element`, `Light`, `Text`, `DimText`, and `Accent`.
 
+---
 
-### How flags work.
-The flags feature serves as the ID of an element in the config file and allows you to read or write the value anywhere in the code.
+## 🚩 How Flags Work
+
+Flags uniquely identify element values across configs, scripts, and runtime lookups.
 
 ```lua
-Section:Toggle({
-    Name = "Toggle",
-    Default = true,
-    Flag = "MyToggle"
+-- Register a flag on any element
+LeftSection:Toggle({
+    Name = "Auto Farm",
+    Default = false,
+    Flag = "Farm_Enabled"
 })
 
-print(Library.Flags["MyToggle"]) -- prints the boolean value of the toggle.
+-- 1. Read current value
+local isFarming = Library.Flags["Farm_Enabled"]
+
+-- 2. Modify value programmatically (triggers visual and callback)
+Library.SetFlags["Farm_Enabled"](true)
 ```
 
-To programmatically change the value of any flag element:
+---
+
+## ⚙️ Global Library Methods & Properties
+
 ```lua
-Library.SetFlags["MyToggle"](false)
-```
+-- UI Scaling
+Library:SetUIScale(1.0)                         -- Scales entire interface (0.5 to 1.5)
 
+-- Theme Management
+Library:SetAccent(Color3.fromRGB(96, 150, 255)) -- Sets global accent color
+Library:SetThemeColor("Section", Color3.fromRGB(25, 25, 30)) -- Overrides a specific theme key
+Library:SetTheme("Azure")                       -- Applies preset: "Default" | "Azure" | "Emerald" | "Ocean" | "Rose"
+Library:ApplyThemeInstant()                     -- Forces immediate recoloring of all active elements
 
-
-## Global Library Methods
-```lua
-Library:SetUIScale(1.0)                         -- Sets the UI scale multiplier
-Library:SetAccent(Color3.fromRGB(96, 150, 255)) -- Changes global accent color
-Library:SetTheme("Azure")                       -- Applies theme preset ("Default", "Azure", "Emerald", "Ocean", "Rose")
-Library:SaveConfigFile("Legit")                 -- Saves current configuration to file
+-- Config Management
+Library:SaveConfigFile("Legit")                 -- Saves current flags to file
 Library:LoadConfigFile("Legit")                 -- Loads configuration from file
-Library:SetAutoload("Legit")                    -- Sets configuration to automatically load on start
-Library:ResetConfig()                           -- Resets all flags
+Library:LoadConfig(jsonString)                  -- Loads raw JSON string
+local raw = Library:GetConfig()                 -- Generates current config JSON string
+local files = Library:ListConfigs()             -- Returns array of config file names
+Library:ResetConfig()                           -- Resets all registered flags to defaults
+
+-- Autoload Management
+Library:SetAutoload("Legit")                    -- Sets startup config name
+local auto = Library:GetAutoload()              -- Returns current autoload name
+Library:CheckAutoload()                         -- Triggers autoload check
+
+-- Popups & Cleanup
+Library:CloseAllPopups()                        -- Closes any active dropdown/picker menus
+Library:ClearNotifications()                    -- Dismisses all active notifications
+Library:Unload()                                -- Completely destroys UI, signals, and background threads
 ```
 
+---
 
+## 🧹 Destroying the Interface
 
-## Destroying the Interface
+To safely disconnect all events, kill render loops, destroy UI containers, and clear global variables:
+
 ```lua
 Library:Unload()
 ```
