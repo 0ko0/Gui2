@@ -419,15 +419,15 @@ local IsMobile = UserInputService.TouchEnabled
             local IsClick = Signal == "MouseButton1Down" or Signal == "MouseButton1Click" or Signal == "Activated"
 
 if IsClick and Self.Instance:IsA("GuiButton") then
-    Connection = Self.Instance.Activated:Connect(function(Input)
-        
-        if IsOverAnyPopup and Input and IsOverAnyPopup(Input.Position) then
-            if not Self.Instance:IsDescendantOf(Library.PopupHolder.Instance) then
-                return
-            end
+Connection = Self.Instance.Activated:Connect(function(Input)
+    local TouchPos = (Input and Input.Position) or UserInputService:GetMouseLocation()
+    if IsOverAnyPopup and IsOverAnyPopup(TouchPos) then
+        if not Self.Instance:IsDescendantOf(Library.PopupHolder.Instance) then
+            return
         end
-        Callback(Input)
-    end)
+    end
+    Callback(Input)
+end)
             else
                 local TargetSignal = Self.Instance[Signal]
                 if TargetSignal and typeof(TargetSignal) == "RBXScriptSignal" and type(Callback) == "function" then
@@ -809,7 +809,7 @@ if IsClick and Self.Instance:IsA("GuiButton") then
         return IsOverObject(Self.Instance, Pos)
     end
 
-    local function IsOverAnyPopup(Pos)
+IsOverAnyPopup = function(Pos)
         for Panel in Library.TouchShields do
             if not Panel.Parent then continue end
             if not Panel.Visible then continue end
@@ -3008,12 +3008,12 @@ local SubW = 260
         })
 
         Items.ProfileHit = MakeButton({
-            Parent = Items.TopBar.Instance,
-            Anchor = Vector2.new(1, 0),
-            Pos = UDim2.new(1, -4, 0, 8),
-            Size = UDim2.fromOffset(42, 36),
-            Z = 5
-        })
+    Parent = Items.TopBar.Instance,
+    Anchor = Vector2.new(1, 0),
+    Pos = UDim2.new(1, -4, 0, 8),
+    Size = UDim2.fromOffset(42, 36),
+    Z = 16 
+})
                 
         Items.MinimizeBtn = MakeImage({
             Parent = Items.TopBar.Instance,
