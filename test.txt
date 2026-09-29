@@ -150,12 +150,12 @@ local IsMobile = UserInputService.TouchEnabled
         end
 
         if IconPack then
-            local Ok, Result = pcall(function()
+            local Ok, Image, Offset, Size = pcall(function()
                 return IconPack.GetIcon(Icon)
             end)
 
-            if Ok and Result and Result ~= "rbxassetid://0" then
-                return Result
+            if Ok and Image and Image ~= "rbxassetid://0" then
+                return Image, Offset, Size
             end
         end
 
@@ -721,22 +721,32 @@ end)
 
     Library.ApplyThemeInstant = function(Self)
         for _, Item in Library.ThemingStuff do
-            for Property, Value in Item.Properties do
-                if type(Value) == "string" then
-                    Item.Item[Property] = Library.Theme[Value]
-                elseif type(Value) == "function" then
-                    Item.Item[Property] = Value()
+            if Item.Item and Item.Item.Parent then
+                for Property, Value in Item.Properties do
+                    pcall(function()
+                        if type(Value) == "string" then
+                            Item.Item[Property] = Library.Theme[Value]
+                        elseif type(Value) == "function" then
+                            Item.Item[Property] = Value()
+                        end
+                    end)
                 end
             end
         end
 
         for _, Gradient in Library.AccentGradients do
-            Gradient.Color = AccentSequence()
+            pcall(function()
+                if Gradient and Gradient.Parent then
+                    Gradient.Color = AccentSequence()
+                end
+            end)
         end
 
         for _, Shadow in Library.AccentShadows do
             pcall(function()
-                Shadow.Color = Library.Theme.Accent
+                if Shadow and Shadow.Parent then
+                    Shadow.Color = Library.Theme.Accent
+                end
             end)
         end
     end
@@ -7799,6 +7809,7 @@ function Divider:SetVisible(Bool)
     Section:Reflow()
 end
 return Divider
+end
 
     Library.ProgressBar = function(Self, Params)
         Params = Params or {}
