@@ -3154,11 +3154,11 @@ local SubW = 260
 
         Library:MakeDraggable(DynamicIsland, FullIslandHit)
 
-        local IsMinimized = false
+        Window.IsMinimized = false
 
-        local function ToggleMinimize()
-            IsMinimized = not IsMinimized
-            if IsMinimized then
+        function Window:SetMinimized(State)
+            Window.IsMinimized = State
+            if State then
                 Library:CloseAllPopups()
                 Items.Root.Instance.Visible = false
                               
@@ -3167,8 +3167,18 @@ local SubW = 260
                 Library:Tween({ Size = UDim2.fromOffset(160, 36) }, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out), DynamicIsland.Instance)
             else
                 DynamicIsland.Instance.Visible = false
-                Items.Root.Instance.Visible = true
+                if Window.IsOpen then
+                    Items.Root.Instance.Visible = true
+                end
             end
+
+            if Window.MobileToggleButton and Window.MobileToggleButton.UpdateState then
+                Window.MobileToggleButton.UpdateState(Window.IsOpen, Window.IsMinimized)
+            end
+        end
+
+        local function ToggleMinimize()
+            Window:SetMinimized(not Window.IsMinimized)
         end
 
         Items.MinimizeHit:Connect("MouseButton1Down", ToggleMinimize)
@@ -3794,21 +3804,31 @@ Library:Create("TextButton", {
 
             if not Bool then
                 Library:CloseAllPopups()
-            end
-
-            local Sub = Window.Current and Window.Current.Current
-            if Sub and Sub.SnapVisible then
-                Sub:SnapVisible()
-            end
-
-            if Bool and Window.PlayIntro then
-                Window:PlayIntro()
+                
+                if DynamicIsland and DynamicIsland.Instance then
+                    DynamicIsland.Instance.Visible = false
+                end
+                Items.Root:FadeDescendants(false)
             else
-                Items.Root:FadeDescendants(Bool)
+                
+                if Window.IsMinimized then
+                    Window:SetMinimized(false)
+                end
+
+                local Sub = Window.Current and Window.Current.Current
+                if Sub and Sub.SnapVisible then
+                    Sub:SnapVisible()
+                end
+
+                if Window.PlayIntro then
+                    Window:PlayIntro()
+                else
+                    Items.Root:FadeDescendants(true)
+                end
             end
 
             if Window.MobileToggleButton and Window.MobileToggleButton.UpdateState then
-                Window.MobileToggleButton.UpdateState(Bool)
+                Window.MobileToggleButton.UpdateState(Window.IsOpen, Window.IsMinimized)
             end
         end
 
@@ -3816,8 +3836,13 @@ Library:Create("TextButton", {
             if Processed or Library.Binding then return end
 
             if KeyMatches(Input, Library.MenuKeybind) then
-    Window:SetOpen(not Window.IsOpen)
-end
+                if Window.IsMinimized then
+                    Window:SetMinimized(false)
+                    Window:SetOpen(true)
+                else
+                    Window:SetOpen(not Window.IsOpen)
+                end
+            end
         end)
 
         local function RunSearch(Query)
@@ -3975,28 +4000,58 @@ end
                         Dragging = false
                         
                         if not HasMoved then
-                            
                             Library:Tween({ Size = UDim2.fromOffset(40, 40) }, TweenInfo.new(0.08), MobileBtn.Instance)
                             task.delay(0.08, function()
                                 Library:Tween({ Size = UDim2.fromOffset(46, 46) }, TweenInfo.new(0.12), MobileBtn.Instance)
                             end)
-                            
-                            Window:SetOpen(not Window.IsOpen)
+                                                        
+                            if Window.IsMinimized then
+                                Window:SetMinimized(false)
+                                Window:SetOpen(true)
+                            else
+                                Window:SetOpen(not Window.IsOpen)
+                            end
                         end
                         DragStart = nil
                     end
                 end
             end)
 
-            MobileBtn.UpdateState = function(IsOpen)
-                if IsOpen then
-                    
-                    Library:Tween({ BackgroundTransparency = 0.6 }, TweenInfo.new(0.2), MobileBtn.Instance)
-                    Library:Tween({ Transparency = 0.7 }, TweenInfo.new(0.2), MobileStroke.Instance)
-                else
-                    
+            MobileBtn.UpdateState = function(IsOpen, IsMinimized)
+                if not IsOpen then
                     Library:Tween({ BackgroundTransparency = 0.1 }, TweenInfo.new(0.2), MobileBtn.Instance)
                     Library:Tween({ Transparency = 0.2 }, TweenInfo.new(0.2), MobileStroke.Instance)
+                    MobileIcon:Tween({ ImageTransparency = 0 })
+                elseif IsMinimized then
+                    Library:Tween({ BackgroundTransparency = 0.4 }, TweenInfo.new(0.2), MobileBtn.Instance)
+                    Library:Tween({ Transparency = 0.4 }, TweenInfo.new(0.2), MobileStroke.Instance)
+                    MobileIcon:Tween({ ImageTransparency = 0.2 })
+                else
+                    Library:Tween({ BackgroundTransparency = 0.65 }, TweenInfo.new(0.2), MobileBtn.Instance)
+                    Library:Tween({ Transparency = 0.75 }, TweenInfo.new(0.2), MobileStroke.Instance)
+                    MobileIcon:Tween({ ImageTransparency = 0.4 })
+                end
+            end
+
+            Window.MobileToggleButton = MobileBtn
+        end
+
+            MobileBtn.UpdateState = function(IsOpen, IsMinimized)
+                if not IsOpen then
+                  
+                    Library:Tween({ BackgroundTransparency = 0.1 }, TweenInfo.new(0.2), MobileBtn.Instance)
+                    Library:Tween({ Transparency = 0.2 }, TweenInfo.new(0.2), MobileStroke.Instance)
+                    MobileIcon:Tween({ ImageTransparency = 0 })
+                elseif IsMinimized then
+                    
+                    Library:Tween({ BackgroundTransparency = 0.4 }, TweenInfo.new(0.2), MobileBtn.Instance)
+                    Library:Tween({ Transparency = 0.4 }, TweenInfo.new(0.2), MobileStroke.Instance)
+                    MobileIcon:Tween({ ImageTransparency = 0.2 })
+                else
+                    
+                    Library:Tween({ BackgroundTransparency = 0.65 }, TweenInfo.new(0.2), MobileBtn.Instance)
+                    Library:Tween({ Transparency = 0.75 }, TweenInfo.new(0.2), MobileStroke.Instance)
+                    MobileIcon:Tween({ ImageTransparency = 0.4 })
                 end
             end
 
