@@ -196,21 +196,46 @@ end)
     end
 
     local function MeasureText(Text, Size, Width, FontFace)
+        Text = tostring(Text or "")
+        if Text == "" then return Vector2.new(0, 0) end
+
+        Size = Size or 14
+        Width = math.max(Width or 0, 10)
+
         local Ok, Bounds = pcall(function()
-            return TextService:GetTextBoundsAsync({
-                Text = Text,
-                Font = FontFace or UiFont,
-                Size = Size,
-                Width = Width
-            })
+            local params = Instance.new("GetTextBoundsParams")
+            params.Text = Text
+            params.Font = FontFace or UiFont
+            params.Size = Size
+            params.Width = Width
+            return TextService:GetTextBoundsAsync(params)
         end)
 
-        if Ok and Bounds then
-            return Bounds
+        if Ok and Bounds and Bounds.Y > 0 then
+            return Vector2.new(math.ceil(Bounds.X), math.ceil(Bounds.Y))
         end
 
-        local Estimate = math.min(#Text * Size * 0.52, Width)
-        return Vector2.new(Estimate, Size * 1.25)
+        local EnumFont = (typeof(FontFace) == "EnumItem" and FontFace) or Enum.Font.GothamMedium
+        local OkEnum, EnumBounds = pcall(function()
+            return TextService:GetTextSize(Text, Size, EnumFont, Vector2.new(Width, 10000))
+        end)
+
+        if OkEnum and EnumBounds and EnumBounds.Y > 0 then
+            return Vector2.new(math.ceil(EnumBounds.X), math.ceil(EnumBounds.Y))
+        end
+
+        local totalLines = 0
+        local charWidth = Size * 0.54
+        local charsPerLine = math.max(1, math.floor(Width / charWidth))
+
+        for line in string.gmatch(Text .. "\n", "([^\n]*)\n") do
+            local lineLength = #line
+            local wrapped = math.max(1, math.ceil(lineLength / charsPerLine))
+            totalLines = totalLines + wrapped
+        end
+
+        local estimatedH = math.max(Size * 1.3, totalLines * (Size * 1.35))
+        return Vector2.new(Width, math.ceil(estimatedH))
     end
 
     Library.__index = Library
@@ -7440,13 +7465,11 @@ end
         Keybind.Picking = false
         
         if IsMobile then
-            -- Dọn dẹp an toàn nút widget cũ
             if Keybind.TouchWidget then
                 pcall(function() Keybind.TouchWidget:Destroy() end)
                 Keybind.TouchWidget = nil
             end
 
-            -- Chỉ tạo nút nổi khi có gán phím hợp lệ
             if Keybind.Key and Keybind.Key ~= Enum.KeyCode.Unknown then
                 local Widget = Library:Create("TextButton", {
                     Parent = Library.Holder.Instance,
@@ -7642,7 +7665,7 @@ end
             RightColor = Params.RightColor or "Accent",
             RichText = Params.RichText or false,
             Align = Params.Align or Enum.TextXAlignment.Left,
-            Wrap = Params.Wrap or false,
+            Wrap = (Params.Wrap == nil and true) or Params.Wrap,
             Items = { }
         }
 
@@ -7651,29 +7674,26 @@ end
         local HasRight = Label.RightText ~= ""
 
         local LeftMargin = HasIcon and 34 or 14
-        local RightMargin = HasRight and 80 or 14
-        local AvailableWidth = Section.Width - LeftMargin - RightMargin
-        
-        local TitleSize = MeasureText(Label.Name, 15, AvailableWidth, UiFont)
-        local DescSize = HasDesc and MeasureText(Label.Description, 12, AvailableWidth, UiFont) or Vector2.new(0, 0)
+        local RightBounds = HasRight and MeasureText(Label.RightText, 13, 140, UiFont) or Vector2.new(0, 0)
+        local RightMargin = HasRight and (RightBounds.X + 22) or 14
+        local AvailableWidth = math.max(Section.Width - LeftMargin - RightMargin, 20)
 
-        local RowHeight = 28
-        if Label.Wrap then
-            RowHeight = TitleSize.Y + (HasDesc and DescSize.Y + 4 or 0) + 10
-            RowHeight = math.max(RowHeight, 28)
-        else
-            RowHeight = HasDesc and 44 or 28
-        end
+        local TitleBounds = MeasureText(Label.Name, 15, AvailableWidth, UiFont)
+        local DescBounds = HasDesc and MeasureText(Label.Description, 12, AvailableWidth, UiFont) or Vector2.new(0, 0)
+
+        local TitleH = math.max(TitleBounds.Y, 18)
+        local DescH = HasDesc and math.max(DescBounds.Y, 14) or 0
+        local RowHeight = HasDesc and math.max(TitleH + DescH + 16, 44) or math.max(TitleH + 12, 28)
 
         local Row, RowData = Section:AddRow(RowHeight, Label.Name)
-        local Items = { Row = Row }
+        local Items = { Row = Row, RowData = RowData }
 
         if HasIcon then
             Items.Icon = MakeImage({
                 Parent = Row.Instance,
                 Icon = Label.Icon,
-                Anchor = Vector2.new(0, 0.5),
-                Pos = UDim2.new(0, 14, 0.5, 0),
+                Anchor = Vector2.new(0, 0),
+                Pos = UDim2.new(0, 14, 0, 7),
                 Size = UDim2.fromOffset(16, 16),
                 Color = Label.Color,
                 Z = 5
@@ -7684,33 +7704,35 @@ end
             Parent = Row.Instance,
             Text = Label.Name,
             TextSize = 15,
-            Anchor = Vector2.new(0, HasDesc and 0 or 0.5),
-            Pos = HasDesc and UDim2.new(0, LeftMargin, 0, 4) or UDim2.new(0, LeftMargin, 0.5, 0),
-            Size = UDim2.new(1, -(LeftMargin + RightMargin), 0, Label.Wrap and TitleSize.Y or 20),
+            Anchor = Vector2.new(0, 0),
+            Pos = UDim2.new(0, LeftMargin, 0, 6),
+            Size = UDim2.fromOffset(AvailableWidth, TitleH),
             Color = Label.Color,
             Align = Label.Align,
-            Wrap = Label.Wrap,
-            Truncate = not Label.Wrap,
+            Wrap = true,
+            Truncate = false,
             Z = 5
         })
         Items.Text.Instance.RichText = Label.RichText
+        Items.Text.Instance.TextYAlignment = Enum.TextYAlignment.Top
 
         if HasDesc then
-            local DescY = Label.Wrap and (TitleSize.Y + 6) or 22
             Items.DescLabel = MakeText({
                 Parent = Row.Instance,
                 Text = Label.Description,
                 TextSize = 12,
-                Pos = UDim2.new(0, LeftMargin, 0, DescY),
-                Size = UDim2.new(1, -(LeftMargin + RightMargin), 0, Label.Wrap and DescSize.Y or 15),
+                Anchor = Vector2.new(0, 0),
+                Pos = UDim2.new(0, LeftMargin, 0, 6 + TitleH + 4),
+                Size = UDim2.fromOffset(AvailableWidth, DescH),
                 Color = Label.DescColor,
                 Align = Label.Align,
-                Wrap = Label.Wrap,
-                Truncate = not Label.Wrap,
+                Wrap = true,
+                Truncate = false,
                 Z = 5
             })
             Items.DescLabel.Instance.RichText = Label.RichText
             Items.DescLabel.Instance.TextTransparency = 0.4
+            Items.DescLabel.Instance.TextYAlignment = Enum.TextYAlignment.Top
         end
 
         if HasRight then
@@ -7718,12 +7740,12 @@ end
                 Parent = Row.Instance,
                 Text = Label.RightText,
                 TextSize = 13,
-                Anchor = Vector2.new(1, 0.5),
-                Pos = UDim2.new(1, -14, 0.5, 0),
-                Size = UDim2.fromOffset(70, 20),
+                Anchor = Vector2.new(1, 0),
+                Pos = UDim2.new(1, -14, 0, 6),
+                Size = UDim2.fromOffset(RightBounds.X + 6, 20),
                 Color = Label.RightColor,
                 Align = Enum.TextXAlignment.Right,
-                Truncate = true,
+                Truncate = false,
                 Z = 5
             })
             Items.RightText.Instance.RichText = Label.RichText
@@ -7731,9 +7753,69 @@ end
 
         Label.Items = Items
 
+        function Label:RecalculateHeight()
+            HasDesc = Label.Description ~= nil and Label.Description ~= ""
+            HasIcon = Label.Icon ~= nil and Label.Icon ~= ""
+            HasRight = Label.RightText ~= nil and Label.RightText ~= ""
+
+            LeftMargin = HasIcon and 34 or 14
+            RightBounds = HasRight and MeasureText(Label.RightText, 13, 140, UiFont) or Vector2.new(0, 0)
+            RightMargin = HasRight and (RightBounds.X + 22) or 14
+            AvailableWidth = math.max(Section.Width - LeftMargin - RightMargin, 20)
+
+            TitleBounds = MeasureText(Label.Name, 15, AvailableWidth, UiFont)
+            DescBounds = HasDesc and MeasureText(Label.Description, 12, AvailableWidth, UiFont) or Vector2.new(0, 0)
+
+            TitleH = math.max(TitleBounds.Y, 18)
+            DescH = HasDesc and math.max(DescBounds.Y, 14) or 0
+            RowHeight = HasDesc and math.max(TitleH + DescH + 16, 44) or math.max(TitleH + 12, 28)
+
+            Items.Text.Instance.Size = UDim2.fromOffset(AvailableWidth, TitleH)
+            Items.Text.Instance.Position = UDim2.new(0, LeftMargin, 0, 6)
+
+            if HasDesc then
+                if not Items.DescLabel then
+                    Items.DescLabel = MakeText({
+                        Parent = Row.Instance,
+                        Text = Label.Description,
+                        TextSize = 12,
+                        Anchor = Vector2.new(0, 0),
+                        Pos = UDim2.new(0, LeftMargin, 0, 6 + TitleH + 4),
+                        Size = UDim2.fromOffset(AvailableWidth, DescH),
+                        Color = Label.DescColor,
+                        Align = Label.Align,
+                        Wrap = true,
+                        Truncate = false,
+                        Z = 5
+                    })
+                    Items.DescLabel.Instance.RichText = Label.RichText
+                    Items.DescLabel.Instance.TextTransparency = 0.4
+                    Items.DescLabel.Instance.TextYAlignment = Enum.TextYAlignment.Top
+                else
+                    Items.DescLabel.Instance.Visible = true
+                    Items.DescLabel.Instance.Position = UDim2.new(0, LeftMargin, 0, 6 + TitleH + 4)
+                    Items.DescLabel.Instance.Size = UDim2.fromOffset(AvailableWidth, DescH)
+                end
+            else
+                if Items.DescLabel then
+                    Items.DescLabel.Instance.Visible = false
+                end
+            end
+
+            if HasRight and Items.RightText then
+                Items.RightText.Instance.Size = UDim2.fromOffset(RightBounds.X + 6, 20)
+            end
+
+            RowData.Height = RowHeight
+            Row.Instance.Size = UDim2.fromOffset(Section.Width, RowHeight)
+
+            Section:Reflow()
+        end
+
         function Label:Set(Text)
-            Label.Name = tostring(Text)
+            Label.Name = tostring(Text or "")
             Items.Text.Instance.Text = Label.Name
+            Label:RecalculateHeight()
         end
 
         function Label:SetText(Text)
@@ -7741,18 +7823,19 @@ end
         end
 
         function Label:SetDescription(Desc)
-            Label.Description = tostring(Desc)
+            Label.Description = tostring(Desc or "")
             if Items.DescLabel then
                 Items.DescLabel.Instance.Text = Label.Description
-                Items.DescLabel.Instance.Visible = Label.Description ~= ""
             end
+            Label:RecalculateHeight()
         end
 
         function Label:SetRightText(Text)
-            Label.RightText = tostring(Text)
+            Label.RightText = tostring(Text or "")
             if Items.RightText then
                 Items.RightText.Instance.Text = Label.RightText
             end
+            Label:RecalculateHeight()
         end
 
         function Label:SetColor(ColorKeyOrColor3)
@@ -7767,16 +7850,29 @@ end
             Label.Icon = Icon
             if Items.Icon then
                 ApplyIcon(Items.Icon.Instance, Icon)
+            else
+                if Icon and Icon ~= "" then
+                    Items.Icon = MakeImage({
+                        Parent = Row.Instance,
+                        Icon = Icon,
+                        Anchor = Vector2.new(0, 0),
+                        Pos = UDim2.new(0, 14, 0, 7),
+                        Size = UDim2.fromOffset(16, 16),
+                        Color = Label.Color,
+                        Z = 5
+                    })
+                end
             end
+            Label:RecalculateHeight()
         end
 
         function Label:SetVisible(Bool)
-    Row.Instance.Visible = Bool
-    if RowData then
-        RowData.Visible = Bool
-    end
-    Section:Reflow()
-end
+            Row.Instance.Visible = Bool
+            if RowData then
+                RowData.Visible = Bool
+            end
+            Section:Reflow()
+        end
 
         return setmetatable(Label, Library)
     end
@@ -7807,13 +7903,19 @@ end
 
         local LeftMargin = 14 + IconWidth
         local RightMargin = 14 + ActionWidth
-        local AvailableWidth = Section.Width - LeftMargin - RightMargin
+        local AvailableWidth = math.max(Section.Width - LeftMargin - RightMargin, 20)
 
-        local TitleBounds = MeasureText(Paragraph.Title, Paragraph.TitleSize, AvailableWidth, UiFont)
-        local ContentBounds = MeasureText(Paragraph.Content, Paragraph.ContentSize, AvailableWidth, UiFont)
+        local HasTitle = Paragraph.Title ~= nil and Paragraph.Title ~= ""
+        local HasContent = Paragraph.Content ~= nil and Paragraph.Content ~= ""
 
-        local RowHeight = TitleBounds.Y + (Paragraph.Content ~= "" and ContentBounds.Y + 6 or 0) + 16
-        RowHeight = math.max(RowHeight, 32)
+        local TitleBounds = HasTitle and MeasureText(Paragraph.Title, Paragraph.TitleSize, AvailableWidth, UiFontBold or UiFont) or Vector2.new(0, 0)
+        local ContentBounds = HasContent and MeasureText(Paragraph.Content, Paragraph.ContentSize, AvailableWidth, UiFont) or Vector2.new(0, 0)
+
+        local TitleH = HasTitle and math.max(TitleBounds.Y, 18) or 0
+        local ContentH = HasContent and math.max(ContentBounds.Y, 16) or 0
+        local Gap = (HasTitle and HasContent) and 6 or 0
+
+        local RowHeight = math.max(TitleH + ContentH + Gap + 16, 32)
 
         local Row, RowData = Section:AddRow(RowHeight, Paragraph.Title .. " " .. Paragraph.Content)
         local Items = { Row = Row, Data = RowData }
@@ -7875,29 +7977,33 @@ end
             Text = Paragraph.Title,
             TextSize = Paragraph.TitleSize,
             Pos = UDim2.fromOffset(LeftMargin, 8),
-            Size = UDim2.fromOffset(AvailableWidth, TitleBounds.Y),
+            Size = UDim2.fromOffset(AvailableWidth, TitleH),
             Color = Paragraph.TitleColor,
             Align = Paragraph.Align,
             Wrap = true,
+            Truncate = false,
             Z = 5
         })
         Items.Title.Instance.RichText = Paragraph.RichText
         Items.Title.Instance.TextYAlignment = Enum.TextYAlignment.Top
+        Items.Title.Instance.Visible = HasTitle
 
-        local ContentY = 8 + TitleBounds.Y + (Paragraph.Content ~= "" and 6 or 0)
+        local ContentY = HasTitle and (8 + TitleH + Gap) or 8
         Items.Body = MakeText({
             Parent = Row.Instance,
             Text = Paragraph.Content,
             TextSize = Paragraph.ContentSize,
             Pos = UDim2.fromOffset(LeftMargin, ContentY),
-            Size = UDim2.fromOffset(AvailableWidth, ContentBounds.Y),
+            Size = UDim2.fromOffset(AvailableWidth, ContentH),
             Color = Paragraph.ContentColor,
             Align = Paragraph.Align,
             Wrap = true,
+            Truncate = false,
             Z = 5
         })
         Items.Body.Instance.RichText = Paragraph.RichText
         Items.Body.Instance.TextYAlignment = Enum.TextYAlignment.Top
+        Items.Body.Instance.Visible = HasContent
 
         function Paragraph:RecalculateHeight()
             HasIcon = Paragraph.Icon ~= nil and Paragraph.Icon ~= ""
@@ -7906,20 +8012,38 @@ end
 
             LeftMargin = 14 + IconWidth
             RightMargin = 14 + ActionWidth
-            AvailableWidth = Section.Width - LeftMargin - RightMargin
+            AvailableWidth = math.max(Section.Width - LeftMargin - RightMargin, 20)
 
-            local TBounds = MeasureText(Paragraph.Title, Paragraph.TitleSize, AvailableWidth, UiFont)
-            local CBounds = MeasureText(Paragraph.Content, Paragraph.ContentSize, AvailableWidth, UiFont)
+            local TitlePresent = Paragraph.Title ~= nil and Paragraph.Title ~= ""
+            local ContentPresent = Paragraph.Content ~= nil and Paragraph.Content ~= ""
 
-            local NewHeight = TBounds.Y + (Paragraph.Content ~= "" and CBounds.Y + 6 or 0) + 16
-            NewHeight = math.max(NewHeight, 32)
+            local TBounds = TitlePresent and MeasureText(Paragraph.Title, Paragraph.TitleSize, AvailableWidth, UiFontBold or UiFont) or Vector2.new(0, 0)
+            local CBounds = ContentPresent and MeasureText(Paragraph.Content, Paragraph.ContentSize, AvailableWidth, UiFont) or Vector2.new(0, 0)
 
-            Items.Title.Instance.Size = UDim2.fromOffset(AvailableWidth, TBounds.Y)
-            Items.Title.Instance.Position = UDim2.fromOffset(LeftMargin, 8)
+            local TH = TitlePresent and math.max(TBounds.Y, 18) or 0
+            local CH = ContentPresent and math.max(CBounds.Y, 16) or 0
+            local CurrentGap = (TitlePresent and ContentPresent) and 6 or 0
 
-            local NewContentY = 8 + TBounds.Y + (Paragraph.Content ~= "" and 6 or 0)
-            Items.Body.Instance.Size = UDim2.fromOffset(AvailableWidth, CBounds.Y)
-            Items.Body.Instance.Position = UDim2.fromOffset(LeftMargin, NewContentY)
+            local NewHeight = math.max(TH + CH + CurrentGap + 16, 32)
+
+            if TitlePresent then
+                Items.Title.Instance.Visible = true
+                Items.Title.Instance.Size = UDim2.fromOffset(AvailableWidth, TH)
+                Items.Title.Instance.Position = UDim2.fromOffset(LeftMargin, 8)
+            else
+                Items.Title.Instance.Visible = false
+                Items.Title.Instance.Size = UDim2.fromOffset(0, 0)
+            end
+
+            if ContentPresent then
+                local NewContentY = TitlePresent and (8 + TH + CurrentGap) or 8
+                Items.Body.Instance.Visible = true
+                Items.Body.Instance.Size = UDim2.fromOffset(AvailableWidth, CH)
+                Items.Body.Instance.Position = UDim2.fromOffset(LeftMargin, NewContentY)
+            else
+                Items.Body.Instance.Visible = false
+                Items.Body.Instance.Size = UDim2.fromOffset(0, 0)
+            end
 
             RowData.Height = NewHeight
             Row.Instance.Size = UDim2.fromOffset(Section.Width, NewHeight)
@@ -7940,10 +8064,14 @@ end
         end
 
         function Paragraph:SetText(Title, Content)
-            if Title then Paragraph.Title = tostring(Title) end
-            if Content then Paragraph.Content = tostring(Content) end
-            Items.Title.Instance.Text = Paragraph.Title
-            Items.Body.Instance.Text = Paragraph.Content
+            if Title ~= nil then
+                Paragraph.Title = tostring(Title)
+                Items.Title.Instance.Text = Paragraph.Title
+            end
+            if Content ~= nil then
+                Paragraph.Content = tostring(Content)
+                Items.Body.Instance.Text = Paragraph.Content
+            end
             Paragraph:RecalculateHeight()
         end
 
